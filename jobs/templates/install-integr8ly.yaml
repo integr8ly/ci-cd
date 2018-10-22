@@ -1,0 +1,26 @@
+- job:
+    name: install-integr8ly-to-staging
+    project-type: pipeline
+    sandbox: true
+    pipeline-scm:
+      scm:
+        - git:
+            url: http://github.com/master/ci-cd
+            clean: true
+            branches: 
+              - master
+      script-path: scripts/install-integr8ly-no-bastion.groovy
+      lightweight-checkout: true
+    parameters:
+      - string:
+          name: NODE
+      - string:
+          name: BRANCH
+          default: 'master'
+      - string:
+          name: OWNER
+          default: 'integr8ly'
+      - string:
+          name: GH_CLIENT_ID
+      - string:
+          name: GH_CLIENT_SECRET
