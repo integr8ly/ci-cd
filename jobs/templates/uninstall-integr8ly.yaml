@@ -1,0 +1,21 @@
+- job:
+    name: uninstall-integr8ly-from-staging
+    project-type: pipeline
+    sandbox: true
+    pipeline-scm:
+      scm:
+        - git:
+            url: http://github.com/integr8ly/ci-cd
+            clean: true
+            branches: 
+              - master
+      script-path: scripts/uninstall-integr8ly-no-bastion.groovy
+      lightweight-checkout: true
+    parameters:
+      - string:
+          name: BRANCH
+          default: 'master'
+      - string:
+          name: OWNER
+          default: 'integr8ly'
+
