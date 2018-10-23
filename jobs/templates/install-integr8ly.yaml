@@ -5,7 +5,7 @@
     pipeline-scm:
       scm:
         - git:
-            url: http://github.com/master/ci-cd
+            url: http://github.com/integr8ly/ci-cd
             clean: true
             branches: 
               - master
