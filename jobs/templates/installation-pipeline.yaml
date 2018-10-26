@@ -1,0 +1,150 @@
+---
+
+- job:
+    name: installation-pipeline
+    project-type: pipeline
+    description: "Installs Integreatly by using bastion server as Jenkins lave and executing Ansible installer there."
+    sandbox: false
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: https://github.com/integr8ly/installation.git
+          description: "Repository of the Integreatly installer"
+      - string:
+          name: BRANCH
+          default: 'master'
+          description: "Branch of the installer repository"
+      - string:
+          name: GH_CLIENT_ID
+          description: "GitHub Client ID for OAuth Apps, required for some of the walkthroughs. Can be left empty"
+      - string:
+          name: GH_CLIENT_SECRET
+          description: "GitHub Client Secret for OAuth Apps, required for some of the walkthroughs. Can be left empty"
+      - bool:
+          name: SELF_SIGNED_CERTS
+          default: true
+          description: "Indicates whether cluster uses self signed certificates or not"
+      - string:
+          name: ANSIBLE_USER
+          default: ec2-user
+          description: "User for Ansible to access the master node of target cluster"
+      - string:
+          name: MASTER_URLS
+          description: "Comma separated list of URLs for master nodes of target cluster to be used in Ansible inventory file"
+      - string:
+          name: BASTION_USER
+          default: ec2-user
+          description: "User capable of SSH-ing to bastion server"
+      - string:
+          name: BASTION_URL
+          description: "URL for bastion server the target cluster is hidden behind"
+      - string:
+          name: BASTION_PRIVATE_KEY_ID
+          description: "ID of SSH Credentials (private key) used for SSH-ing to bastion"
+      - string:
+          name: PLAYBOOK
+          default: install
+          description: "Playbook to run. Only tested values are 'install' and 'uninstall'"
+    dsl: |
+      import hudson.model.*
+      import jenkins.model.*
+      import hudson.slaves.*
+      import hudson.slaves.EnvironmentVariablesNodeProperty.Entry
+
+      import hudson.plugins.sshslaves.verifiers.*
+
+      String bastionLabel = "${BASTION_URL}-slave"
+
+      timeout(60) {
+          node('cirhos_rhel7') {        
+              stage('Verify input') {
+                  if (!MASTER_URLS) {
+                      throw new hudson.AbortException('MASTER_URLS parameter is required!')
+                  }
+                  
+                  if (!BASTION_URL) {
+                      throw new hudson.AbortException('BASTION_URL parameter is required!')
+                  }
+              }
+
+              stage('Configure bastion as jenkins slave') {
+                  
+                  if(Jenkins.instance.getNode(bastionLabel)) {
+                      println "Slave '${bastionLabel} already exists, skipping its creation."
+                  } else {
+                  
+                      ComputerLauncher launcher = new hudson.plugins.sshslaves.SSHLauncher(
+                          "${BASTION_URL}", // Host
+                          22, // Port
+                          "${BASTION_PRIVATE_KEY_ID}", // Credentials
+                          (String)null, // JVM Options
+                          (String)null, // JavaPath
+                          (hudson.tools.JDKInstaller)null, //jdkInstaller
+                          (String)null, // Prefix Start Slave Command
+                          (String)null, // Suffix Start Slave Command
+                          (Integer)null, // Launch Timeout in Seconds
+                          (Integer)null, // Maximum Number of Retries
+                          (Integer)null, // The number of seconds to wait between retries
+                          new NonVerifyingKeyVerificationStrategy() // Host Key Verification Strategy
+                      )
+                      
+                      // Define a "Permanent Agent"
+                      Slave agent = new DumbSlave(
+                              bastionLabel,
+                              "/home/${BASTION_USER}",
+                              launcher)
+                      agent.nodeDescription = "Bastion for ${JOB_NAME}"
+                      agent.numExecutors = 1
+                      agent.labelString = bastionLabel
+                      agent.mode = Node.Mode.NORMAL
+                      agent.retentionStrategy = new RetentionStrategy.Always()
+          
+                      // Create a "Permanent Agent"
+                      Jenkins.instance.addNode(agent)
+                      
+                      println "Slave ${bastionLabel} has been created successfully."
+                  } // end if
+              } // stage
+          } // node
+
+          node(bastionLabel) {
+              stage('Clone the installer') {
+                  dir('installation') {
+                      git branch: BRANCH, url: REPOSITORY
+                  } // dir
+              } // stage
+
+              stage('Prepare environment') {
+                  dir('installation') {
+                      sh """
+                          sed -i 's/ansible_user=ec2-user/ansible_user=${ANSIBLE_USER}/g' ./evals/inventories/hosts
+                      """
+                      
+                      String masterUrls = MASTER_URLS.replaceAll(~/,[\s]*/, '\\\\n')
+                      
+                      sh """
+                          sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\n${masterUrls}@;P;D' ./evals/inventories/hosts
+                      """
+                      
+                      String output = readFile('./evals/inventories/hosts')
+                      println output
+                  } // dir
+              } // stage
+              
+              stage('Execute playbook') {
+                  dir('installation/evals') {
+                      
+                      String githubParams = ''
+                      if(GH_CLIENT_ID && GH_CLIENT_SECRET) {
+                          githubParams = "-e github_client_id=${GH_CLIENT_ID} -e github_client_secret=${GH_CLIENT_SECRET}"
+                      }
+                      
+                      sh """
+                          sudo oc login -u system:admin
+                          sudo ansible-playbook -i ./inventories/hosts ./playbooks/${PLAYBOOK}.yml ${githubParams} -e eval_self_signed_certs=${SELF_SIGNED_CERTS}
+                      """
+                  } // dir
+              } // stage
+          } // node
+
+      } // timeout
