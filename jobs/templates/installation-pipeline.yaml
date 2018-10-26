@@ -96,7 +96,7 @@
                       agent.nodeDescription = "Bastion for ${JOB_NAME}"
                       agent.numExecutors = 1
                       agent.labelString = bastionLabel
-                      agent.mode = Node.Mode.NORMAL
+                      agent.mode = Node.Mode.EXCLUSIVE
                       agent.retentionStrategy = new RetentionStrategy.Always()
           
                       // Create a "Permanent Agent"
