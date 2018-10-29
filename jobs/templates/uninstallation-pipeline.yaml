@@ -1,9 +1,9 @@
 ---
 
 - job:
-    name: installation-pipeline
+    name: uninstallation-pipeline
     project-type: pipeline
-    description: "Installs Integreatly by using bastion server as Jenkins slave and executing Ansible installation playbook there."
+    description: "Uninstalls Integreatly by using bastion server as Jenkins slave and executing Ansible uninstallation playbook there."
     sandbox: false
     parameters:
       - string:
@@ -14,16 +14,6 @@
           name: BRANCH
           default: 'master'
           description: "Branch of the installer repository"
-      - string:
-          name: GH_CLIENT_ID
-          description: "GitHub Client ID for OAuth Apps, required for some of the walkthroughs. Can be left empty"
-      - string:
-          name: GH_CLIENT_SECRET
-          description: "GitHub Client Secret for OAuth Apps, required for some of the walkthroughs. Can be left empty"
-      - bool:
-          name: SELF_SIGNED_CERTS
-          default: true
-          description: "Indicates whether cluster uses self signed certificates or not"
       - string:
           name: ANSIBLE_USER
           default: ec2-user
@@ -41,10 +31,6 @@
       - string:
           name: BASTION_PRIVATE_KEY_ID
           description: "ID of SSH Credentials (private key) used for SSH-ing to bastion"
-      - string:
-          name: PLAYBOOK
-          default: install
-          description: "Playbook to run. Only tested values are 'install' and 'uninstall'"
     dsl: |
       import hudson.model.*
       import jenkins.model.*
@@ -133,15 +119,9 @@
               
               stage('Execute playbook') {
                   dir('installation/evals') {
-                      
-                      String githubParams = ''
-                      if(GH_CLIENT_ID && GH_CLIENT_SECRET) {
-                          githubParams = "-e github_client_id=${GH_CLIENT_ID} -e github_client_secret=${GH_CLIENT_SECRET}"
-                      }
-                      
                       sh """
                           sudo oc login -u system:admin
-                          sudo ansible-playbook -i ./inventories/hosts ./playbooks/${PLAYBOOK}.yml ${githubParams} -e eval_self_signed_certs=${SELF_SIGNED_CERTS}
+                          sudo ansible-playbook -i ./inventories/hosts ./playbooks/uninstall.yml
                       """
                   } // dir
               } // stage
