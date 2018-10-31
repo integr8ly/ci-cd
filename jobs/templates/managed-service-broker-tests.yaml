@@ -1,5 +1,5 @@
 - job:
-    name: managed-broker-service-tests
+    name: managed-service-broker-tests
     project-type: pipeline
     sandbox: true
     pipeline-scm:
