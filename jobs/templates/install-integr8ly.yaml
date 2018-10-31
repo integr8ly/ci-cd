@@ -13,14 +13,16 @@
       lightweight-checkout: true
     parameters:
       - string:
-          name: NODE
-      - string:
           name: BRANCH
           default: 'master'
+          description: "Integreatly installation repository branch name."
       - string:
           name: OWNER
           default: 'integr8ly'
+          description: 'Group or owner of the installation repository.'
       - string:
           name: GH_CLIENT_ID
+          description: 'GitHub OAuth client ID to enable GitHub authorization for Launcher.'
       - string:
           name: GH_CLIENT_SECRET
+          description: 'GitHub OAuth client secret to enable GitHub authorization for Launcher.'
