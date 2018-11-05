@@ -15,8 +15,8 @@
       - string:
           name: CLUSTER_ROUTE
           default: 'integr8ly-staging.dynamic.xpaas'
-          description: "Cluster route suffix. We run on QE cluster by default."
+          description: 'Cluster route suffix. We run on QE cluster by default.'
       - string:
           name: NAMESPACE
           default: 'managed-service-broker'
-          description: "Namespace where the managed-service-broker will be deployed"
+          description: 'Namespace where the managed-service-broker will be deployed'
