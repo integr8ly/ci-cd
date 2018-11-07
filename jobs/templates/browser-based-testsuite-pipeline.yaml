@@ -4,10 +4,19 @@
     name: browser-based-testsuite-pipeline
     project-type: pipeline
     description: 'Executes browser based testsuite against Integreatly Tutorial Web App.'
-    sandbox: false
+    sandbox: true
+    pipeline-scm:
+      scm:
+        - git:
+            url: http://github.com/integr8ly/ci-cd
+            clean: true
+            branches: 
+              - master
+      script-path: scripts/browser-tests.groovy
     parameters:
       - string:
           name: REPOSITORY
+          default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
           description: 'Repository of the Integreatly Browser based tests'
       - string:
           name: BRANCH
@@ -24,48 +33,3 @@
           name: ADMIN_PASSWORD
           default: 'Password1'
           description: 'Password for the Tutorial Web App log in'
-    dsl: |
-      timeout(60) {
-          node('cirhos_rhel7') {  
-              stage('Clone the testsuite') {
-                  dir('integreatly-qe') {
-                      git branch: BRANCH, url: REPOSITORY
-                  } // dir
-              } // stage
-              
-              stage('Start browser container') {
-                  sh """                          
-                      sudo docker run --name chrome_selenium -d -p 4444:4444 -v /dev/shm:/dev/shm -v "$PWD":"$PWD" -e SE_OPTS="-timeout 3600" selenium/standalone-chrome:3.14.0-krypton || true
-                  """
-              }
-
-              stage('Initial setup') {
-                  dir('integreatly-qe/js-testsuite') {
-                      sh """
-                          # Disable starting Selenium, Docker is used instead
-                          sed -i 's/"start_process" : true,/"start_process" : false,/g' nightwatch.json
-                          npm install
-                      """
-                  } // dir
-              }
-              
-              stage('Execute tests') {
-                  dir('integreatly-qe/js-testsuite') {
-                      sh """
-                          export WEBAPP_URL=${WEBAPP_URL}
-                          export ADMIN_USERNAME=${ADMIN_USERNAME}
-                          export ADMIN_PASSWORD=${ADMIN_PASSWORD}
-
-                          npm test
-                      """
-                  } // dir
-              } // stage
-              
-              stage('Stop browser container') {
-                  sh """
-                      sudo docker stop chrome_selenium || true
-                      sudo docker rm chrome_selenium || true
-                  """
-              } // stage
-          } // node
-      } // timeout
