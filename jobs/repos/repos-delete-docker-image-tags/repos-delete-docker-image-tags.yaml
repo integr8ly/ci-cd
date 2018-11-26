@@ -1,0 +1,27 @@
+---
+- job:
+    name: repos-delete-docker-image-tags
+    display-name: 'Repos Delete Docker Image Tags'
+    project-type: pipeline
+    parameters:
+      - string:
+          name: 'tagNames'
+          default: ''
+          description: 'The tags to delete, e.g. release-1.2.3'
+      - string:
+          name: 'installationGitUrl'
+          default: 'git@github.com:integr8ly/installation.git'
+          description: '[REQUIRED] The installation repo containing the components meta file (COMPONENTS.yaml)'
+      - string:
+          name: 'installationGitRef'
+          default: 'master'
+          description: '[REQUIRED] The installation git ref'
+    pipeline-scm:
+      script-path: jobs/repos/repos-delete-docker-image-tags/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

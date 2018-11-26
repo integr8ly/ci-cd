@@ -1,0 +1,209 @@
+#!groovy
+
+//Helper methods
+def checkoutGitRepo(gitUrl, gitRef, credentialsID) {
+    checkout([$class: 'GitSCM', branches: [[name: gitRef]],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [],
+            submoduleCfg: [],
+            userRemoteConfigs: [[credentialsId: credentialsID, url: gitUrl]]])
+}
+
+String gitRepoIsDirty(untrackedFiles = 'no') {
+    return sh(
+            returnStdout: true,
+            script: "git status --porcelain --untracked-files=${untrackedFiles}"
+    )?.trim()
+}
+
+String getReleaseBranch(version) {
+    def versionParts = version.tokenize(".")
+    return "v${versionParts[0]}.${versionParts[1]}"
+}
+
+String getReleaseTag(version, candidate = null) {
+    if (candidate) {
+        "release-${version}-${candidate}"
+    } else {
+        "release-${version}"
+    }
+}
+//
+
+def installationGitUrl = params.installationGitUrl
+def installationGitRef = params.installationGitRef
+
+def releaseBaseBranch = 'master'
+def releaseBranchName = getReleaseBranch(params.releaseVersion)
+def releaseTagName = getReleaseTag(params.releaseVersion)
+
+def releaseConfig = [:]
+def componentConfigs = []
+
+def githubCredentialsID = "jenkinsgithub"
+def quayCredentialsID = "integreatly-quay"
+
+currentBuild.displayName = "${currentBuild.displayName} ${params.releaseVersion}"
+
+node('cirhos_rhel7') {
+    sshagent([githubCredentialsID]) {
+        sh "git config --global user.name  \"Jenkins\""
+        sh "git config --global user.email \"jenkins@wendy.feedhenry.net\""
+
+        cleanWs()
+
+        stage('Fetch Installation Repo') {
+            println("Fetch Installation Repo")
+
+            dir('installation') {
+                checkoutGitRepo(installationGitUrl, installationGitRef, githubCredentialsID)
+
+                //Check for an existing release tag on the installation repo and bail if it already exists!!
+                def existingTagCommitHash = sh(returnStdout: true, script: "git ls-remote origin refs/tags/${releaseTagName} | cut -f 1").trim()
+                if (existingTagCommitHash) {
+                    println "[installtion] - The tag '${releaseTagName}' already exists, can't continue!!"
+                    sh('exit 1')
+                }
+
+                releaseConfig = readYaml file: "COMPONENTS.yaml"
+                componentConfigs = releaseConfig['components']
+            }
+        }
+
+        stage('Fetch Component Repos') {
+            println("Fetch Component Repos")
+
+            for (i = 0; i < componentConfigs.size(); i++) {
+                def index = i
+                def componentConfig = componentConfigs[index]
+
+                dir(componentConfig['name']) {
+                    checkoutGitRepo(componentConfig['gitUrl'], releaseBaseBranch, githubCredentialsID)
+                }
+            }
+        }
+
+        stage('Create Installation Release Branch') {
+            println("Create Installation Release Branch")
+            dir('installation') {
+                def latestCommitHash = sh(returnStdout: true, script: "git log -n 1 --pretty=format:\"%H\"").trim()
+                def existingBranchCommitHash = sh(returnStdout: true, script: "git ls-remote origin refs/heads/${releaseBranchName} | cut -f 1").trim()
+
+                if (existingBranchCommitHash) {
+                    println "[installtion] - Checking out existing branch ${releaseBranchName}"
+                    sh "git checkout ${releaseBranchName}"
+                } else {
+                    println "[installation] - Creating new branch ${releaseBranchName} at ${latestCommitHash}"
+                    sh "git checkout -b ${releaseBranchName}"
+                }
+
+                sh "git checkout ${releaseBranchName}"
+                sh "git push origin ${releaseBranchName}"
+            }
+        }
+
+        stage('Create Git Release Tags') {
+            println("Create Git Release Tags")
+
+            for (i = 0; i < componentConfigs.size(); i++) {
+                def index = i
+                def componentConfig = componentConfigs[index]
+
+                if (componentConfig['skipGitTag'] || !componentConfig['gitUrl']) {
+                    println("[${componentConfig['name']}] - Skipped git tagging, please ensure the release tag ${releaseTagName} exists for this component!")
+                } else {
+                    dir(componentConfig['name']) {
+                        def latestCommitHash = sh(returnStdout: true, script: "git log -n 1 --pretty=format:\"%H\"").trim()
+                        def existingTagCommitHash = sh(returnStdout: true, script: "git ls-remote origin refs/tags/${releaseTagName} | cut -f 1").trim()
+
+                        if (existingTagCommitHash) {
+                            println "[${componentConfig['name']}] - Release tag ${releaseTagName} already exists at ${existingTagCommitHash}"
+                        } else {
+                            println "[${componentConfig['name']}] - Creating new tag ${releaseTagName} at ${latestCommitHash}"
+                            sh "git tag ${releaseTagName}"
+                        }
+                        sh "git push origin ${releaseTagName}"
+                        sh "git checkout ${releaseTagName}"
+                    }
+                }
+            }
+        }
+
+        stage('Create Image Release Tags') {
+            println("Create Image Release Tags")
+
+            withCredentials([
+                    usernameColonPassword(credentialsId: quayCredentialsID, variable: 'QUAY_CREDS'),
+            ]) {
+
+                for (i = 0; i < componentConfigs.size(); i++) {
+                    def index = i
+                    def componentConfig = componentConfigs[index]
+
+                    if (componentConfig['skipImageTag'] || !componentConfig['imageUrl']) {
+                        println("[${componentConfig['name']}] - Skipped image tagging, please ensure the release tag ${releaseTagName} exists for this component!")
+                    } else {
+                        dir(componentConfig['name']) {
+                            def headHash = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
+                            println("[${componentConfig['name']}] - Tagging docker image ${headHash} as ${releaseTagName}")
+
+                            retry(3) {
+                                sh """
+                            skopeo copy \
+                              --src-creds ${env.QUAY_CREDS} \
+                              --dest-creds ${env.QUAY_CREDS} \
+                              docker://${componentConfig['imageUrl']}:${headHash} \
+                              docker://${componentConfig['imageUrl']}:${releaseTagName}
+                            """
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+
+        stage('Update Installation Repo') {
+            println("Update Installation Repo")
+
+            dir('installation') {
+
+                def globalVariablesFile = releaseConfig?.get('ansible')?.get('variablesFile')
+
+                for (i = 0; i < componentConfigs.size(); i++) {
+                    def index = i
+                    def componentConfig = componentConfigs[index]
+
+                    def variablesFile = componentConfig?.get('ansible')?.get('variablesFile') ?: globalVariablesFile
+                    if (!variablesFile) {
+                        componentRole = componentConfig?.get('ansible')?.get('role')
+                        if (componentRole) {
+                            variablesFile = "evals/roles/${componentRole}/defaults/main.yml"
+                        }
+                    }
+
+                    def imageTagVar = componentConfig?.get('ansible')?.get('imageTagVar')
+                    def gitTagVar = componentConfig?.get('ansible')?.get('gitTagVar')
+
+                    if (imageTagVar) {
+                        sh "sed -i '/^${imageTagVar}/c ${imageTagVar}: ${releaseTagName}' ${variablesFile}"
+                    }
+
+                    if (gitTagVar) {
+                        sh "sed -i '/^${gitTagVar}/c ${gitTagVar}: ${releaseTagName}' ${variablesFile}"
+                    }
+
+                }
+
+                if (gitRepoIsDirty()) {
+                    sh "git commit -a -m \"[automation] Update component versions for release ${releaseTagName}\""
+                    sh "git push origin HEAD:${releaseBranchName}"
+                }
+
+                sh "git tag ${releaseTagName}"
+                sh "git push origin ${releaseTagName}"
+            }
+        }
+
+    }
+}

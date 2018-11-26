@@ -1,0 +1,51 @@
+#!groovy
+
+//Helper methods
+String getReleaseBranch(version) {
+    def versionParts = version.tokenize(".")
+    return "v${versionParts[0]}.${versionParts[1]}"
+}
+
+String getReleaseTag(version, candidate = null) {
+    if (candidate) {
+        "release-${version}-${candidate}"
+    } else {
+        "release-${version}"
+    }
+}
+//
+
+def releaseBranchName = getReleaseBranch(params.releaseVersion)
+def releaseTagName = getReleaseTag(params.releaseVersion)
+
+def installationGitUrl = params.installationGitUrl
+def installationGitRef = params.installationGitRef ?: releaseBranchName
+
+currentBuild.displayName = "${currentBuild.displayName} ${params.releaseVersion}"
+
+println("WARNING - This job will delete all docker image tags and git branches and tags associated with this release!!")
+
+input "This is a very destructive job and is only intended to be used for testing purposes. Are you sure you want to continue?"
+
+stage('Delete docker image tags') {
+    print "Delete docker image tags"
+    def jobName = 'repos-delete-docker-image-tags'
+    def jobParams = [
+            [$class: 'StringParameterValue', name: 'tagNames', value: releaseTagName],
+            [$class: 'StringParameterValue', name: 'installationGitUrl', value: installationGitUrl],
+            [$class: 'StringParameterValue', name: 'installationGitRef', value: installationGitRef]
+    ]
+    build job: jobName, parameters: jobParams
+}
+
+stage('Delete repo branches and tags') {
+    print "Delete repo branches and tags"
+    def jobName = 'repos-delete-branches-and-tags'
+    def jobParams = [
+            [$class: 'StringParameterValue', name: 'branchNames', value: releaseBranchName],
+            [$class: 'StringParameterValue', name: 'tagNames', value: releaseTagName],
+            [$class: 'StringParameterValue', name: 'installationGitUrl', value: installationGitUrl],
+            [$class: 'StringParameterValue', name: 'installationGitRef', value: installationGitRef]
+    ]
+    build job: jobName, parameters: jobParams
+}
