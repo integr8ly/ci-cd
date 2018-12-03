@@ -117,6 +117,7 @@
               stage('Prepare environment') {
                   dir('installation') {
                       sh """
+                          cp ./evals/inventories/hosts.template ./evals/inventories/hosts
                           sed -i 's/ansible_user=ec2-user/ansible_user=${ANSIBLE_USER}/g' ./evals/inventories/hosts
                       """
                       
