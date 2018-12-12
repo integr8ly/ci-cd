@@ -30,3 +30,13 @@ jenkins-jobs --conf /path/to/your/jenkins_jobs.ini test /path/to/your/template.y
 ```
 jenkins-jobs --conf /path/to/your/jenkins_jobs.ini update /path/to/your/template.yaml
 ```
+
+### Generate inline script jobs
+```
+./scripts/generate_inline_script_pipeline_job -j /path/to/your/template.yaml -o /path/to/your/generated/jobs
+```
+
+### Configure all jobs and views
+```
+./scripts/configure_jenkins /path/to/your/jenkins_jobs.ini
+```
