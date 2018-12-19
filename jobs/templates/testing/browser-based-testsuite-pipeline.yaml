@@ -26,6 +26,9 @@
           name: WEBAPP_URL
           description: 'URL of Tutorial Web App'
       - string:
+          name: CLUSTER_URL
+          description: 'URL of OpenShift Cluster'
+      - string:
           name: ADMIN_USERNAME
           default: 'admin@example.com'
           description: 'Username for Tutorial Web App log in'
