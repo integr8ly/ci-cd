@@ -36,3 +36,7 @@
           name: ADMIN_PASSWORD
           default: 'Password1'
           description: 'Password for the Tutorial Web App log in'
+      - string:
+          name: EVALS_USERNAME
+          default: 'evals11@example.com'
+          description: 'Evals account email address used to access the available consoles'
