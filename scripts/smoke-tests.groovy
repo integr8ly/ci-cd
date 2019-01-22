@@ -5,10 +5,12 @@ node('cirhos_rhel7'){
             }
         }
         stage('Run the smoke tests'){
-            dir('node-testsuite'){
+            dir('tests'){
                 sh '''
                     npm install
                 '''
+            }
+            dir('tests/backend-testsuite'){    
                 try {
                     sh '''
                         gulp smoke
