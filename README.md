@@ -50,3 +50,13 @@ jenkins-jobs --conf /path/to/your/jenkins_jobs.ini update /path/to/your/template
 ```
 ./scripts/configure_jenkins /path/to/your/jenkins_jobs.ini
 ```
+
+## Troubleshooting
+To prevent from getting SSL: CERTIFICATE_VERIFY_FAILED when running jenkins-jobs commands:
+`ssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate in certificate chain`
+
+execute the following command in the terminal:
+
+```
+export PYTHONHTTPSVERIFY=0
+```
