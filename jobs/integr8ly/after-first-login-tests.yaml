@@ -1,0 +1,51 @@
+---
+
+- job:
+    name: after-first-login-tests
+    description: 'Executes backend-testsuite from integreatly qe repository on specified integreatly cluster'
+    project-type: pipeline
+    sandbox: true
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
+          description: 'QE repository containing the smoke tests source code.'
+      - string:
+          name: BRANCH
+          default: 'master'
+          description: 'Branch of the repository'
+      - string:
+          name: CLUSTER_URL
+          description: 'URL of cluster on which the smoke tests will be executed.'
+      - string:
+          name: ADMIN_USERNAME
+          default: 'admin@example.com'
+          description: 'Username to login to Integreatly cluster.'
+      - string:
+          name: ADMIN_PASSWORD
+          default: 'Password1'
+          description: 'Password to login to Integreatly cluster.'
+      - string:
+          name: RELEASE_VERSION
+          default: 'master'
+          description: 'This optional parameter allows to test particular release version. If not provided, master will be used'
+    dsl: |
+      node('cirhos_rhel7'){
+          stage('Clone QE repository') {
+              dir('.') {
+                  git branch: "${BRANCH}", url: "${REPOSITORY}"
+              }
+          }
+          stage('Run the tests after login'){
+              dir('tests'){
+                  sh '''
+                      npm install
+                  '''
+              }
+              dir('tests/backend-testsuite') {
+                  sh '''
+                      gulp after-first-login
+                  '''                
+              }
+          }
+      }
