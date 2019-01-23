@@ -5,6 +5,7 @@
     project-type: pipeline
     description: "Installs Integreatly by using bastion server as Jenkins slave and executing Ansible installation playbook there."
     sandbox: false
+    concurrent: true
     parameters:
         - string:
             name: REPOSITORY
