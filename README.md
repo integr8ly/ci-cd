@@ -2,7 +2,17 @@
 Continuous Integration / Continuous Delivery related bits
 
 ## Jenkins Job Builder
-Job definitions are stored in form of templates for [Jenkins Job Builder](https://docs.openstack.org/infra/jenkins-job-builder/) (JJB).
+Job definitions are stored in form of templates for [Jenkins Job Builder](https://docs.openstack.org/infra/jenkins-job-builder/) (JJB). 
+
+## Installation
+
+### Linux
+Go to https://docs.openstack.org/infra/jenkins-job-builder/ and follow the instructions.
+
+### Mac
+Install jjb using Brew:
+
+`brew install jenkins-job-builder`
 
 ### Configuration of JJB
 Create `jenkins_job.ini` file containing
