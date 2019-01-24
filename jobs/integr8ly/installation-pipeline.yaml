@@ -42,12 +42,6 @@
         - string:
             name: BASTION_PRIVATE_KEY_ID
             description: "ID of SSH Credentials (private key) used for SSH-ing to bastion"
-        - choice:
-            name: PLAYBOOK
-            choices:
-              - install
-              - uninstall
-            description: "Playbook to run ('install' and 'uninstall')"
     dsl: |
         import hudson.model.*
         import jenkins.model.*
@@ -146,7 +140,7 @@
                             
                             sh """
                                 sudo oc login -u system:admin
-                                sudo ansible-playbook -i ./inventories/hosts ./playbooks/${PLAYBOOK}.yml ${githubParams} -e eval_self_signed_certs=${SELF_SIGNED_CERTS}
+                                sudo ansible-playbook -i ./inventories/hosts ./playbooks/install.yml ${githubParams} -e eval_self_signed_certs=${SELF_SIGNED_CERTS}
                             """
                         } // dir
                     } // stage
