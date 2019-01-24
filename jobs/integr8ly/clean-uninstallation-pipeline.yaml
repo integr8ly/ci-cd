@@ -1,0 +1,64 @@
+---
+
+- job:
+    name: clean-uninstallation-pipeline
+    description: 'Uninstalls Integreatly by using master node as Jenkins slave (preconfigured) and executing Ansible uninstallation playbook there. Small single node Openstack based OpenShift living in rhmobile tenant where Integreatly has never been installed is used.'
+    project-type: pipeline
+    sandbox: false
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: 'https://github.com/integr8ly/installation.git'
+          description: 'Repository of the Integreatly installer'
+      - string:
+          name: BRANCH
+          default: 'master'
+          description: 'Branch of the installer repository'
+    triggers:
+      - timed: 'H H(0-5) * * *'
+    dsl: |
+        timeout(60) {
+            node('clean-uninstall-slave') {
+                try {
+                    stage('Clone the installer') {
+                        dir('installation') {
+                            checkout scm: [
+                                        $class: 'GitSCM', 
+                                        userRemoteConfigs: [[url: REPOSITORY]], 
+                                        branches: [[name: BRANCH]]
+                                        ]
+                        } // dir
+                    } // stage
+
+                    stage('Prepare environment') {
+                        dir('installation') {
+                            sh """
+                                cp ./evals/inventories/hosts.template ./evals/inventories/hosts
+                                sed -i 's/ansible_user=ec2-user/ansible_user=root/g' ./evals/inventories/hosts
+                            """
+            
+                            sh """
+                                sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\ntrepel-merrn-1@;P;D' ./evals/inventories/hosts
+                            """
+                            
+                            String output = readFile('./evals/inventories/hosts')
+                            println output
+                        } // dir
+                    } // stage
+                
+                    stage('Execute playbook') {
+                        dir('installation/evals') {
+                            sh """
+                                ansible-playbook -i ./inventories/hosts ./playbooks/uninstall.yml
+                            """
+                        } // dir
+                    } // stage
+                } catch (any) {
+                    currentBuild.result = 'FAILURE'
+                    throw any
+                } finally {
+                    step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'trepel@redhat.com', sendToIndividuals: true])
+                } // finally
+            } // node
+
+        } // timeout
