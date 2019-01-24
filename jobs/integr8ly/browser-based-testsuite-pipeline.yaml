@@ -5,14 +5,6 @@
     project-type: pipeline
     description: 'Executes browser based testsuite against Integreatly Tutorial Web App.'
     sandbox: true
-    pipeline-scm:
-      scm:
-        - git:
-            url: http://github.com/integr8ly/ci-cd
-            clean: true
-            branches: 
-              - master
-      script-path: scripts/browser-tests.groovy
     parameters:
       - string:
           name: REPOSITORY
@@ -40,3 +32,26 @@
           name: EVALS_USERNAME
           default: 'evals11@example.com'
           description: 'Evals account email address used to access the available consoles'
+    dsl: |
+        timeout(60) {
+            node('cirhos_rhel7') {  
+                stage('Clone the testsuite') {
+                    dir('integreatly-qe') {
+                            git branch: BRANCH, url: REPOSITORY
+                    } 
+                }
+                
+                docker.image('selenium/standalone-chrome:3.14.0-krypton').withRun('--name chrome_selenium -d -p 4444:4444 -v /dev/shm:/dev/shm -v "$PWD":"$PWD" -e SE_OPTS="-timeout 3600"') { c ->
+                    stage('Test') {
+                        dir('integreatly-qe/tests') {
+                            sh """
+                            # Disable starting Selenium, Docker is used instead
+                            sed -i 's/"start_process" : true,/"start_process" : false,/g' nightwatch.json
+                            npm install
+                            npm test
+                            """
+                        } 
+                    }
+                }
+            }
+        }
