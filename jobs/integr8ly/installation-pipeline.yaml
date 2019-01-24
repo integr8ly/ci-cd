@@ -42,10 +42,12 @@
         - string:
             name: BASTION_PRIVATE_KEY_ID
             description: "ID of SSH Credentials (private key) used for SSH-ing to bastion"
-        - string:
+        - choice:
             name: PLAYBOOK
-            default: install
-            description: "Playbook to run. Only tested values are 'install' and 'uninstall'"
+            choices:
+              - install
+              - uninstall
+            description: "Playbook to run ('install' and 'uninstall')"
     dsl: |
         import hudson.model.*
         import jenkins.model.*
