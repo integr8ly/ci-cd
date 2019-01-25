@@ -18,6 +18,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/release/release-create/integreat
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release/release-delete/integreatly-release-delete.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/repos/repos-delete-branches-and-tags/repos-delete-branches-and-tags.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/repos/repos-delete-docker-image-tags/repos-delete-docker-image-tags.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-3scale/release-monitoring-3scale.yaml
 
 #Generated jobs
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/generated/

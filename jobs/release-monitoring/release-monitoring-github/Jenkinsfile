@@ -1,0 +1,201 @@
+#!groovy
+
+//remote repository checkout
+def checkoutGitRepo(gitUrl, gitRef, credentialsID) {
+    checkout([$class: 'GitSCM', branches: [[name: gitRef]],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [],
+            submoduleCfg: [],
+            userRemoteConfigs: [[credentialsId: credentialsID, url: gitUrl]]])
+}
+
+//gets latest release tag of a github repository
+def getLatestRelease(gitOrg, gitRepo, gitTokenId) {
+    def response = null
+    def data = null
+    
+    withCredentials([string(credentialsId: gitTokenId, variable: 'gitToken')]) {
+        def url = "https://api.github.com/repos/${gitOrg}/${gitRepo}/releases/latest"
+        def headers = [
+            ["name": "Authorization", "value": "token ${env.gitToken}"]
+        ]
+
+        response = httpRequest customHeaders: headers, url: url
+        data = readJSON text: response.content
+    }
+
+    return [response.status, data]
+}
+
+def getLabelScore(label) {
+    if (!label) {
+        return 0
+    }
+    
+    def score = 0
+    def scores = [
+        'GA': 1,
+        'redhat': 1
+    ]
+    def parts = label.tokenize('-')
+    
+    parts.each { part ->
+        if (scores.containsKey(part)) {
+            score += scores[part]
+        }
+
+        if (!scores.containsKey(part) && part.isInteger()) {
+            score += part.toInteger()
+        }
+    }
+
+    return score
+}
+
+//checks if current semver is lower than the supposed latest one
+def hasNewGARelease(currentVersion, newVersion) {
+    def current = currentVersion.tokenize('.')
+    def latest = newVersion.tokenize('.')
+
+    def currentMajor = current[0] as Integer
+    def latestMajor = latest[0] as Integer
+    def currentMinor = current[1] as Integer
+    def latestMinor = latest[1] as Integer
+    def currentPatch = current[2] as Integer
+    def latestPatch = latest[2] as Integer
+    def currentLabel = current[3]
+    def latestLabel = latest[3]
+
+    def previousVer = 0
+    def currentVer = 0
+    for (i = 0; i <= 2; i++) {
+        if (i > 0) {
+            previousVer = i - 1
+        }
+        currentVer = i
+
+        def previousDiff = current[previousVer] == latest[previousVer]
+        if (i == 0) {
+            previousDiff = true
+        }
+        def currentDiff =  latest[currentVer] > current[currentVer]
+        if (previousDiff && currentDiff) {
+            return true
+        }
+    }
+
+    def currentLabelScore = getLabelScore(currentLabel)
+    def latestLabelScore = getLabelScore(latestLabel)
+
+    if (latestLabelScore > currentLabelScore) {
+        return true
+    }
+
+    return false
+}
+
+def fnMap = [
+    '3scale': { currentVersion, newVersion -> hasNewGARelease(currentVersion, newVersion) }
+]
+
+def installationGitUrl = params.installationGitUrl
+def installationGitRef = params.installationGitRef
+def manifestVar = params.manifestVar
+def projectOrg = params.projectOrg
+def projectRepo = params.projectRepo
+def githubToken = params.githubToken
+def githubCredentialsID = params.credentialId
+def nextBranch = params.installationProductBranch
+def clusterConfigCredentialsID = params.clusterConfigCredentialsID
+def dryRun = params.dryRun
+def installJobName = params.installJobName
+def testJobName = params.testJobName
+def uninstallJobName = params.uninstallJobName
+def productName = params.productName
+
+node {
+    stage('Fetch Installation Repo') {
+        println '[INFO] Fetch Installation Repo'
+
+        cleanWs()
+        dir('installation') {
+            checkoutGitRepo(installationGitUrl, installationGitRef, githubCredentialsID)
+            releaseConfig = readYaml file: './evals/inventories/group_vars/all/manifest.yaml'
+            componentRelease = releaseConfig[manifestVar]
+        }
+    }
+
+    stage('Fetch latest release') {
+        def (code, data) = getLatestRelease(projectOrg, projectRepo, githubToken)
+        if (code != 200) {
+            currentBuild.result = "FAILURE"
+            error "[ERROR] Failed to retrieved latest release: ${data}"
+        }
+        def tagName = data.tag_name
+        latestRelease = tagName
+    }
+
+    stage('Diff Release Versions') {
+        if (latestRelease == "" || componentRelease == "") {
+            currentBuild.result = "FAILURE"
+            error "[ERROR] Error while retrieving releases: ${latestRelease}:${componentRelease}"
+        }
+
+        def checkFn = fnMap[productName]
+        if (!checkFn) {
+            currentBuild.result = "FAILURE"
+            error "[ERROR] Could not find a function to check this product version"
+        }
+
+        if (!checkFn(componentRelease, latestRelease)) {
+            currentBuild.result = "ABORTED"
+            error '[ERROR] No new releases available'
+        }
+
+        println '[INFO] Found new release'
+
+        releaseConfig[manifestVar] = latestRelease
+        dir('installation') {
+            sshagent([githubCredentialsID]) {
+                sh 'git config --global user.name "Automatron"'
+                sh 'git config --global user.email "github.eng@feedhenry.com"'
+                
+                def branchCode = sh script: "git checkout -b ${nextBranch}", returnStatus: true
+                if (branchCode  != 0) {
+                    sh "git checkout ${nextBranch}"
+                    sh "git fetch origin && git reset --hard origin/${nextBranch}"
+                }
+                
+                sh "git rebase origin/${installationGitRef}"
+
+                sh 'rm ./evals/inventories/group_vars/all/manifest.yaml'
+                writeYaml file: './evals/inventories/group_vars/all/manifest.yaml', data: releaseConfig
+                sh 'git add ./evals/inventories/group_vars/all/manifest.yaml'
+
+                def changesCode = sh script: "git diff --exit-code ./evals/inventories/group_vars/all/manifest.yaml", returnStatus: true
+                if (branchCode != 0 && changesCode == 0) {
+                    currentBuild.result = 'ABORTED'
+                    error '[INFO] Remote branch is up to date'
+                }
+
+                def commitCode = sh script: "git commit -m '${manifestVar}:${latestRelease}'", returnStatus: true
+                if (commitCode != 0) {
+                    currentBuild.result = 'ABORTED'
+                    error '[ERROR] failed to  commit changes'
+                }
+
+                println '[INFO] New version available'
+                def pushCode = sh script: "git push origin ${nextBranch}", returnStatus: true
+                if (commitCode != 0) {
+                    currentBuild.result = 'ABORTED'
+                    error '[ERRPR] failed to push changes'
+                }
+            }
+        }
+    }
+
+    stage('Archive manifest file') {
+        println '[INFO] Archiving manifest file'
+        archiveArtifacts 'installation/evals/inventories/group_vars/all/manifest.yaml'
+    }
+}
