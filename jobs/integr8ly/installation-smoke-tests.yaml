@@ -4,15 +4,6 @@
     name: installation-smoke-tests
     project-type: pipeline
     sandbox: true
-    pipeline-scm:
-      scm:
-        - git:
-            url: http://github.com/integr8ly/ci-cd
-            clean: true
-            branches: 
-              - master
-      script-path: scripts/smoke-tests.groovy
-      lightweight-checkout: true
     parameters:
       - string:
           name: REPOSITORY
@@ -37,4 +28,23 @@
           name: RELEASE_VERSION
           default: ''
           description: 'Provide release version when testing particular release.'
-    
+    dsl: |
+        node('cirhos_rhel7'){
+            stage('Clone QE repository') {
+                dir('.') {
+                    git branch: "${BRANCH}", url: "${REPOSITORY}"
+                }
+            }
+            stage('Run the smoke tests'){
+                dir('tests'){
+                    sh '''
+                        npm install
+                    '''
+                }
+                dir('tests/backend-testsuite'){    
+                    sh '''
+                        gulp smoke
+                    '''
+                }
+            }
+        }
