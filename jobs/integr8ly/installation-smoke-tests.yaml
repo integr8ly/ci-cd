@@ -42,13 +42,9 @@
                     '''
                 }
                 dir('tests/backend-testsuite'){    
-                    try {
-                        sh '''
-                            gulp smoke
-                        '''
-                    } catch(exp) {
-                        currentBuild.result = 'UNSTABLE'
-                    }
+                    sh '''
+                        gulp smoke
+                    '''
                 }
             }
         }
