@@ -30,22 +30,28 @@
           default: 'master'
           description: 'This optional parameter allows to test particular release version. If not provided, master will be used'
     dsl: |
-      node('cirhos_rhel7'){
-          stage('Clone QE repository') {
-              dir('.') {
-                  git branch: "${BRANCH}", url: "${REPOSITORY}"
-              }
-          }
-          stage('Run the tests after login'){
-              dir('tests'){
-                  sh '''
-                      npm install
-                  '''
-              }
-              dir('tests/backend-testsuite') {
-                  sh '''
-                      gulp after-first-login
-                  '''                
-              }
-          }
-      }
+        node('cirhos_rhel7') {
+            stage('Clone QE repository') {
+                dir('.') {
+                    git branch: "${BRANCH}", url: "${REPOSITORY}"
+                }
+            }
+            stage('Run the tests after login'){
+                dir('tests'){
+                    sh '''
+                        npm install
+                    '''
+                }
+                dir('tests/backend-testsuite') {
+                    sh '''
+                        gulp after-first-login
+                    '''                
+                }
+            }
+            stage('Publish test results') {
+                dir('tests/backend-testsuite/reports/') {
+                    archiveArtifacts 'after-first-login.xml'                  
+                    junit allowEmptyResults:true, testResults: 'after-first-login.xml'
+                } 
+            }
+        }
