@@ -30,6 +30,9 @@
           description: 'Provide release version when testing particular release.'
     dsl: |
         node('cirhos_rhel7'){
+
+            Boolean publishTestResults = true
+
             stage('Clone QE repository') {
                 dir('.') {
                     git branch: "${BRANCH}", url: "${REPOSITORY}"
@@ -42,15 +45,27 @@
                     '''
                 }
                 dir('tests/backend-testsuite'){    
-                    sh '''
-                        gulp smoke
-                    '''
+                    String output = sh returnStdout: true, script: 'gulp smoke || true'
+
+                    // To see the output in Jenkins build console log as well
+                    println output
+                    
+                    if(!output.contains('Integreatly Smoke Tests')) {
+                        currentBuild.result = 'FAILURE'
+                        publishTestResults = false
+                    } else if(output.contains('There were test failures')) {
+                        currentBuild.result = 'UNSTABLE'
+                    }
                 }
             }
             stage('Publish test results') {
-                dir('tests/backend-testsuite/reports/') {
-                    archiveArtifacts 'smoke.xml'                  
-                    junit allowEmptyResults:true, testResults: 'smoke.xml'
-                } 
+                if(publishTestResults) {
+                    dir('tests/backend-testsuite/reports/') {
+                        archiveArtifacts 'smoke.xml'                  
+                        junit allowEmptyResults:true, testResults: 'smoke.xml'
+                    }
+                } else {
+                    println 'Publishing the results skipped. Probably due to an error.'
+                }
             }
         }
