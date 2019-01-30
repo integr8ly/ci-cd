@@ -53,5 +53,12 @@
                         } 
                     }
                 }
+
+                stage('Publish test results') {
+                    dir('integreatly-qe/tests/ui-testsuite/reports') {
+                        archiveArtifacts '**/*.xml'                  
+                        junit allowEmptyResults:true, testResults: '**/*.xml'
+                    } 
+                }
             }
         }
