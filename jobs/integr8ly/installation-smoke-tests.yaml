@@ -47,4 +47,10 @@
                     '''
                 }
             }
+            stage('Publish test results') {
+                dir('tests/backend-testsuite/reports/') {
+                    archiveArtifacts 'smoke.xml'                  
+                    junit allowEmptyResults:true, testResults: 'smoke.xml'
+                } 
+            }
         }
