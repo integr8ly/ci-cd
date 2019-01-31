@@ -70,7 +70,7 @@
                     if (publishTestResults) {
                         dir('integreatly-qe/tests/ui-testsuite/reports') {
                             archiveArtifacts '**/*.xml'                  
-                            junit allowEmptyResults:true, testResults: '**/*.xml'
+                            junit testResults: '**/*.xml'
                         }
                     } else {
                         println 'Publishing the results skipped. Probably due to an error.'
