@@ -31,6 +31,9 @@
           description: 'This optional parameter allows to test particular release version. If not provided, master will be used'
     dsl: |
         node('cirhos_rhel7') {
+            
+            Boolean publishTestResults = true
+            
             stage('Clone QE repository') {
                 dir('.') {
                     git branch: "${BRANCH}", url: "${REPOSITORY}"
@@ -43,15 +46,27 @@
                     '''
                 }
                 dir('tests/backend-testsuite') {
-                    sh '''
-                        gulp after-first-login
-                    '''                
+                    String output = sh returnStdout: true, script: 'gulp after-first-login || true'
+
+                    // To see the output in Jenkins build console log as well
+                    println output
+                    
+                    if(!output.contains('Integreatly After First Login Tests')) {
+                        currentBuild.result = 'FAILURE'
+                        publishTestResults = false
+                    } else if(output.contains('There were test failures')) {
+                        currentBuild.result = 'UNSTABLE'
+                    }              
                 }
             }
             stage('Publish test results') {
-                dir('tests/backend-testsuite/reports/') {
-                    archiveArtifacts 'after-first-login.xml'                  
-                    junit allowEmptyResults:true, testResults: 'after-first-login.xml'
-                } 
+                if (publishTestResults) {
+                    dir('tests/backend-testsuite/reports/') {
+                        archiveArtifacts 'after-first-login.xml'                  
+                        junit allowEmptyResults:true, testResults: 'after-first-login.xml'
+                    } 
+                } else {
+                    println 'Publishing the results skipped. Probably due to an error.'
+                }
             }
         }
