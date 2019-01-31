@@ -41,29 +41,26 @@
 
                 stage('Clone the testsuite') {
                     dir('integreatly-qe') {
-                            git branch: BRANCH, url: REPOSITORY
+                        git branch: BRANCH, url: REPOSITORY
                     } 
                 }
                 
                 docker.image('selenium/standalone-chrome:3.14.0-krypton').withRun('--name chrome_selenium -d -p 4444:4444 -v /dev/shm:/dev/shm -v "$PWD":"$PWD" -e SE_OPTS="-timeout 3600"') { c ->
                     stage('Test') {
                         dir('integreatly-qe/tests') {
-                            sh """
-                            # Disable starting Selenium, Docker is used instead
-                            sed -i 's/"start_process" : true,/"start_process" : false,/g' nightwatch.json
-                            npm install
-                            """
-                            
-                            String output = sh returnStdout: true, script: 'npm test || true'
-                            
-                            // To see the output in Jenkins build console log as well
-                            println output
-
-                            if(!output.contains('Enmasse Console Login')) {
-                                currentBuild.result = 'FAILURE'
-                                publishTestResults = false
-                            } else if(output.contains('There were test failures')) {
-                                currentBuild.result = 'UNSTABLE'
+                            try {
+                                sh """
+                                # Disable starting Selenium, Docker is used instead
+                                sed -i 's/"start_process" : true,/"start_process" : false,/g' nightwatch.json
+                                npm install
+                                npm test
+                                """   
+                            } catch (Exception e) {
+                                String reportsDirEntriesCount = sh returnStdout: true, script: 'ls ui-testsuite/reports | wc -l'
+                                if (reportsDirEntriesCount.trim() == '0') {
+                                    currentBuild.result = 'FAILURE'
+                                    publishTestResults = false
+                                }
                             }
                         } 
                     }
