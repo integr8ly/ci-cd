@@ -34,7 +34,11 @@
           description: 'Evals account email address used to access the available consoles'
     dsl: |
         timeout(60) {
+
             node('cirhos_rhel7') {  
+
+                Boolean publishTestResults = true
+
                 stage('Clone the testsuite') {
                     dir('integreatly-qe') {
                             git branch: BRANCH, url: REPOSITORY
@@ -48,17 +52,32 @@
                             # Disable starting Selenium, Docker is used instead
                             sed -i 's/"start_process" : true,/"start_process" : false,/g' nightwatch.json
                             npm install
-                            npm test
                             """
+                            
+                            String output = sh returnStdout: true, script: 'npm test || true'
+                            
+                            // To see the output in Jenkins build console log as well
+                            println output
+
+                            if(!output.contains('Enmasse Console Login')) {
+                                currentBuild.result = 'FAILURE'
+                                publishTestResults = false
+                            } else if(output.contains('There were test failures')) {
+                                currentBuild.result = 'UNSTABLE'
+                            }
                         } 
                     }
                 }
 
                 stage('Publish test results') {
-                    dir('integreatly-qe/tests/ui-testsuite/reports') {
-                        archiveArtifacts '**/*.xml'                  
-                        junit allowEmptyResults:true, testResults: '**/*.xml'
-                    } 
+                    if (publishTestResults) {
+                        dir('integreatly-qe/tests/ui-testsuite/reports') {
+                            archiveArtifacts '**/*.xml'                  
+                            junit allowEmptyResults:true, testResults: '**/*.xml'
+                        }
+                    } else {
+                        println 'Publishing the results skipped. Probably due to an error.'
+                    }
                 }
             }
-        }
+}
