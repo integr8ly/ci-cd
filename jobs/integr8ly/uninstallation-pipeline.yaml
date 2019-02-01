@@ -43,7 +43,7 @@
         String bastionLabel = "${BASTION_URL}-slave"
 
         try {
-            timeout(60) {
+            timeout(60) { ansiColor('gnome-terminal') { timestamps {
                 node('cirhos_rhel7') {        
                     stage('Verify input') {
                         if (!MASTER_URLS) {
@@ -130,7 +130,7 @@
                     } // stage
                 } // node
 
-            } // timeout
+            }}} // timeout, ansiColor, timestamps
             
         } finally {
             // Clean up - remove jenkins slave that was created
