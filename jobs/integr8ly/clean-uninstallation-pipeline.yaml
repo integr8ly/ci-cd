@@ -17,7 +17,7 @@
     triggers:
       - timed: 'H H(0-5) * * *'
     dsl: |
-        timeout(60) {
+        timeout(60) { ansiColor('gnome-terminal') { timestamps {
             node('clean-uninstall-slave') {
                 try {
                     stage('Clone the installer') {
@@ -61,4 +61,4 @@
                 } // finally
             } // node
 
-        } // timeout
+        }}} // timeout, ansiColor, timestamps

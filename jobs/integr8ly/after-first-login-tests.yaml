@@ -30,43 +30,45 @@
           default: 'master'
           description: 'This optional parameter allows to test particular release version. If not provided, master will be used'
     dsl: |
-        node('cirhos_rhel7') {
-            
-            Boolean publishTestResults = true
-            
-            stage('Clone QE repository') {
-                dir('.') {
-                    git branch: "${BRANCH}", url: "${REPOSITORY}"
+        timeout(60) { ansiColor('gnome-terminal') { timestamps {
+            node('cirhos_rhel7') {
+                
+                Boolean publishTestResults = true
+                
+                stage('Clone QE repository') {
+                    dir('.') {
+                        git branch: "${BRANCH}", url: "${REPOSITORY}"
+                    }
                 }
-            }
-            stage('Run the tests after login'){
-                dir('tests'){
-                    sh '''
-                        npm install
-                    '''
-                }
-                dir('tests/backend-testsuite') {
-                    String output = sh returnStdout: true, script: 'gulp after-first-login || true'
+                stage('Run the tests after login'){
+                    dir('tests'){
+                        sh '''
+                            npm install
+                        '''
+                    }
+                    dir('tests/backend-testsuite') {
+                        String output = sh returnStdout: true, script: 'gulp after-first-login || true'
 
-                    // To see the output in Jenkins build console log as well
-                    println output
-                    
-                    if(!output.contains('Integreatly After First Login Tests')) {
-                        currentBuild.result = 'FAILURE'
-                        publishTestResults = false
-                    } else if(output.contains('There were test failures')) {
-                        currentBuild.result = 'UNSTABLE'
-                    }              
+                        // To see the output in Jenkins build console log as well
+                        println output
+                        
+                        if(!output.contains('Integreatly After First Login Tests')) {
+                            currentBuild.result = 'FAILURE'
+                            publishTestResults = false
+                        } else if(output.contains('There were test failures')) {
+                            currentBuild.result = 'UNSTABLE'
+                        }              
+                    }
+                }
+                stage('Publish test results') {
+                    if (publishTestResults) {
+                        dir('tests/backend-testsuite/reports/') {
+                            archiveArtifacts 'after-first-login.xml'                  
+                            junit allowEmptyResults:true, testResults: 'after-first-login.xml'
+                        } 
+                    } else {
+                        println 'Publishing the results skipped. Probably due to an error.'
+                    }
                 }
             }
-            stage('Publish test results') {
-                if (publishTestResults) {
-                    dir('tests/backend-testsuite/reports/') {
-                        archiveArtifacts 'after-first-login.xml'                  
-                        junit allowEmptyResults:true, testResults: 'after-first-login.xml'
-                    } 
-                } else {
-                    println 'Publishing the results skipped. Probably due to an error.'
-                }
-            }
-        }
+        }}}
