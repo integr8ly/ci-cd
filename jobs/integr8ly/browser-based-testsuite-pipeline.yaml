@@ -71,13 +71,12 @@
                     }
                 }
                 
-                stage('Publish screenshots for any failures/ errors') {
+                stage('Save screenshots for any failures/ errors') {
                     dir('integreatly-qe/tests/ui-testsuite') {
-                        String testsuiteDirectories = sh returnStdout: true, script: 'ls'
-                        if (testsuiteDirectories.contains('screenshots')) {
+                        if (fileExists('screenshots')) {
                             archiveArtifacts 'screenshots/**'
                         } else {
-                            println 'No screenshots found. Skipping this step...'
+                            println 'No screenshots found. Skipping...'
                         }
                     }
                 }
