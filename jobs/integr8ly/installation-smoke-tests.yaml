@@ -27,7 +27,15 @@
       - string:
           name: RELEASE_VERSION
           default: ''
-          description: 'Provide release version when testing particular release.'
+          description: 'Provide release version when testing particular release. Empty value means the master version is expected.'
+      - string:
+          name: WEBAPP_VERSION
+          default: ''
+          description: 'Provide webapp release version. Empty value means the master version is expected.'
+      - string:
+          name: WALKTHROUGHS_VERSION
+          default: ''
+          description: 'Provide walkthroughs release version. Empty value means the master version is expected.'
     dsl: |
         timeout(60) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){
