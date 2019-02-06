@@ -32,6 +32,10 @@
           name: EVALS_USERNAME
           default: 'evals11@example.com'
           description: 'Evals account email address used to access the available consoles'
+      - string:
+          name: TEST_TO_RUN
+          default: 
+          description: 'Specific test to run (by default all of the tests are executed), e.g. "ui-testsuite/tests/20_apicurito/apicurito-console-login.js"'
     dsl: |
         timeout(60) { ansiColor('gnome-terminal') { timestamps {
 
@@ -52,7 +56,7 @@
                                 sed -i 's/"start_process" : true,/"start_process" : false,/g' nightwatch.json
                                 rm -rf ui-testsuite/screenshots ui-testsuite/reports # so that any leftovers from past builds are not archived
                                 npm install
-                                npm test
+                                npm test ${TEST_TO_RUN}
                                 """   
                             } catch (Exception e) {
                                 String reportsDirEntriesCount = sh returnStdout: true, script: 'ls ui-testsuite/reports | wc -l'
