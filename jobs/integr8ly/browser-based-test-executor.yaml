@@ -1,0 +1,88 @@
+---
+
+- job:
+    name: browser-based-test-executor
+    project-type: pipeline
+    description: 'Executes browser based testsuite against Integreatly Tutorial Web App.'
+    sandbox: true
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
+          description: 'Repository of the Integreatly Browser based tests'
+      - string:
+          name: BRANCH
+          default: 'master'
+          description: 'Branch of the repository'
+      - string:
+          name: WEBAPP_URL
+          description: 'URL of Tutorial Web App'
+      - string:
+          name: CLUSTER_URL
+          description: 'URL of OpenShift Cluster'
+      - string:
+          name: ADMIN_USERNAME
+          default: 'admin@example.com'
+          description: 'Username for Tutorial Web App log in'
+      - string:
+          name: ADMIN_PASSWORD
+          default: 'Password1'
+          description: 'Password for the Tutorial Web App log in'
+      - string:
+          name: EVALS_USERNAME
+          default: 'evals11@example.com'
+          description: 'Evals account email address used to access the available consoles'
+      - string:
+          name: TEST_TO_RUN
+          default: 
+          description: 'Specific test to run (by default all of the tests are executed), e.g. "ui-testsuite/tests/20_apicurito/apicurito-console-login.js"'
+    dsl: |
+        timeout(60) { ansiColor('gnome-terminal') { timestamps {
+
+            node('cirhos_rhel7') {  
+
+                stage('Clone the testsuite') {
+                    dir('integreatly-qe') {
+                        git branch: BRANCH, url: REPOSITORY
+                    } 
+                }
+                
+                docker.image('selenium/standalone-chrome:3.14.0-krypton').withRun('--name chrome_selenium -d -p 4444:4444 -v /dev/shm:/dev/shm -v "$PWD":"$PWD" -e SE_OPTS="-timeout 3600"') { c ->
+                    stage('Test') {
+                        dir('integreatly-qe/tests') {
+                            try {
+                                sh """
+                                # Disable starting Selenium, Docker is used instead
+                                sed -i 's/"start_process" : true,/"start_process" : false,/g' nightwatch.json
+                                rm -rf ui-testsuite/screenshots ui-testsuite/reports # so that any leftovers from past builds are not archived
+                                npm install
+                                npm test ${TEST_TO_RUN}
+                                """   
+                            } catch (Exception e) {
+                                String reportsDirEntriesCount = sh returnStdout: true, script: 'ls ui-testsuite/reports | wc -l'
+                                if (reportsDirEntriesCount.trim() == '0') {
+                                    currentBuild.result = 'FAILURE'
+                                }
+                            }
+                        } 
+                    }
+                }
+
+                stage('Publish test results') {
+                    dir('integreatly-qe/tests/ui-testsuite/reports') {
+                        archiveArtifacts '**/*.xml'                  
+                        junit allowEmptyResults:true, testResults: '**/*.xml'
+                    }
+                }
+                
+                stage('Save screenshots for any failures/ errors') {
+                    dir('integreatly-qe/tests/ui-testsuite') {
+                        if (fileExists('screenshots')) {
+                            archiveArtifacts 'screenshots/**'
+                        } else {
+                            println 'No screenshots found. Skipping...'
+                        }
+                    }
+                }
+            }
+        }}}
