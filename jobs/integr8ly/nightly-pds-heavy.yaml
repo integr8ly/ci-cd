@@ -1,0 +1,52 @@
+---
+
+- job:
+    name: nightly-pds-heavy
+    project-type: pipeline
+    description: "Nightly pipeline for heavy PDS testing."
+    sandbox: false
+    concurrent: false
+    triggers:
+      - timed: "H H(0-2) * * *"
+    properties:
+      - build-discarder:
+          num-to-keep: 56
+      - inject:
+          properties-content: |
+            YOURCITY=yourcity-hash
+            GH_CLIENT_ID=yourclientid
+            GH_CLIENT_SECRET=yourclientsecret
+            SELF_SIGNED_CERTS=true
+            RECIPIENTS=integreatly-qe@redhat.com
+            INSTALLATION_REPOSITORY=https://github.com/integr8ly/installation.git
+            INSTALLATION_BRANCH=master
+            TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
+            TEST_SUITES_BRANCH=master
+            TO_DO=heavy
+    dsl: |
+        timeout(180) { ansiColor('gnome-terminal') { timestamps {
+            node('cirhos_rhel7') {
+                stage ('Trigger PDS Pipeline') {
+                    buildStatus = build(job: 'pds-general', propagate: false, parameters: [
+                        string(name: 'YOURCITY', value: "${YOURCITY}"),
+                        string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
+                        string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
+                        string(name: 'SELF_SIGNED_CERTS', value: "${SELF_SIGNED_CERTS}"),
+                        string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
+                        string(name: 'INSTALLATION_REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
+                        string(name: 'INSTALLATION_BRANCH', value: "${INSTALLATION_BRANCH}"),
+                        string(name: 'TEST_SUITES_REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
+                        string(name: 'TEST_SUITES_BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                        string(name: 'TO_DO', value: "${TO_DO}")
+                    ]).result
+
+                    if(buildStatus == 'UNSTABLE') {
+                        currentBuild.result = 'UNSTABLE'
+                    } else if(buildStatus == 'SUCCESS') {
+                        currentBuild.result = 'SUCCESS'
+                    } else {
+                        currentBuild.result = 'FAILURE'
+                    }
+                } // stage
+            }// node
+        }}} // timeout, ansiColor, timestamps
