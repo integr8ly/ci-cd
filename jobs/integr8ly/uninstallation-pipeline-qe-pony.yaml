@@ -51,7 +51,13 @@
 
                 stage('Clone the installer') {
                     dir('installation') {
-                        git branch: BRANCH, url: REPOSITORY
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: BRANCH]],,
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [],
+                            userRemoteConfigs: [[url: REPOSITORY]]
+                        ])
                     } // dir
                 } // stage
 
