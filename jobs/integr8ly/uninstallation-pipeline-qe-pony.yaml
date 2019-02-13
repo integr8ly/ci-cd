@@ -58,23 +58,23 @@
                 stage('Prepare environment') {
                     dir('installation') {
                         sh """
-                            cp ./evals/inventories/hosts.template ./evals/inventories/hosts
-                            sed -i 's/ansible_user=ec2-user/ansible_user=${ANSIBLE_USER}/g' ./evals/inventories/hosts
+                            cp ./inventories/hosts.template ./inventories/hosts
+                            sed -i 's/ansible_user=ec2-user/ansible_user=${ANSIBLE_USER}/g' ./inventories/hosts
                         """
                     
                         String masterUrls = MASTER_URLS.replaceAll(~/,[\s]*/, '\\\\n')
                     
                         sh """
-                            sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\n${masterUrls}@;P;D' ./evals/inventories/hosts
+                            sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\n${masterUrls}@;P;D' ./inventories/hosts
                         """
                     
-                        String output = readFile('./evals/inventories/hosts')
+                        String output = readFile('./inventories/hosts')
                         println output
                     } // dir
                 } // stage
             
                 stage('Execute playbook') {
-                    dir('installation/evals') {
+                    dir('installation') {
                         sh """
                             sudo oc login ${CLUSTER_URL} -u ${OC_USER} -p ${OC_PASSWORD}
                             sudo ansible-playbook -i ./inventories/hosts ./playbooks/uninstall.yml

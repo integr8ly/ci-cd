@@ -8,7 +8,7 @@
         }
         
         stage('Uninstall'){
-            dir('evals'){
+            dir('.'){
               sh 'sudo ansible-playbook -i inventories/hosts playbooks/uninstall.yml'   
             }
         }

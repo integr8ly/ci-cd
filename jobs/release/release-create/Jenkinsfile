@@ -178,7 +178,7 @@ node('cirhos_rhel7') {
                     if (!variablesFile) {
                         componentRole = componentConfig?.get('ansible')?.get('role')
                         if (componentRole) {
-                            variablesFile = "evals/roles/${componentRole}/defaults/main.yml"
+                            variablesFile = "roles/${componentRole}/defaults/main.yml"
                         }
                     }
 

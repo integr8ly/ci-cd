@@ -33,21 +33,21 @@
                     stage('Prepare environment') {
                         dir('installation') {
                             sh """
-                                cp ./evals/inventories/hosts.template ./evals/inventories/hosts
-                                sed -i 's/ansible_user=ec2-user/ansible_user=root/g' ./evals/inventories/hosts
+                                cp ./inventories/hosts.template ./inventories/hosts
+                                sed -i 's/ansible_user=ec2-user/ansible_user=root/g' ./inventories/hosts
                             """
             
                             sh """
-                                sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\ntrepel-merrn-1@;P;D' ./evals/inventories/hosts
+                                sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\ntrepel-merrn-1@;P;D' ./inventories/hosts
                             """
                             
-                            String output = readFile('./evals/inventories/hosts')
+                            String output = readFile('./inventories/hosts')
                             println output
                         } // dir
                     } // stage
                 
                     stage('Execute playbook') {
-                        dir('installation/evals') {
+                        dir('installation') {
                             sh """
                                 ansible-playbook -i ./inventories/hosts ./playbooks/uninstall.yml
                             """
