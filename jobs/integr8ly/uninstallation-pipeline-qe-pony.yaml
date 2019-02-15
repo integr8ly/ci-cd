@@ -76,8 +76,7 @@
                 stage('Execute playbook') {
                     dir('installation/evals') {
                         sh """
-                            sudo oc login ${CLUSTER_URL} -u ${OC_USER} -p ${OC_PASSWORD}
-                            sudo ansible-playbook -i ./inventories/hosts ./playbooks/uninstall.yml
+                            sudo ansible-playbook -i ./inventories/hosts ./playbooks/uninstall.yml -e openshift_login=true -e openshift_username=${OC_USER} -e openshift_password=${OC_PASSWORD} -e openshift_master_public_url=${CLUSTER_URL}
                         """
                      } // dir
                 } // stage
