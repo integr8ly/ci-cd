@@ -94,7 +94,7 @@
                         }
                         githubParams = githubParams + " -e threescale_pvc_rwx_storageclassname=nfs -e che_persistent_volume_storageclassname=nfs"
                         sh """
-                            sudo ansible-playbook -i ./inventories/hosts ./playbooks/install.yml ${githubParams} -e eval_self_signed_certs=${SELF_SIGNED_CERTS} -e openshift_login=true -e openshift_username=${OC_USER} -e openshift_password=${OC_PASSWORD} -e openshift_master_public_url=${CLUSTER_URL}
+                            sudo ansible-playbook -i ./inventories/hosts ./playbooks/install.yml ${githubParams} -e create_cluster_admin=false -e eval_self_signed_certs=${SELF_SIGNED_CERTS} -e openshift_login=true -e openshift_username=${OC_USER} -e openshift_password=${OC_PASSWORD} -e openshift_master_public_url=${CLUSTER_URL}
                         """
                     } // dir
                 } // stage
