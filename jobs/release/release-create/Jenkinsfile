@@ -65,8 +65,14 @@ node('cirhos_rhel7') {
                     sh('exit 1')
                 }
 
-                releaseConfig = readYaml file: "COMPONENTS.yaml"
-                componentConfigs = releaseConfig['components']
+                def componentFileName ='COMPONENTS.yaml'
+                def exists = fileExists componentFileName
+                if (exists) {
+                    releaseConfig = readYaml file: componentFileName
+                    componentConfigs = releaseConfig['components']
+                } else {
+                    println "No ${componentFileName} to load!!"
+                }
             }
         }
 
