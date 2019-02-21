@@ -26,6 +26,10 @@
           default: 'Password1'
           description: 'Password to login to Integreatly cluster.'
       - string:
+          name: EVALS_USERNAME
+          default: 'evals11@example.com'
+          description: 'Evals account email address for checking created namespaces.'    
+      - string:
           name: RELEASE_VERSION
           default: 'master'
           description: 'This optional parameter allows to test particular release version. If not provided, master will be used'
