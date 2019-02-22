@@ -5,7 +5,7 @@
     project-type: pipeline
     description: "Installs Integreatly remotely from Jenkins slave to QE Pony cluster."
     sandbox: false
-    concurrent: false
+    concurrent: true
     parameters:
         - string:
             name: REPOSITORY
@@ -43,6 +43,9 @@
         - string:
             name: OC_PASSWORD
             description: "OpenShift password for QE cluster."
+        - string:
+            name: ADDITIONAL_ANSIBLE_PARAMS
+            description: "Additional parameters passed to install playbook, e.g.'-e eval_seed_users_count=0'. Can be left empty"
     dsl: |
         timeout(60) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {        
@@ -94,13 +97,14 @@
                 stage('Execute playbook') {
                     dir('installation/evals') {
                     
-                        String githubParams = ''
+                        String ansibleParams = ''
                         if(GH_CLIENT_ID && GH_CLIENT_SECRET) {
-                            githubParams = "-e github_client_id=${GH_CLIENT_ID} -e github_client_secret=${GH_CLIENT_SECRET}"
+                            ansibleParams = "-e github_client_id=${GH_CLIENT_ID} -e github_client_secret=${GH_CLIENT_SECRET}"
                         }
-                        githubParams = githubParams + " -e threescale_pvc_rwx_storageclassname=nfs -e che_persistent_volume_storageclassname=nfs"
+                        ansibleParams = ansibleParams + " -e threescale_pvc_rwx_storageclassname=nfs -e che_persistent_volume_storageclassname=nfs ${ADDITIONAL_ANSIBLE_PARAMS}"
+
                         sh """
-                            sudo ansible-playbook -i ./inventories/hosts ./playbooks/install.yml ${githubParams} -e create_cluster_admin=false -e eval_self_signed_certs=${SELF_SIGNED_CERTS} -e openshift_login=true -e openshift_username=${OC_USER} -e openshift_password=${OC_PASSWORD} -e openshift_master_public_url=${CLUSTER_URL}
+                            sudo ansible-playbook -i ./inventories/hosts ./playbooks/install.yml ${ansibleParams} -e create_cluster_admin=false -e eval_self_signed_certs=${SELF_SIGNED_CERTS} -e openshift_login=true -e openshift_username=${OC_USER} -e openshift_password=${OC_PASSWORD} -e openshift_master_public_url=${CLUSTER_URL}
                         """
                     } // dir
                 } // stage
