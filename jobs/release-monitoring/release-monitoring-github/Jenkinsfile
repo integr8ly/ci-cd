@@ -1,5 +1,7 @@
 #!groovy
 
+//Helper methods, should eventually be moved tio a shared library
+
 //remote repository checkout
 def checkoutGitRepo(gitUrl, gitRef, credentialsID) {
     checkout([$class: 'GitSCM', branches: [[name: gitRef]],
@@ -9,15 +11,57 @@ def checkoutGitRepo(gitUrl, gitRef, credentialsID) {
             userRemoteConfigs: [[credentialsId: credentialsID, url: gitUrl]]])
 }
 
+//https://github.com/feedhenry/fh-pipeline-library/blob/master/vars/gitCreateAndCheckoutBranch.groovy
+def gitCreateAndCheckoutBranch(branchName, pushOnCreate = false) {
+    String remoteBranchCommit = sh(returnStdout: true, script: "git ls-remote origin refs/heads/${branchName} | cut -f 1").trim()
+
+    if (remoteBranchCommit) {
+        sh "git checkout ${branchName}"
+    } else {
+        sh "git checkout -b ${branchName}"
+        if (pushOnCreate) {
+            if (params.dryRun) {
+                String gitRepoUrl = sh(returnStdout: true, script: 'git config --get remote.origin.url').trim()
+                print "Would push ${branchName} to ${gitRepoUrl}"
+            } else {
+                sh "git push origin ${branchName}"
+            }
+        }
+    }
+}
+
+String gitRepoIsDirty(untrackedFiles = 'no') {
+    return sh(
+            returnStdout: true,
+            script: "git status --porcelain --untracked-files=${untrackedFiles}"
+    )?.trim()
+}
+
+//https://github.com/feedhenry/fh-pipeline-library/blob/master/vars/gitCreateAndCheckoutBranch.groovy
+boolean gitCommitWhenChanges(commitMsgTitle, body) {
+    def changes = []
+    def msgs = []
+    body(msgs)
+    msgs = msgs - null - ""
+    if (gitRepoIsDirty()) {
+        changes = [commitMsgTitle]
+        changes << msgs.join('\n')
+        changes = changes.join('\n\n')
+        sh "git commit -a -m \"${changes}\""
+        return true
+    }
+    return false
+}
+
 //gets latest release tag of a github repository
 def getLatestRelease(gitOrg, gitRepo, gitTokenId) {
     def response = null
     def data = null
-    
+
     withCredentials([string(credentialsId: gitTokenId, variable: 'gitToken')]) {
         def url = "https://api.github.com/repos/${gitOrg}/${gitRepo}/releases/latest"
         def headers = [
-            ["name": "Authorization", "value": "token ${env.gitToken}"]
+                ["name": "Authorization", "value": "token ${env.gitToken}"]
         ]
 
         response = httpRequest customHeaders: headers, url: url
@@ -31,14 +75,14 @@ def getLabelScore(label) {
     if (!label) {
         return 0
     }
-    
+
     def score = 0
     def scores = [
-        'GA': 1,
-        'redhat': 1
+            'GA': 1,
+            'redhat': 1
     ]
     def parts = label.tokenize('-')
-    
+
     parts.each { part ->
         if (scores.containsKey(part)) {
             score += scores[part]
@@ -54,8 +98,8 @@ def getLabelScore(label) {
 
 //checks if current semver is lower than the supposed latest one
 def hasNewGARelease(currentVersion, newVersion) {
-    def current = currentVersion.tokenize('.')
-    def latest = newVersion.tokenize('.')
+    def current = currentVersion.replaceAll("[^0-9]", "").tokenize('.')
+    def latest = newVersion.replaceAll("[^0-9]", "").tokenize('.')
 
     def currentMajor = current[0] as Integer
     def latestMajor = latest[0] as Integer
@@ -78,7 +122,7 @@ def hasNewGARelease(currentVersion, newVersion) {
         if (i == 0) {
             previousDiff = true
         }
-        def currentDiff =  latest[currentVer] > current[currentVer]
+        def currentDiff = latest[currentVer] > current[currentVer]
         if (previousDiff && currentDiff) {
             return true
         }
@@ -94,108 +138,97 @@ def hasNewGARelease(currentVersion, newVersion) {
     return false
 }
 
-def fnMap = [
-    '3scale': { currentVersion, newVersion -> hasNewGARelease(currentVersion, newVersion) }
-]
+//https://github.com/comquent/imperative-when
+import org.jenkinsci.plugins.pipeline.modeldefinition.Utils
+def when(boolean condition, body) {
+    def config = [:]
+    body.resolveStrategy = Closure.OWNER_FIRST
+    body.delegate = config
 
-def installationGitUrl = params.installationGitUrl
-def installationGitRef = params.installationGitRef
+    if (condition) {
+        body()
+    } else {
+        Utils.markStageSkippedForConditional(STAGE_NAME)
+    }
+}
+
+//Helper methods
+
+def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
+def installationGitRef = params.installationGitRef ?: 'master'
+def githubToken = params.githubToken ?: 'jenkins-github-api-token'
+def githubCredentialsID = params.credentialId ?: 'jenkinsgithub'
 def manifestVar = params.manifestVar
 def projectOrg = params.projectOrg
 def projectRepo = params.projectRepo
-def githubToken = params.githubToken
-def githubCredentialsID = params.credentialId
-def nextBranch = params.installationProductBranch
-def clusterConfigCredentialsID = params.clusterConfigCredentialsID
-def dryRun = params.dryRun
-def installJobName = params.installJobName
-def testJobName = params.testJobName
-def uninstallJobName = params.uninstallJobName
 def productName = params.productName
+def nextBranch = params.installationProductBranch ?: "${productName}-next"
+def installationManifestFile = './evals/inventories/group_vars/all/manifest.yaml'
+
+currentBuild.displayName = "${currentBuild.displayName} ${productName}"
 
 node {
+    cleanWs()
     stage('Fetch Installation Repo') {
         println '[INFO] Fetch Installation Repo'
-
         cleanWs()
         dir('installation') {
             checkoutGitRepo(installationGitUrl, installationGitRef, githubCredentialsID)
-            releaseConfig = readYaml file: './evals/inventories/group_vars/all/manifest.yaml'
+            releaseConfig = readYaml file: installationManifestFile
             componentRelease = releaseConfig[manifestVar]
         }
     }
 
-    stage('Fetch latest release') {
+    stage('Fetch Latest GitHub Release') {
         def (code, data) = getLatestRelease(projectOrg, projectRepo, githubToken)
         if (code != 200) {
-            currentBuild.result = "FAILURE"
-            error "[ERROR] Failed to retrieved latest release: ${data}"
+            //ToDo Handle 404 here, means no release has been created in this Git Repo!!
+            error "[ERROR] Failed to retrieve latest release: ${data}"
         }
-        def tagName = data.tag_name
-        latestRelease = tagName
-    }
+        latestRelease = data.tag_name
 
-    stage('Diff Release Versions') {
         if (latestRelease == "" || componentRelease == "") {
-            currentBuild.result = "FAILURE"
             error "[ERROR] Error while retrieving releases: ${latestRelease}:${componentRelease}"
         }
-
-        def checkFn = fnMap[productName]
-        if (!checkFn) {
-            currentBuild.result = "FAILURE"
-            error "[ERROR] Could not find a function to check this product version"
-        }
-
-        if (!checkFn(componentRelease, latestRelease)) {
-            currentBuild.result = "ABORTED"
-            error '[ERROR] No new releases available'
-        }
-
-        println '[INFO] Found new release'
-
-        releaseConfig[manifestVar] = latestRelease
-        dir('installation') {
-            sshagent([githubCredentialsID]) {
-                sh 'git config --global user.name "Automatron"'
-                sh 'git config --global user.email "github.eng@feedhenry.com"'
-                
-                def branchCode = sh script: "git checkout -b ${nextBranch}", returnStatus: true
-                if (branchCode  != 0) {
-                    sh "git checkout ${nextBranch}"
-                    sh "git fetch origin && git reset --hard origin/${nextBranch}"
-                }
-                
-                sh "git rebase origin/${installationGitRef}"
-
-                sh 'rm ./evals/inventories/group_vars/all/manifest.yaml'
-                writeYaml file: './evals/inventories/group_vars/all/manifest.yaml', data: releaseConfig
-                sh 'git add ./evals/inventories/group_vars/all/manifest.yaml'
-
-                def changesCode = sh script: "git diff --exit-code ./evals/inventories/group_vars/all/manifest.yaml", returnStatus: true
-                if (branchCode != 0 && changesCode == 0) {
-                    currentBuild.result = 'ABORTED'
-                    error '[INFO] Remote branch is up to date'
-                }
-
-                def commitCode = sh script: "git commit -m '${manifestVar}:${latestRelease}'", returnStatus: true
-                if (commitCode != 0) {
-                    currentBuild.result = 'ABORTED'
-                    error '[ERROR] failed to  commit changes'
-                }
-
-                println '[INFO] New version available'
-                def pushCode = sh script: "git push origin ${nextBranch}", returnStatus: true
-                if (commitCode != 0) {
-                    currentBuild.result = 'ABORTED'
-                    error '[ERRPR] failed to push changes'
-                }
-            }
-        }
+        isGARelease = hasNewGARelease(componentRelease, latestRelease)
+        println "[INFO] latestRelease:${latestRelease}, componentRelease:${componentRelease}, isGARelease:${isGARelease}"
+        currentBuild.description = "latest: ${latestRelease}\ncurrent: ${componentRelease}"
     }
 
-    stage('Archive manifest file') {
-        println '[INFO] Archiving manifest file'
-        archiveArtifacts 'installation/evals/inventories/group_vars/all/manifest.yaml'
+    dir('installation') {
+        sshagent([githubCredentialsID]) {
+            sh 'git config --global user.name "Automatron"'
+            sh 'git config --global user.email "github.eng@feedhenry.com"'
+
+            stage('Ensure Product Next Branch') {
+                gitCreateAndCheckoutBranch(nextBranch, true)
+                try {
+                    sh "git rebase origin/${installationGitRef}"
+                } catch (Exception e) {
+                    sh "git rebase --abort"
+                    println "We were unable to automatically rebase the target branch '${installationGitRef}' into the source branch '${nextBranch}'. Please fix these conflicts locally and push the changes to ${nextBranch} before running this job again!"
+                }
+            }
+
+            stage('Product Version Update') {
+                when(isGARelease) {
+                    gitCommitWhenChanges("Updated ${productName} product version to ${latestRelease}") { msgs ->
+                        manifestFileTxt = readFile(installationManifestFile)
+                        manifestFileTxt = manifestFileTxt.replaceFirst(/${manifestVar}: '.*'/, "${manifestVar}: '${latestRelease}'")
+                        writeFile file: installationManifestFile, text: manifestFileTxt
+                    }
+                }
+            }
+
+            stage('Push Product Next Branch') {
+                boolean doPush = nextBranch != 'master'
+                if (doPush) {
+                    //sh "git push --force-with-lease origin ${nextBranch}"
+                    //We should be using force-with-lease, but the agents appear to have a really old git version in them.
+                    sh "git push --force origin ${nextBranch}"
+                }
+
+            }
+        }
     }
 }
