@@ -24,6 +24,19 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/release-monit
 #Generated jobs
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/generated/
 
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/after-first-login-tests.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/browser-based-test-executor.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/browser-based-testsuite-pipeline.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/clean-uninstallation-pipeline.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/installation-pipeline-qe-pony.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/installation-pipeline.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/installation-smoke-tests.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/nightly-pds-heavy.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/pds-general.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/qe-poc-master-general.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/uninstallation-pipeline-qe-pony.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/uninstallation-pipeline.yaml
+
 #Views
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/repos/
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/release/
