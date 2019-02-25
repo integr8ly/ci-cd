@@ -1,0 +1,203 @@
+---
+
+- job:
+    name: qe-poc-master-general
+    project-type: pipeline
+    description: "Nightly pipeline for testing on POC (originally Pony) clusters."
+    sandbox: false
+    concurrent: true
+    properties:
+      - build-discarder:
+          num-to-keep: 20
+    parameters:
+        - string:
+            name: GH_CLIENT_ID
+            description: "GitHub OAuth Client ID, required for some of the walkthroughs. Can be left empty"
+        - string:
+            name: GH_CLIENT_SECRET
+            description: "GitHub OAuth Client Secret, required for some of the walkthroughs. Can be left empty"
+        - bool:
+            name: SELF_SIGNED_CERTS
+            default: false
+            description: "Indicates whether the cluster uses self signed certificates or not.
+This needs to be changed to 'false' for Integreatly Workshop since it uses valid certificates."
+        - string:
+            name: RECIPIENTS
+            default: integreatly-qe@redhat.com
+            description: "Whitespace- or comma-separated list of recipient addresses"
+        - string:
+            name: INSTALLATION_REPOSITORY
+            default: https://github.com/integr8ly/installation.git
+            description: "Repository of the Integreatly installer"
+        - string:
+            name: INSTALLATION_BRANCH
+            default: master
+            description: "Branch of the installer repository"
+        - string:
+            name: TEST_SUITES_REPOSITORY
+            default: https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
+            description: "Repository of the Integreatly test suites"
+        - string:
+            name: TEST_SUITES_BRANCH
+            default: master
+            description: "Branch of a repository of Integreatly test suites"
+        - string:
+            name: CLUSTER_URL
+            description: "URL of cluster for installation."
+        - string:
+            name: MASTER_URLS
+            description: "Comma separated list of URLs for master nodes of target cluster to be used in Ansible inventory file"
+        - string:
+            name: ANSIBLE_USER
+            default: root
+            description: "User for Ansible to access the master node of target cluster"
+        - string:
+            name: OC_USER
+            default: trepel
+            description: "Default OpenShift admin user when Integr8ly is not installed."
+        - string:
+            name: OC_PASSWORD
+            description: "Default OpenShift admin password when Integr8ly is not installed."    
+    dsl: |
+        try {
+            timeout(180) { ansiColor('gnome-terminal') { timestamps {
+                node('cirhos_rhel7') {        
+                    stage('Verify input') {
+                        if (!MASTER_URLS) {
+                            throw new hudson.AbortException('MASTER_URLS parameter is required!')
+                        } // if
+                        if (!CLUSTER_URL) {
+                            throw new hudson.AbortException('CLUSTER_URL parameter is required!')
+                        } // if
+                        if (!OC_USER) {
+                            throw new hudson.AbortException('OC_USER parameter is required!')
+                        } // if
+                        if (!OC_PASSWORD) {
+                            throw new hudson.AbortException('OC_PASSWORD parameter is required!')
+                        } // if
+                    } // stage
+                    
+                    stage ('Uninstall #1') {
+                        build job: 'uninstallation-pipeline-qe-pony', parameters: [
+                            string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
+                            string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
+                            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                            string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
+                            string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
+                            string(name: 'OC_USER', value: 'admin@example.com'),
+                            string(name: 'OC_PASSWORD', value: 'Password1')]
+                                
+                        // Waiting for 5 minutes so that resources scheduled for termination are actually terminated
+                        sleep time: 5, unit: 'MINUTES'
+                    } // stage
+                    
+                    stage ('Uninstall #2') {
+                        build job: 'uninstallation-pipeline-qe-pony', parameters: [
+                            string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
+                            string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
+                            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                            string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
+                            string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
+                            string(name: 'OC_USER', value: "${OC_USER}"),
+                            string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}")]
+
+                        // Waiting for 1 minute so that resources scheduled for termination are actually terminated
+                        // Since this is 2nd uninstall there is no need for a long wait here
+                        sleep time: 1, unit: 'MINUTES'
+                    } // stage
+
+                    stage('Install #1') {
+                        build job: 'installation-pipeline-qe-pony', parameters: [
+                            string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
+                            string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
+                            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                            string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
+                            string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
+                            booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
+                            string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
+                            string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
+                            string(name: 'OC_USER', value: "${OC_USER}"),
+                            string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}")]
+                                
+                            sleep time: 3, unit: 'MINUTES'
+                    } // stage
+                    
+                    stage('Execute "After Installation" Workarounds #2') {
+                        if (INSTALLATION_BRANCH == 'master') {
+                            // this patches the webapp to use master image
+                            sh """
+                                oc login ${CLUSTER_URL} -u ${OC_USER} -p ${OC_PASSWORD}  --insecure-skip-tls-verify
+                                oc patch deploymentconfig/tutorial-web-app -n webapp -p '{ "spec": { "template": { "spec": { "containers": [{ "name": "tutorial-web-app", "image": "quay.io/integreatly/tutorial-web-app:master" }]}}}}' || true
+                            """
+                        }
+                    } // stage
+
+                    stage('Smoke Tests') {
+                        buildStatus = build(job: 'installation-smoke-tests', propagate: false, parameters: [
+                            string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
+                            string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                            string(name: 'ADMIN_USERNAME', value: 'admin@example.com'),
+                            string(name: 'ADMIN_PASSWORD', value: 'Password1')]).result
+                                
+                        println "Build finished with ${buildStatus}"
+                            
+                        if(buildStatus != 'SUCCESS') {
+                            currentBuild.result = 'UNSTABLE'
+                        }
+                    } // stage
+
+                    stage('Browser Based Tests') {
+                        CLUSTER_URI = "${CLUSTER_URL}".replace("https://","")
+                        buildStatus = build(job: 'browser-based-testsuite-pipeline', propagate: false, parameters: [
+                            string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
+                            string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                            string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-webapp.${CLUSTER_URI}"),
+                            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                            string(name: 'ADMIN_USERNAME', value: 'admin@example.com'),
+                            string(name: 'ADMIN_PASSWORD', value: 'Password1'),
+                            string(name: 'EVALS_USERNAME', value: 'evals11@example.com')]).result
+                            
+                        println "Build finished with ${buildStatus}"
+                            
+                        if(buildStatus != 'SUCCESS') {
+                            currentBuild.result = 'UNSTABLE'
+                        }
+                            
+                        sleep time: 3, unit: 'MINUTES'
+                    } // stage
+
+                    stage('After First Login Tests') {
+                        buildStatus = build(job: 'after-first-login-tests', propagate: false, parameters: [
+                            string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
+                            string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                            string(name: 'ADMIN_USERNAME', value: 'admin@example.com'),
+                            string(name: 'ADMIN_PASSWORD', value: 'Password1'),
+                            string(name: 'EVALS_USERNAME', value: 'evals11@example.com')]).result
+                            
+                        println "Build finished with ${buildStatus}"
+                                
+                        if(buildStatus != 'SUCCESS') {
+                            currentBuild.result = 'UNSTABLE'
+                        }
+                    } // stage 
+
+                } // node
+            }}} // timeout, ansiColor, timestamps
+        } finally {
+            notifyBuild(currentBuild.result)
+        }
+
+        def notifyBuild(String buildStatus) {
+            
+            // In theory, null means success. In practise if there is an error thrown elsewhere than in the triggered jobs (eg. in wokraround scripts)
+            // the job fails but success will be stored in buildStatus anyway
+            buildStatus =  buildStatus ?: 'SUCCESS'
+            
+            String mailRecipients = "${RECIPIENTS}"
+            String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+            String body = "${subject}\n\n(${env.BUILD_URL})"
+
+            mail body: body, subject: subject, to: mailRecipients
+        }
