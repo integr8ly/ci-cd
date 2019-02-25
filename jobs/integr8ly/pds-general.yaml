@@ -58,6 +58,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
               - uninstall + install + tests
               - none
     dsl: |
+        def err = null
         try {
             timeout(180) { ansiColor('gnome-terminal') { timestamps {
                 node('cirhos_rhel7') {        
@@ -270,11 +271,14 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
 
                 } // node
             }}} // timeout, ansiColor, timestamps
+        } catch (caughtError){
+            currentBuild.result = 'FAILURE'
+            err = caughtError 
         } finally {
-            notifyBuild(currentBuild.result)
+            notifyBuild(currentBuild.result, err)
         }
 
-        def notifyBuild(String buildStatus) {
+        def notifyBuild(String buildStatus, err) {
             
             // In theory, null means success. In practise if there is an error thrown elsewhere than in the triggered jobs (eg. in wokraround scripts)
             // the job fails but success will be stored in buildStatus anyway
@@ -283,6 +287,10 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             String mailRecipients = "${RECIPIENTS}"
             String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
             String body = "${subject}\n\n(${env.BUILD_URL})"
+
+            if(err != null){
+                body = "${body}\n\n FAILURE was ${err}"
+            }
 
             mail body: body, subject: subject, to: mailRecipients
         }
