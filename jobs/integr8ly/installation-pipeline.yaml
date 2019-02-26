@@ -42,6 +42,9 @@
         - string:
             name: BASTION_PRIVATE_KEY_ID
             description: "ID of SSH Credentials (private key) used for SSH-ing to bastion"
+        - string:
+            name: ADDITIONAL_ANSIBLE_PARAMS
+            description: "Additional parameters passed to install playbook, e.g.'-e eval_seed_users_count=0'. Can be left empty"
     dsl: |
         import hudson.model.*
         import jenkins.model.*
@@ -139,14 +142,15 @@
                     stage('Execute playbook') {
                         dir('installation/evals') {
                             
-                            String githubParams = ''
+                            String ansibleParams = ''
                             if(GH_CLIENT_ID && GH_CLIENT_SECRET) {
-                                githubParams = "-e github_client_id=${GH_CLIENT_ID} -e github_client_secret=${GH_CLIENT_SECRET}"
+                                ansibleParams = "-e github_client_id=${GH_CLIENT_ID} -e github_client_secret=${GH_CLIENT_SECRET}"
                             }
+                            ansibleParams = ansibleParams + " ${ADDITIONAL_ANSIBLE_PARAMS}"
                             
                             sh """
                                 sudo oc login -u system:admin
-                                sudo ansible-playbook -i ./inventories/hosts ./playbooks/install.yml ${githubParams} -e eval_self_signed_certs=${SELF_SIGNED_CERTS}
+                                sudo ansible-playbook -i ./inventories/hosts ./playbooks/install.yml ${ansibleParams} -e eval_self_signed_certs=${SELF_SIGNED_CERTS}
                             """
                         } // dir
                     } // stage
