@@ -21,6 +21,9 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/repos/repos-delete-docker-image-
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-github/release-monitoring-github.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-3scale.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-gitea.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-msbroker.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-rhsso.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-webapp.yaml
 
 #Generated jobs
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/generated/
