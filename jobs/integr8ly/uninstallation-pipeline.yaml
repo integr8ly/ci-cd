@@ -142,5 +142,10 @@
             // Clean up - remove jenkins slave that was created
         
             Node bastionSlave = Jenkins.instance.getNode(bastionLabel);
-            Jenkins.instance.removeNode(bastionSlave);
+            if(bastionSlave != null) {
+                Boolean isIdle = bastionSlave.toComputer().isIdle();
+                if(isIdle) {
+                    Jenkins.instance.removeNode(bastionSlave);
+                }
+            }
         }
