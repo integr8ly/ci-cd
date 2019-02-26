@@ -1,9 +1,14 @@
 ---
 - job:
     name: release-monitoring-github
-    display-name: 'Integreatly Github Release Monitoring'
+    display-name: 'Github Release Monitoring'
     project-type: pipeline
     concurrent: true
+    logrotate:
+      daysToKeep: 3
+      numToKeep: 20
+      artifactDaysToKeep: -1
+      artifactNumToKeep: -1
     parameters:
       - string:
           name: 'installationGitUrl'
