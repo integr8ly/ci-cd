@@ -39,6 +39,7 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/pds-general.ya
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/qe-poc-master-general.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/uninstallation-pipeline-qe-pony.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/uninstallation-pipeline.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/recreate-pipelines.yaml
 
 #Views
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/repos/
