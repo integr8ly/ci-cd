@@ -1,0 +1,40 @@
+---
+
+- job:
+    name: recreate-pipelines
+    project-type: pipeline
+    sandbox: true
+    triggers:
+      - timed: "H H(0-1) * * *"
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: 'https://github.com/integr8ly/ci-cd.git'
+          description: 'CI/CD repository containing pipeline definitions.'
+    dsl: |
+        timeout(60) { 
+            ansiColor('gnome-terminal') { 
+                timestamps {
+                    node('cirhos_rhel7') {
+
+                        stage('Clone repository') {
+                            dir('.') {
+                                git branch: "master", url: "${REPOSITORY}"
+                            }
+                        }
+                        stage('Run the configuration script'){
+                            withCredentials([
+                                string(credentialsId: 'jenkins-api-token', variable: 'JENKINS_SECRET'),
+                             ]) {
+                                sh """
+                                    # This is not nice but JJB cannot parse the variables defined directly in the file
+                                    sed -i 's@JENKINS_URL@'"${JENKINS_URL}"'@' ./scripts/config-template.ini
+                                    sed -i 's@JENKINS_PSW@'"${JENKINS_SECRET}"'@' ./scripts/config-template.ini
+                                   ./scripts/configure_jenkins.sh ./scripts/config-template.ini
+                                """
+                            }
+                        }
+                    }
+                }
+            }
+        }
