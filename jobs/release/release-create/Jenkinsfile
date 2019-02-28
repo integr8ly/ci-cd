@@ -84,7 +84,11 @@ node('cirhos_rhel7') {
                 def componentConfig = componentConfigs[index]
 
                 dir(componentConfig['name']) {
-                    checkoutGitRepo(componentConfig['gitUrl'], releaseBaseBranch, githubCredentialsID)
+                    try {
+                        checkoutGitRepo(componentConfig['gitUrl'], releaseBranchName, githubCredentialsID)
+                    } catch (Exception e) {
+                        checkoutGitRepo(componentConfig['gitUrl'], releaseBaseBranch, githubCredentialsID)
+                    }
                 }
             }
         }
