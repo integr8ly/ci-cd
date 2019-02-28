@@ -1,7 +1,7 @@
 ---
 - job:
-    name: release-monitoring-3scale
-    display-name: '3Scale Release Monitoring'
+    name: release-monitoring-discovery/3scale
+    display-name: '3Scale'
     project-type: pipeline
     concurrent: false
     triggers:
@@ -28,7 +28,7 @@
           description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version if available'
           read-only: true
     pipeline-scm:
-      script-path: jobs/release-monitoring/release-monitoring-github/Jenkinsfile
+      script-path: jobs/release-monitoring/discovery/github/Jenkinsfile
       scm:
         - git:
             branches:

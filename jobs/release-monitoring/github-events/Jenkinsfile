@@ -34,7 +34,7 @@ node {
 
     stage('Trigger next branch job') {
         when(isNextBranch) {
-            def jobName = "release-monitoring-branch-${gitBranch}"
+            def jobName = "release-monitoring-branch/${gitBranch}"
             build job: jobName, wait: false
         }
     }
