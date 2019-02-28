@@ -1,0 +1,114 @@
+#!groovy
+
+//Helper methods, should eventually be moved to a shared library
+
+//remote repository checkout
+def checkoutGitRepo(gitUrl, gitRef, credentialsID) {
+    checkout([$class: 'GitSCM', branches: [[name: gitRef]],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [],
+            submoduleCfg: [],
+            userRemoteConfigs: [[credentialsId: credentialsID, url: gitUrl]]])
+}
+
+//https://github.com/comquent/imperative-when
+import org.jenkinsci.plugins.pipeline.modeldefinition.Utils
+
+def when(boolean condition, body) {
+    def config = [:]
+    body.resolveStrategy = Closure.OWNER_FIRST
+    body.delegate = config
+
+    if (condition) {
+        body()
+    } else {
+        Utils.markStageSkippedForConditional(STAGE_NAME)
+    }
+}
+
+import com.cloudbees.groovy.cps.NonCPS
+import org.kohsuke.github.GHCommitState
+import org.kohsuke.github.GHCommitStatus
+import org.kohsuke.github.GHIssueState
+import org.kohsuke.github.GHPullRequest
+import org.kohsuke.github.GHRepository
+import org.kohsuke.github.GitHub
+import org.kohsuke.github.PagedIterable
+import org.kohsuke.github.GitHubBuilder
+import org.kohsuke.github.GHPullRequest
+
+@NonCPS
+GHPullRequest ghGetPullRequest(GHRepository repo, String head, String base, GHIssueState state) {
+    PagedIterable<GHPullRequest> pullRequests = repo.queryPullRequests()
+            .head(head)
+            .base(base)
+            .state(state)
+            .list()
+    return pullRequests[0]
+}
+
+@NonCPS
+GHPullRequest ghFindOrCreatePullRequest(GHRepository repo, String head, String base, String title, String body) {
+    GHPullRequest pr = ghGetPullRequest(repo, head, base, GHIssueState.OPEN)
+    if (pr) {
+        println "Found already open PR on ${repo.getName()} head:${head} base:${base} - ${pr.getHtmlUrl()}"
+    } else {
+        //head for the query above requires the user e.g. fheng:branch_name, but here we only want branch_name see https://developer.github.com/v3/pulls/#list-pull-requests
+        head = head.split(':').last()
+        pr = repo.createPullRequest(title, head, base, body)
+        println "Opened new PR on ${repo.getName()} head:${head} base:${base} - ${pr.getHtmlUrl()}"
+    }
+    return pr
+}
+
+//Helper methods
+
+def ghOwner = "integr8ly"
+def ghRepo = "installation"
+def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
+def sourceBranch = params.installationProductBranch
+def targetBranch = 'master'
+def githubSSHCredentialsID = 'jenkinsgithub'
+def githubUserPassCredentialsID = 'githubjenkins'
+def productName = params.productName
+def sourceChanges = false
+
+node {
+    cleanWs()
+    stage('Checkout') {
+        dir('installation') {
+            checkoutGitRepo(installationGitUrl, sourceBranch, githubSSHCredentialsID)
+        }
+    }
+
+    stage('Check Source vs Target') {
+        dir('installation') {
+            def totalCommits = sh(returnStdout: true, script: "git log origin/${targetBranch}..HEAD --pretty=o | wc -l").trim()
+            if ((totalCommits as int) > 0) {
+                sourceChanges = true
+                println("Changes detected on ${sourceBranch}, totalCommits:${totalCommits}")
+            } else {
+                sourceChanges = false
+                println("No changes detected on ${sourceBranch}")
+            }
+        }
+    }
+
+    stage('Create PR') {
+        when(sourceChanges) {
+            println("Creating PR for ${productName}")
+            withCredentials([usernamePassword(
+                    credentialsId: githubUserPassCredentialsID,
+                    passwordVariable: 'GITHUB_PASSWORD',
+                    usernameVariable: 'GITHUB_USERNAME')]) {
+                final GitHub gitHub = new GitHubBuilder()
+                        .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
+                        .build()
+                String title = "[WIP] ${productName} update"
+                String body = "Created automatically by jenkins"
+                GHPullRequest pr = ghFindOrCreatePullRequest(gitHub.getRepository("${ghOwner}/${ghRepo}"), "${ghOwner}:${sourceBranch}", targetBranch, title, body)
+                println "Component Update PR = ${pr.getHtmlUrl()}"
+            }
+        }
+    }
+}

@@ -1,0 +1,10 @@
+---
+- job:
+    name: release-monitoring-discovery
+    display-name: 'Release Discovery Jobs'
+    project-type: folder
+
+- job:
+    name: release-monitoring-branch
+    display-name: 'Next Branch Jobs'
+    project-type: folder
