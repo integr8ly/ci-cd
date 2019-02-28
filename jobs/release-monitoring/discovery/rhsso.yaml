@@ -1,7 +1,7 @@
 ---
 - job:
-    name: release-monitoring-msbroker
-    display-name: 'Managed Service Broker Release Monitoring'
+    name: release-monitoring-discovery/rhsso
+    display-name: 'RHSSO'
     project-type: pipeline
     concurrent: false
     triggers:
@@ -9,7 +9,7 @@
     parameters:
       - string:
           name: 'manifestVar'
-          default: 'msbroker_release_tag'
+          default: 'rhsso_operator_release_tag'
           description: '[REQUIRED] The manifest variable to be used as the current component version'
           read-only: true
       - string:
@@ -19,16 +19,16 @@
           read-only: true
       - string:
           name: 'projectRepo'
-          default: 'managed-service-broker'
+          default: 'keycloak-operator'
           description: '[REQUIRED] github project repostirory'
           read-only: true
       - string:
           name: 'productName'
-          default: 'msbroker'
+          default: 'rhsso'
           description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version if available'
           read-only: true
     pipeline-scm:
-      script-path: jobs/release-monitoring/release-monitoring-github/Jenkinsfile
+      script-path: jobs/release-monitoring/discovery/github/Jenkinsfile
       scm:
         - git:
             branches:

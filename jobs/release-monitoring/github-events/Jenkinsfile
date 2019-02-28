@@ -1,0 +1,42 @@
+#!groovy
+
+//Helper methods, should eventually be moved to a shared library
+//https://github.com/comquent/imperative-when
+import org.jenkinsci.plugins.pipeline.modeldefinition.Utils
+
+def when(boolean condition, body) {
+    def config = [:]
+    body.resolveStrategy = Closure.OWNER_FIRST
+    body.delegate = config
+
+    if (condition) {
+        body()
+    } else {
+        Utils.markStageSkippedForConditional(STAGE_NAME)
+    }
+}
+//Helpers
+
+String githubEventStr = params.sqs_body
+String gitBranch = ""
+boolean isNextBranch = false
+
+currentBuild.description = "sqsMessageId: ${params.sqs_messageId}"
+
+node {
+    cleanWs()
+    stage('Parse GitHub Event') {
+        def ghEvent = readJSON text: githubEventStr
+        gitBranch = ghEvent['ref'].tokenize('/').last()
+        isNextBranch = gitBranch.endsWith("-next")
+        currentBuild.description = "${currentBuild.description}\nbranch: ${gitBranch}"
+    }
+
+    stage('Trigger next branch job') {
+        when(isNextBranch) {
+            def jobName = "release-monitoring-branch/${gitBranch}"
+            build job: jobName, wait: false
+        }
+    }
+
+}

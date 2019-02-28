@@ -14,16 +14,26 @@ generate_inline_script_job() {
   $SCRIPTS_DIR/generate_inline_script_pipeline_job -j $1 -o $SCRIPTS_DIR/../jobs/generated
 }
 
+rm -rf $SCRIPTS_DIR/../jobs/generated/*
+
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release/release-create/integreatly-release-create.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release/release-delete/integreatly-release-delete.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/repos/repos-delete-branches-and-tags/repos-delete-branches-and-tags.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/repos/repos-delete-docker-image-tags/repos-delete-docker-image-tags.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-github/release-monitoring-github.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-3scale.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-gitea.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-msbroker.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-rhsso.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-webapp.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/3scale.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/gitea.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/msbroker.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/rhsso.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/webapp.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/3scale-next.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/gitea-next.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/msbroker-next.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/rhsso-next.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/webapp-next.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/github-events/release-monitoring-github-events.yaml
+
+#Folders
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-folders.yaml
 
 #Generated jobs
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/generated/

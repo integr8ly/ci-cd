@@ -1,7 +1,7 @@
 ---
 - job:
-    name: release-monitoring-gitea
-    display-name: 'Gitea Release Monitoring'
+    name: release-monitoring-discovery/webapp
+    display-name: 'WebApp'
     project-type: pipeline
     concurrent: false
     triggers:
@@ -9,7 +9,7 @@
     parameters:
       - string:
           name: 'manifestVar'
-          default: 'gitea_operator_release_tag'
+          default: 'webapp_operator_release_tag'
           description: '[REQUIRED] The manifest variable to be used as the current component version'
           read-only: true
       - string:
@@ -19,16 +19,16 @@
           read-only: true
       - string:
           name: 'projectRepo'
-          default: 'gitea-operator'
+          default: 'tutorial-web-app-operator'
           description: '[REQUIRED] github project repostirory'
           read-only: true
       - string:
           name: 'productName'
-          default: 'gitea'
+          default: 'webapp'
           description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version if available'
           read-only: true
     pipeline-scm:
-      script-path: jobs/release-monitoring/release-monitoring-github/Jenkinsfile
+      script-path: jobs/release-monitoring/discovery/github/Jenkinsfile
       scm:
         - git:
             branches:

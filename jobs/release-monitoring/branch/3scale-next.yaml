@@ -1,0 +1,28 @@
+---
+- job:
+    name: release-monitoring-branch/3scale-next
+    display-name: '3Scale'
+    project-type: pipeline
+    concurrent: false
+    parameters:
+      - string:
+          name: 'installationGitUrl'
+          default: 'git@github.com:integr8ly/installation.git'
+          description: '[REQUIRED] The installation repo containing the components meta file (COMPONENTS.yaml)'
+      - string:
+          name: 'installationProductBranch'
+          default: '3scale-next'
+          description: '[REQUIRED] The installation git branch to push new version changes'
+      - string:
+          name: 'productName'
+          default: '3scale'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version if available'
+    pipeline-scm:
+      script-path: jobs/release-monitoring/branch/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - master
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false
