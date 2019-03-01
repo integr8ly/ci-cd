@@ -1,0 +1,122 @@
+#!groovy
+
+//Helper methods, should eventually be moved tio a shared library
+
+//remote repository checkout
+def checkoutGitRepo(gitUrl, gitRef, credentialsID) {
+    checkout([$class: 'GitSCM', branches: [[name: gitRef]],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [],
+            submoduleCfg: [],
+            userRemoteConfigs: [[credentialsId: credentialsID, url: gitUrl]]])
+}
+
+def getLabelScore(label) {
+    if (!label) {
+        return 0
+    }
+
+    def score = 0
+    def scores = [
+            'GA': 1,
+            'redhat': 1
+    ]
+    def parts = label.tokenize('-')
+
+    parts.each { part ->
+        if (scores.containsKey(part)) {
+            score += scores[part]
+        }
+
+        if (!scores.containsKey(part) && part.isInteger()) {
+            score += part.toInteger()
+        }
+    }
+
+    return score
+}
+
+//checks if current semver is lower than the supposed latest one
+def hasNewGARelease(currentVersion, newVersion) {
+    def current = currentVersion.replaceAll("[^0-9]", "").tokenize('.')
+    def latest = newVersion.replaceAll("[^0-9]", "").tokenize('.')
+
+    def currentMajor = current[0] as Integer
+    def latestMajor = latest[0] as Integer
+    def currentMinor = current[1] as Integer
+    def latestMinor = latest[1] as Integer
+    def currentPatch = current[2] as Integer
+    def latestPatch = latest[2] as Integer
+    def currentLabel = current[3]
+    def latestLabel = latest[3]
+
+    def previousVer = 0
+    def currentVer = 0
+    for (i = 0; i <= 2; i++) {
+        if (i > 0) {
+            previousVer = i - 1
+        }
+        currentVer = i
+
+        def previousDiff = current[previousVer] == latest[previousVer]
+        if (i == 0) {
+            previousDiff = true
+        }
+        def currentDiff = latest[currentVer] > current[currentVer]
+        if (previousDiff && currentDiff) {
+            return true
+        }
+    }
+
+    def currentLabelScore = getLabelScore(currentLabel)
+    def latestLabelScore = getLabelScore(latestLabel)
+
+    if (latestLabelScore > currentLabelScore) {
+        return true
+    }
+
+    return false
+}
+
+//Helper methods
+
+def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
+def installationGitRef = params.installationGitRef ?: 'master'
+def githubToken = params.githubToken ?: 'jenkins-github-api-token'
+def githubCredentialsID = params.credentialId ?: 'jenkinsgithub'
+def manifestVar = params.manifestVar
+def projectOrg = params.projectOrg
+def projectRepo = params.projectRepo
+def productName = params.productName
+def nextBranch = params.installationProductBranch ?: "${productName}-next"
+def installationManifestFile = './evals/inventories/group_vars/all/manifest.yaml'
+
+currentBuild.displayName = "${currentBuild.displayName} ${productName}"
+
+node {
+    cleanWs()
+    stage('Fetch Installation Repo') {
+        println '[INFO] Fetch Installation Repo'
+        cleanWs()
+        dir('installation') {
+            checkoutGitRepo(installationGitUrl, installationGitRef, githubCredentialsID)
+            releaseConfig = readYaml file: installationManifestFile
+            componentRelease = releaseConfig[manifestVar]
+        }
+    }
+
+    stage('Fetch Latest Release') {
+
+        //ToDo Add logic here to parse latest release of fuse from the tags
+        latestRelease = ""
+
+        if (latestRelease == "" || componentRelease == "") {
+            error "[ERROR] Error while retrieving releases: ${latestRelease}:${componentRelease}"
+        }
+
+        //ToDo Implement changes in hasNewGARelease that can compare the 2 versions correctly
+        isGARelease = hasNewGARelease(componentRelease, latestRelease)
+        println "[INFO] latestRelease:${latestRelease}, componentRelease:${componentRelease}, isGARelease:${isGARelease}"
+        currentBuild.description = "latest: ${latestRelease}\ncurrent: ${componentRelease}"
+    }
+}
