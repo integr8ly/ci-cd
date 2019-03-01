@@ -11,7 +11,7 @@ def checkoutGitRepo(gitUrl, gitRef, credentialsID) {
             userRemoteConfigs: [[credentialsId: credentialsID, url: gitUrl]]])
 }
 
-def getLabelScore(label) {
+def getLabelScore(label) {    
     if (!label) {
         return 0
     }
@@ -36,10 +36,73 @@ def getLabelScore(label) {
     return score
 }
 
+//Fetch data from git with credentials
+def gitFetch(url, gitTokenId) {
+  def response = null
+  def data = null
+
+  withCredentials([string(credentialsId: gitTokenId, variable: 'gitToken')]) {
+    def headers = [
+            ["name": "Authorization", "value": "token ${env.gitToken}"]
+    ]
+
+    response = httpRequest customHeaders: headers, url: url
+    data = readJSON text: response.content
+  }
+
+  return [response.status, data]
+}
+
+//Gets the latest release by git tags
+def getLatestReleaseByTag(gitOrg, gitRepo, gitTokenId, productName) {
+  def latestRelease = ""
+  def url = "https://api.github.com/repos/${gitOrg}/${gitRepo}/git/refs/tags"
+
+  def (code, releases) = gitFetch(url, gitTokenId)
+  if (code != 200) {
+    error "[ERROR] Failed to retrieve tags for:${productName}. The :${gitRepo} repository does not have any tags available"
+  }
+
+  if (productName == "fuse") {
+    releases = releases.findAll{release -> release.ref.contains("-redhat-")}
+  }
+
+  latestRelease = releases.get(releases.size() - 1).ref
+  latestRelease = latestRelease.minus("refs/tags/")
+
+
+  return latestRelease
+}
+
+//Gets the latest release by git releases
+def getLatestReleaseByRelease(gitOrg, gitRepo, gitTokenId, productName) {
+  def url = "https://api.github.com/repos/${gitOrg}/${gitRepo}/releases/latest"
+
+  def (code, release) = gitFetch(url, gitTokenId)
+  if (code != 200) {
+    error "[ERROR] Failed to retrieve latest release for:${productName}. The :${gitRepo} repository does not have any releases available"
+  }
+
+  return release.tag_name
+}
+
+//Gets the latest release of a product from the project repository
+def getLatestRelease(gitOrg, gitRepo, gitTokenId, productName) {
+    println "[INFO] Getting latest release for:${productName}"
+
+    if (productName == "fuse" || productName == "fuse-online") {
+      return getLatestReleaseByTag(gitOrg, gitRepo, gitTokenId, productName)
+    } else {
+      return getLatestReleaseByRelease(gitOrg, gitRepo, gitTokenId, productName)
+    }
+}
+
 //checks if current semver is lower than the supposed latest one
 def hasNewGARelease(currentVersion, newVersion) {
     def current = currentVersion.replaceAll("[^0-9]", "").tokenize('.')
     def latest = newVersion.replaceAll("[^0-9]", "").tokenize('.')
+    
+    println "[INFO] current:${current}, latest:${latest}"
 
     def currentMajor = current[0] as Integer
     def latestMajor = latest[0] as Integer
@@ -106,15 +169,15 @@ node {
     }
 
     stage('Fetch Latest Release') {
-
-        //ToDo Add logic here to parse latest release of fuse from the tags
-        latestRelease = ""
+        latestRelease = getLatestRelease(projectOrg, projectRepo, githubToken, productName)
 
         if (latestRelease == "" || componentRelease == "") {
             error "[ERROR] Error while retrieving releases: ${latestRelease}:${componentRelease}"
         }
 
-        //ToDo Implement changes in hasNewGARelease that can compare the 2 versions correctly
+        println "[INFO] latestRelease:${latestRelease}, componentRelease:${componentRelease}"
+
+        // TODO: Implement changes in hasNewGARelease that can compare the 2 versions correctly
         isGARelease = hasNewGARelease(componentRelease, latestRelease)
         println "[INFO] latestRelease:${latestRelease}, componentRelease:${componentRelease}, isGARelease:${isGARelease}"
         currentBuild.description = "latest: ${latestRelease}\ncurrent: ${componentRelease}"
