@@ -140,45 +140,53 @@ def getLabelScore(label) {
 }
 
 //checks if current semver is lower than the supposed latest one
-def hasNewGARelease(currentVersion, newVersion) {
-    def current = currentVersion.replaceAll("[^0-9]", "").tokenize('.')
-    def latest = newVersion.replaceAll("[^0-9]", "").tokenize('.')
+def hasNewGARelease(currentVersion, newVersion, productName) {
+  def current = ""
+  def latest = ""
 
-    def currentMajor = current[0] as Integer
-    def latestMajor = latest[0] as Integer
-    def currentMinor = current[1] as Integer
-    def latestMinor = latest[1] as Integer
-    def currentPatch = current[2] as Integer
-    def latestPatch = latest[2] as Integer
-    def currentLabel = current[3]
-    def latestLabel = latest[3]
+  if (productName == "fuse") {
+    current = currentVersion.replaceAll("[^0-9/-]", "").tokenize("-")
+    latest = newVersion.replaceAll("[^0-9/-]", "").tokenize("-")
+  } else {
+    current = currentVersion.replaceAll("[^0-9/.]", "").tokenize(".")
+    latest = newVersion.replaceAll("[^0-9/.]", "").tokenize('.')
+  }
 
-    def previousVer = 0
-    def currentVer = 0
-    for (i = 0; i <= 2; i++) {
-        if (i > 0) {
-            previousVer = i - 1
-        }
-        currentVer = i
+  def currentMajor = current[0] as Integer
+  def latestMajor = latest[0] as Integer
+  def currentMinor = current[1] as Integer
+  def latestMinor = latest[1] as Integer
+  def currentPatch = current[2] as Integer
+  def latestPatch = latest[2] as Integer
+  def currentLabel = current[3]
+  def latestLabel = latest[3]
 
-        def previousDiff = current[previousVer] == latest[previousVer]
-        if (i == 0) {
-            previousDiff = true
-        }
-        def currentDiff = latest[currentVer] > current[currentVer]
-        if (previousDiff && currentDiff) {
-            return true
-        }
-    }
+  def previousVer = 0
+  def currentVer = 0
+  for (i = 0; i <= 2; i++) {
+      if (i > 0) {
+          previousVer = i - 1
+      }
+      currentVer = i
 
-    def currentLabelScore = getLabelScore(currentLabel)
-    def latestLabelScore = getLabelScore(latestLabel)
+      def previousDiff = current[previousVer] == latest[previousVer]
+      if (i == 0) {
+          previousDiff = true
+      }
+      def currentDiff = latest[currentVer] > current[currentVer]
+      if (previousDiff && currentDiff) {
+          return true
+      }
+  }
 
-    if (latestLabelScore > currentLabelScore) {
-        return true
-    }
+  def currentLabelScore = getLabelScore(currentLabel)
+  def latestLabelScore = getLabelScore(latestLabel)
 
-    return false
+  if (latestLabelScore > currentLabelScore) {
+      return true
+  }
+
+  return false
 }
 
 //https://github.com/comquent/imperative-when
@@ -229,7 +237,7 @@ node {
         if (latestRelease == "" || componentRelease == "") {
             error "[ERROR] Error while retrieving releases: ${latestRelease}:${componentRelease}"
         }
-        isGARelease = hasNewGARelease(componentRelease, latestRelease)
+        isGARelease = hasNewGARelease(componentRelease, latestRelease, productName)
         println "[INFO] latestRelease:${latestRelease}, componentRelease:${componentRelease}, isGARelease:${isGARelease}"
         currentBuild.description = "latest: ${latestRelease}\ncurrent: ${componentRelease}"
     }
