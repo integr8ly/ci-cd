@@ -104,10 +104,10 @@ def getLatestReleaseByRelease(gitOrg, gitRepo, gitTokenId, productName) {
 }
 
 //Gets the latest release of a product from the project repository
-def getLatestRelease(gitOrg, gitRepo, gitTokenId, productName) {
+def getLatestRelease(gitOrg, gitRepo, gitTokenId, releaseFetchMethod) {
     println "[INFO] Getting latest release for:${productName}"
 
-    if (productName == "fuse" || productName == "fuse-online") {
+    if (releaseFetchMethod == "tag") {
       return getLatestReleaseByTag(gitOrg, gitRepo, gitTokenId, productName)
     } else {
       return getLatestReleaseByRelease(gitOrg, gitRepo, gitTokenId, productName)
@@ -205,6 +205,7 @@ def manifestVar = params.manifestVar
 def projectOrg = params.projectOrg
 def projectRepo = params.projectRepo
 def productName = params.productName
+def releaseFetchMethod = params.releaseFetchMethod
 def nextBranch = params.installationProductBranch ?: "${productName}-next"
 def installationManifestFile = './evals/inventories/group_vars/all/manifest.yaml'
 
@@ -223,7 +224,7 @@ node {
     }
 
     stage('Fetch Latest GitHub Release') {
-        latestRelease = getLatestRelease(projectOrg, projectRepo, githubToken, productName)
+        latestRelease = getLatestRelease(projectOrg, projectRepo, githubToken, releaseFetchMethod)
         
         if (latestRelease == "" || componentRelease == "") {
             error "[ERROR] Error while retrieving releases: ${latestRelease}:${componentRelease}"

@@ -27,6 +27,11 @@
           default: 'fuse-online'
           description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version if available'
           read-only: true
+      - string:
+          name: 'releaseFetchMethod'
+          default: 'tag'
+          description: '[REQUIRED] Method to fetch latest release which can either be by tag or by release'
+          read-only: true
     pipeline-scm:
       script-path: jobs/release-monitoring/discovery/github/Jenkinsfile
       scm:
