@@ -1,6 +1,6 @@
 ---
 - job:
-    name: release-monitoring-branch/fuse-online
+    name: release-monitoring-branch/fuse-online-next
     display-name: 'Fuse Online'
     project-type: pipeline
     concurrent: false
