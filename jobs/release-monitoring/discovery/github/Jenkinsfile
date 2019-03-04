@@ -85,7 +85,7 @@ def getLatestReleaseByTag(gitOrg, gitRepo, gitTokenId, productName) {
     releases = releases.findAll{release -> release.ref.contains("-redhat-")}
   }
 
-  latestRelease = releases.get(releases.size() - 1).ref
+  latestRelease = releases.last().ref
   latestRelease = latestRelease.minus("refs/tags/")
 
   return latestRelease
