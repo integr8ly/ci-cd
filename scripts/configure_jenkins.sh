@@ -22,6 +22,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/repos/repos-delete-branches-and-
 generate_inline_script_job $SCRIPTS_DIR/../jobs/repos/repos-delete-docker-image-tags/repos-delete-docker-image-tags.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/3scale.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/fuse.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/fuse-online.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/gitea.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/msbroker.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/middleware-monitoring.yaml
