@@ -53,22 +53,65 @@ boolean gitCommitWhenChanges(commitMsgTitle, body) {
     return false
 }
 
-//gets latest release tag of a github repository
-def getLatestRelease(gitOrg, gitRepo, gitTokenId) {
-    def response = null
-    def data = null
+//Fetch data from git with credentials
+def gitFetch(url, gitTokenId) {
+  def response = null
+  def data = null
 
-    withCredentials([string(credentialsId: gitTokenId, variable: 'gitToken')]) {
-        def url = "https://api.github.com/repos/${gitOrg}/${gitRepo}/releases/latest"
-        def headers = [
-                ["name": "Authorization", "value": "token ${env.gitToken}"]
-        ]
+  withCredentials([string(credentialsId: gitTokenId, variable: 'gitToken')]) {
+    def headers = [
+            ["name": "Authorization", "value": "token ${env.gitToken}"]
+    ]
 
-        response = httpRequest customHeaders: headers, url: url
-        data = readJSON text: response.content
+    response = httpRequest customHeaders: headers, url: url
+    data = readJSON text: response.content
+  }
+
+  return [response.status, data]
+}
+
+//Gets the latest release by git tags
+def getLatestReleaseByTag(gitOrg, gitRepo, gitTokenId, productName) {
+  def latestRelease = ""
+  def url = "https://api.github.com/repos/${gitOrg}/${gitRepo}/git/refs/tags"
+
+  def (code, releases) = gitFetch(url, gitTokenId)
+  if (code != 200) {
+    error "[ERROR] Failed to retrieve tags for:${productName}. The :${gitRepo} repository does not have any tags available"
+  }
+
+  if (productName == "fuse") {
+    // Retrieve only Fuse's GA releases
+    releases = releases.findAll{release -> release.ref.contains("-redhat-")}
+  }
+
+  latestRelease = releases.get(releases.size() - 1).ref
+  latestRelease = latestRelease.minus("refs/tags/")
+
+  return latestRelease
+}
+
+//Gets the latest release by git releases
+def getLatestReleaseByRelease(gitOrg, gitRepo, gitTokenId, productName) {
+  def url = "https://api.github.com/repos/${gitOrg}/${gitRepo}/releases/latest"
+
+  def (code, release) = gitFetch(url, gitTokenId)
+  if (code != 200) {
+    error "[ERROR] Failed to retrieve latest release for:${productName}. The :${gitRepo} repository does not have any releases available"
+  }
+
+  return release.tag_name
+}
+
+//Gets the latest release of a product from the project repository
+def getLatestRelease(gitOrg, gitRepo, gitTokenId, productName) {
+    println "[INFO] Getting latest release for:${productName}"
+
+    if (productName == "fuse" || productName == "fuse-online") {
+      return getLatestReleaseByTag(gitOrg, gitRepo, gitTokenId, productName)
+    } else {
+      return getLatestReleaseByRelease(gitOrg, gitRepo, gitTokenId, productName)
     }
-
-    return [response.status, data]
 }
 
 def getLabelScore(label) {
@@ -180,13 +223,8 @@ node {
     }
 
     stage('Fetch Latest GitHub Release') {
-        def (code, data) = getLatestRelease(projectOrg, projectRepo, githubToken)
-        if (code != 200) {
-            //ToDo Handle 404 here, means no release has been created in this Git Repo!!
-            error "[ERROR] Failed to retrieve latest release: ${data}"
-        }
-        latestRelease = data.tag_name
-
+        latestRelease = getLatestRelease(projectOrg, projectRepo, githubToken, productName)
+        
         if (latestRelease == "" || componentRelease == "") {
             error "[ERROR] Error while retrieving releases: ${latestRelease}:${componentRelease}"
         }
