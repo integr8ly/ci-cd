@@ -28,6 +28,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/msb
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/middleware-monitoring.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/rhsso.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/webapp.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/amq-online.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/3scale-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/fuse-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/fuse-online-next.yaml
@@ -36,6 +37,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/msbrok
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/middleware-monitoring-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/rhsso-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/webapp-next.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/amq-online-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/github-events/release-monitoring-github-events.yaml
 
 #Folders
