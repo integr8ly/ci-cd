@@ -209,11 +209,14 @@ def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/
 def installationGitRef = params.installationGitRef ?: 'master'
 def githubToken = params.githubToken ?: 'jenkins-github-api-token'
 def githubCredentialsID = params.credentialId ?: 'jenkinsgithub'
-def manifestVar = params.manifestVar
+def releaseTagVar = params.manifestVar ?: params.releaseTagVar
+def productVersionVar = params.productVersionVar
 def projectOrg = params.projectOrg
 def projectRepo = params.projectRepo
 def productName = params.productName
 def releaseFetchMethod = params.releaseFetchMethod
+def productVersionLocation = params.productVersionLocation
+def productVersionIdentifier = params.productVersionIdentifier
 def nextBranch = params.installationProductBranch ?: "${productName}-next"
 def installationManifestFile = './evals/inventories/group_vars/all/manifest.yaml'
 
@@ -227,7 +230,11 @@ node {
         dir('installation') {
             checkoutGitRepo(installationGitUrl, installationGitRef, githubCredentialsID)
             releaseConfig = readYaml file: installationManifestFile
-            componentRelease = releaseConfig[manifestVar]
+            if (releaseTagVar != "") {
+              componentRelease = releaseConfig[releaseTagVar]
+            } else {
+              componentRelease = releaseConfig[productVersionVar]
+            }
         }
     }
 
@@ -240,6 +247,47 @@ node {
         isGARelease = hasNewGARelease(componentRelease, latestRelease, productName)
         println "[INFO] latestRelease:${latestRelease}, componentRelease:${componentRelease}, isGARelease:${isGARelease}"
         currentBuild.description = "latest: ${latestRelease}\ncurrent: ${componentRelease}"
+    }
+
+    stage('Fetch Component Product Version') {
+        def productVersion = ""
+
+        // Only set the product version as the latest release if the release tag var is not available
+        if (!releaseTagVar) {
+          productVersion = latestRelease
+        }
+        // Ensures that old jobs will still work with old parameter
+        // Can be removed after all service discovery jobs have been updated
+        else if (params.manifestVar) {
+          productVersion = latestRelease
+        } else {
+          if (!productVersionLocation || !productVersionIdentifier) {
+            error "[ERROR] The product version location and/or identifier was not defined"
+          }
+
+          def templateUrl = "https://raw.githubusercontent.com/${projectOrg}/${projectRepo}/${latestRelease}/${productVersionLocation}"
+
+          if (projectOrg == "integr8ly") {
+            productVersion = sh(returnStdout: true, script: "curl -i '${templateUrl}' | grep '${productVersionIdentifier}' | head -n 1 | awk '{print \$3}'")
+            productVersion = productVersion.replaceAll("[\"\']v*", "")
+          }
+
+          // Current tags/releases does not have the right product version in the webapp handler.
+          // This can be removed once this property has been updated with the correct information in the next release
+          // https://github.com/integr8ly/tutorial-web-app-operator/blob/v0.0.4/pkg/handlers/webhandler.go#L23
+          if (productName == "webapp") {
+            productVersion = sh(returnStdout: true, script: "curl -i '${templateUrl}' | grep '${productVersionIdentifier}' | awk -F ':' '{print \$3}'")
+            productVersion = productVersion.replaceAll("v", "")
+          }
+
+          productVersion = productVersion.trim()
+
+          if (productVersion == "") {
+            error "[ERROR] Product version for ${productName} was not found. Product Version: ${productVersion}"
+          }
+        }
+
+        println "[INFO] product version: ${productVersion}"
     }
 
     dir('installation') {
@@ -260,8 +308,12 @@ node {
             stage('Product Version Update') {
                 when(isGARelease) {
                     gitCommitWhenChanges("Updated ${productName} product version to ${latestRelease}") { msgs ->
-                        manifestFileTxt = readFile(installationManifestFile)
-                        manifestFileTxt = manifestFileTxt.replaceFirst(/${manifestVar}: '.*'/, "${manifestVar}: '${latestRelease}'")
+                        manifestFileTxt = readFile(installationManifestFile)                        
+                        // Updates the release tag version
+                        manifestFileTxt = manifestFileTxt.replaceFirst(/${releaseTagVar}: '.*'/, "${releaseTagVar}: '${latestRelease}'")
+                        
+                        // Updates the product version
+                        manifestFileTxt = manifestFileTxt.replaceFirst(/${productVersionVar}: '.*'/, "${productVersionVar}: '${productVersion}'")
                         writeFile file: installationManifestFile, text: manifestFileTxt
                     }
                 }

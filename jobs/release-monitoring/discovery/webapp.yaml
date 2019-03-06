@@ -8,9 +8,14 @@
       - timed: '@hourly'
     parameters:
       - string:
-          name: 'manifestVar'
+          name: 'releaseTagVar'
           default: 'webapp_operator_release_tag'
-          description: '[REQUIRED] The manifest variable to be used as the current component version'
+          description: '[OPTIONAL] The manifest variable to be used as the current component release tag'
+          read-only: true
+      - string:
+          name: 'productVersionVar'
+          default: 'webapp_version'
+          description: '[REQUIRED] The manifest variable to be used as the current component product version'
           read-only: true
       - string:
           name: 'projectOrg'
@@ -25,7 +30,17 @@
       - string:
           name: 'productName'
           default: 'webapp'
-          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version if available'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
+          read-only: true
+      - string:
+          name: 'productVersionLocation'
+          default: 'deploy/template/tutorial-web-app.yml'
+          description: '[OPTIONAL] Path to the file where the product version of the component is declared'
+          read-only: true
+      - string:
+          name: 'productVersionIdentifier'
+          default: 'quay.io/integreatly/tutorial-web-app'
+          description: '[OPTIONAL] Identifier to be used to retrieve the product version from the productVersionLocation'
           read-only: true
     pipeline-scm:
       script-path: jobs/release-monitoring/discovery/github/Jenkinsfile
