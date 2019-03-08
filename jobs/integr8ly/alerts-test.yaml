@@ -9,14 +9,14 @@
       - string:
           name: REPOSITORY
           default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
-          description: 'QE repository containing the smoke tests source code.'
+          description: 'QE repository containing the test source code.'
       - string:
           name: BRANCH
           default: 'master'
           description: 'Branch of the repository'
       - string:
           name: CLUSTER_URL
-          description: 'URL of cluster on which the smoke tests will be executed.'
+          description: 'URL of cluster on which the test will be executed.'
       - string:
           name: ADMIN_USERNAME
           default: 'admin@example.com'
