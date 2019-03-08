@@ -3,7 +3,10 @@
         deleteDir()
         stage('Checkout SCM'){
           dir('.') {
-                git branch: "${BRANCH}", url: "https://github.com/${OWNER}/installation.git"
+            git branch: "${BRANCH}", url: "https://github.com/${OWNER}/installation.git"
+            if(!fileExists("evals")) {
+              sh "ln -s . evals"
+            }
           } 
         }
         

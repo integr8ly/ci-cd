@@ -58,6 +58,9 @@
                             extensions: [],
                             userRemoteConfigs: [[url: REPOSITORY]]
                         ])
+                        if(!fileExists("evals")) {
+                            sh "ln -s . evals"
+                        }
                     } // dir
                 } // stage
 
@@ -88,4 +91,3 @@
                 } // stage
             } // node
         }}} // timeout, ansiColor, timestamps
-    
