@@ -8,7 +8,7 @@
       - timed: '@hourly'
     parameters:
       - string:
-          name: 'manifestVar'
+          name: 'productVersionVar'
           default: 'threescale_version'
           description: '[REQUIRED] The manifest variable to be used as the current component version'
           read-only: true
@@ -20,12 +20,12 @@
       - string:
           name: 'projectRepo'
           default: '3scale-amp-openshift-templates'
-          description: '[REQUIRED] github project repostirory'
+          description: '[REQUIRED] github project repository'
           read-only: true
       - string:
           name: 'productName'
           default: '3scale'
-          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version if available'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
           read-only: true
     pipeline-scm:
       script-path: jobs/release-monitoring/discovery/github/Jenkinsfile
