@@ -25,7 +25,7 @@
       - string:
           name: 'projectRepo'
           default: 'tutorial-web-app-operator'
-          description: '[REQUIRED] github project repostirory'
+          description: '[REQUIRED] github project repository'
           read-only: true
       - string:
           name: 'productName'
