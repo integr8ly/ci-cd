@@ -40,7 +40,7 @@
                         git branch: "${BRANCH}", url: "${REPOSITORY}"
                     }
                 }
-                stage('Run the alert checking tests'){
+                stage('Run the customer admin permissions test'){
                     dir('tests'){
                         sh '''
                             npm install

@@ -47,9 +47,11 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/release-monitoring/relea
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/generated/
 
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/after-first-login-tests.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/alerts-test.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/browser-based-test-executor.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/browser-based-testsuite-pipeline.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/clean-uninstallation-pipeline.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/customer-admin-permissions-test.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/installation-pipeline-qe-pony.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/installation-pipeline.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/installation-smoke-tests.yaml
