@@ -257,8 +257,6 @@ node {
     }
 
     stage('Fetch Component Product Version') {
-        def productVersion = ""
-
         // Only set the product version as the latest release if the release tag var is not available
         if (!releaseTagVar) {
           productVersion = latestRelease
@@ -289,7 +287,7 @@ node {
 
           productVersion = productVersion.trim()
 
-          if (productVersion == "") {
+          if (!productVersion) {
             error "[ERROR] Product version for ${productName} was not found. Product Version: ${productVersion}"
           }
         }
