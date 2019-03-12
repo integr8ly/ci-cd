@@ -204,6 +204,22 @@ def when(boolean condition, body) {
     }
 }
 
+def ensureEvalsDir() {
+    if (!fileExists("evals")) {
+        sh "ln -s . evals"
+    }
+}
+
+def updateManifestVariable(manifestFileTxt, name, value) {
+    if (name && value) {
+        println("Updating manifest variable: name = ${name}, value = ${value}")
+        manifestFileTxt = manifestFileTxt.replaceFirst(/${name}: '.*'/, "${name}: '${value}'")
+    } else {
+        println("Unable to update manifest variable: name = ${name}, value = ${value}")
+    }
+    return manifestFileTxt
+}
+
 //Helper methods
 
 def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
@@ -222,20 +238,6 @@ def nextBranch = params.installationProductBranch ?: "${productName}-next"
 def installationManifestFile = './evals/inventories/group_vars/all/manifest.yaml'
 
 currentBuild.displayName = "${currentBuild.displayName} ${productName}"
-
-def ensureEvalsDir() {
-    if (!fileExists("evals")) {
-        sh "ln -s . evals"
-    }
-}
-
-def updateManifestVariable(manifestFileTxt, name, value) {
-    if (name && value) {
-        manifestFileTxt.replaceFirst(/${name}: '.*'/, "${name}: '${value}'")
-    } else {
-        println("Unable to update manifest variable: name = ${name}, value = ${value}")
-    }
-}
 
 node {
     cleanWs()
@@ -319,8 +321,8 @@ node {
                 when(isGARelease) {
                     gitCommitWhenChanges("Updated ${productName} product version to ${latestRelease}") { msgs ->
                         manifestFileTxt = readFile(installationManifestFile)
-                        updateManifestVariable(manifestFileTxt, releaseTagVar, latestRelease)
-                        updateManifestVariable(manifestFileTxt, productVersionVar, productVersion)
+                        manifestFileTxt = updateManifestVariable(manifestFileTxt, releaseTagVar, latestRelease)
+                        manifestFileTxt = updateManifestVariable(manifestFileTxt, productVersionVar, productVersion)
                         writeFile file: installationManifestFile, text: manifestFileTxt
                     }
                 }
