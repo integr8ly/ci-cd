@@ -85,8 +85,8 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                             string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
                             string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
                             string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
-                            string(name: 'OC_USER', value: 'admin@example.com'),
-                            string(name: 'OC_PASSWORD', value: 'Password1')]
+                            string(name: 'OC_USER', value: "${OC_USER}"),
+                            string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}")]
                                 
                         // Waiting for 5 minutes so that resources scheduled for termination are actually terminated
                         sleep time: 5, unit: 'MINUTES'
