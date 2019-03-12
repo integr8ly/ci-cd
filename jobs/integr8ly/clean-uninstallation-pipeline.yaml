@@ -14,6 +14,10 @@
           name: BRANCH
           default: 'master'
           description: 'Branch of the installer repository'
+      - string:
+          name: RECIPIENTS
+          default: integreatly-qe@redhat.com
+          description: 'Whitespace- or comma-separated list of recipient addresses'
     triggers:
       - timed: 'H H(0-5) * * *'
     dsl: |
@@ -41,7 +45,7 @@
                             """
             
                             sh """
-                                sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\ntrepel-merrn-1@;P;D' ./evals/inventories/hosts
+                                sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\n10.8.249.123@;P;D' ./evals/inventories/hosts
                             """
                             
                             String output = readFile('./evals/inventories/hosts')
@@ -60,7 +64,7 @@
                     currentBuild.result = 'FAILURE'
                     throw any
                 } finally {
-                    step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'trepel@redhat.com', sendToIndividuals: true])
+                    step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: "${RECIPIENTS}", sendToIndividuals: true])
                 } // finally
             } // node
 
