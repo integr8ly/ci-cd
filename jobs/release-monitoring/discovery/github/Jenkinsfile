@@ -289,6 +289,11 @@ node {
                 productVersion = productVersion.replaceAll("v", "")
             }
 
+            if (productName == "fuse") {
+              productVersion = sh(returnStdout: true, script: "curl -i '${templateUrl}' | grep '${productVersionIdentifier}' | awk -F ':' '{print \$2}'")
+              productVersion = productVersion.replaceAll("[^0-9.]", "")
+            }
+
             productVersion = productVersion.trim()
 
             if (!productVersion) {

@@ -8,9 +8,14 @@
       - timed: '@hourly'
     parameters:
       - string:
-          name: 'manifestVar'
+          name: 'releaseTagVar'
           default: 'fuse_release_tag'
-          description: '[REQUIRED] The manifest variable to be used as the current component version'
+          description: '[OPTIONAL] The manifest variable to be used as the current component release tag'
+          read-only: true
+      - string:
+          name: 'productVersionVar'
+          default: 'fuse_version'
+          description: '[REQUIRED] The manifest variable to be used as the current component product version'
           read-only: true
       - string:
           name: 'projectOrg'
@@ -31,6 +36,16 @@
           name: 'releaseFetchMethod'
           default: 'tag'
           description: '[REQUIRED] Method to fetch latest release which can either be by tag or by release'
+          read-only: true
+      - string:
+          name: 'productVersionLocation'
+          default: 'fis-console-cluster-template.json'
+          description: '[OPTIONAL] Path to the file where the product version of the component is declared'
+          read-only: true
+      - string:
+          name: 'productVersionIdentifier'
+          default: 'openshift.io/display-name'
+          description: '[OPTIONAL] Identifier to be used to retrieve the product version from the productVersionLocation'
           read-only: true
     pipeline-scm:
       script-path: jobs/release-monitoring/discovery/github/Jenkinsfile
