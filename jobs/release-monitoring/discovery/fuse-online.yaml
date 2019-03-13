@@ -8,9 +8,9 @@
       - timed: '@hourly'
     parameters:
       - string:
-          name: 'manifestVar'
+          name: 'releaseTagVar'
           default: 'fuse_online_release_tag'
-          description: '[REQUIRED] The manifest variable to be used as the current component version'
+          description: '[OPTIONAL] The manifest variable to be used as the current component release tag'
           read-only: true
       - string:
           name: 'projectOrg'
