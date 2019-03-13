@@ -1,0 +1,74 @@
+---
+
+- job:
+    name: customer-admin-permissions-test
+    description: 'Executes tests checking whether permissions for the customer-admin are appropriately set'
+    project-type: pipeline
+    sandbox: true
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
+          description: 'QE repository containing the test source code.'
+      - string:
+          name: BRANCH
+          default: 'master'
+          description: 'Branch of the repository'
+      - string:
+          name: CLUSTER_URL
+          description: 'URL of cluster on which the test will be executed.'
+      - string:
+          name: ADMIN_USERNAME
+          default: 'admin@example.com'
+          description: 'Username to login to Integreatly cluster.'
+      - string:
+          name: ADMIN_PASSWORD
+          default: 'Password1'
+          description: 'Password to login to Integreatly cluster.'
+      - string:
+          name: CUSTOMER_ADMIN_USERNAME
+          default: 'customer-admin@example.com'
+          description: 'customer-admin username to login to Integreatly cluster.'
+    dsl: |
+        timeout(60) { ansiColor('gnome-terminal') { timestamps {
+            node('cirhos_rhel7'){
+
+                Boolean publishTestResults = true
+
+                stage('Clone QE repository') {
+                    dir('.') {
+                        git branch: "${BRANCH}", url: "${REPOSITORY}"
+                    }
+                }
+                stage('Run the customer admin permissions test'){
+                    dir('tests'){
+                        sh '''
+                            npm install
+                        '''
+                    }
+                    dir('tests/backend-testsuite'){    
+                        sh '''
+                            gulp customer-admin-permissions | tee output.txt
+                        '''
+                        String output = readFile("output.txt");
+                        
+                        if(!output.contains('Integreatly customer-admin Permissions Test')) {
+                            currentBuild.result = 'FAILURE'
+                            publishTestResults = false
+                        } else if(output.contains('There were test failures')) {
+                            currentBuild.result = 'UNSTABLE'
+                        }
+                    }
+                }
+                stage('Publish test results') {
+                    if(publishTestResults) {
+                        dir('tests/backend-testsuite/reports/') {
+                            archiveArtifacts 'customer-admin-permissions.xml'                  
+                            junit allowEmptyResults:true, testResults: 'customer-admin-permissions.xml'
+                        }
+                    } else {
+                        println 'Publishing the results skipped. Probably due to an error.'
+                    }
+                }
+            }
+        }}}
