@@ -213,7 +213,7 @@ def ensureEvalsDir() {
 def updateManifestVariable(manifestFileTxt, name, value) {
     if (name && value) {
         println("Updating manifest variable: name = ${name}, value = ${value}")
-        manifestFileTxt = manifestFileTxt.replaceFirst(/${name}: '.*'/, "${name}: '${value}'")
+        manifestFileTxt = manifestFileTxt.replaceFirst(/${name}: .*/, "${name}: '${value}'")
     } else {
         println("Unable to update manifest variable: name = ${name}, value = ${value}")
     }
