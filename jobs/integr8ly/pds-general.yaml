@@ -128,9 +128,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                     } // stage
 
                     stage('Install #2') {
-                        // Added false to always skip this step.
-                        // Workaround for https://issues.jboss.org/browse/INTLY-1002
-                        if(false && (TO_DO.contains('heavy') || TO_DO.count(' install') >= 2)) {
+                        if(TO_DO.contains('heavy') || TO_DO.count(' install') >= 2) {
                             build job: 'installation-pipeline', parameters: [
                                 string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
                                 string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
