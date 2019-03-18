@@ -175,6 +175,9 @@
                             // this patches WALKTHROUGHS_LOCATIONS to use master tag
                             sh """
                                 sudo oc patch webapp/tutorial-web-app-operator -n webapp --type merge -p '{ "spec": { "template": { "parameters": { "WALKTHROUGHS_LOCATION": "https://github.com/integr8ly/tutorial-web-app-walkthroughs#master" } } } }' || true
+
+                                # patch of tutorial-web-app, workaround for https://issues.jboss.org/browse/INTLY-1201
+                                sudo oc patch deploymentconfig/tutorial-web-app -n webapp -p '{ "spec": { "template": { "spec": { "containers": [{ "name": "tutorial-web-app", "image": "quay.io/integreatly/tutorial-web-app:master" }]}}}}' || true
                             """
                         }
                     } // stage
