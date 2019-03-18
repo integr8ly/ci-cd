@@ -114,9 +114,8 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                                 string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
                                 booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
                                 string(name: 'ANSIBLE_USER', value: 'ec2-user'),
-                                string(name: 'MASTER_URLS', value: "master1.${YOURCITY}.internal"),
+                                string(name: 'YOURCITY', value: "${YOURCITY}"),
                                 string(name: 'BASTION_USER', value: 'ec2-user'),
-                                string(name: 'BASTION_URL', value: "bastion.${YOURCITY}.openshiftworkshop.com"),
                                 string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
                                 
                             if(TO_DO.contains('heavy') || TO_DO.contains('tests') || TO_DO.count('install') >= 2) {
@@ -136,9 +135,8 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                                 string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
                                 booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
                                 string(name: 'ANSIBLE_USER', value: 'ec2-user'),
-                                string(name: 'MASTER_URLS', value: "master1.${YOURCITY}.internal"),
+                                string(name: 'YOURCITY', value: "${YOURCITY}"),
                                 string(name: 'BASTION_USER', value: 'ec2-user'),
-                                string(name: 'BASTION_URL', value: "bastion.${YOURCITY}.openshiftworkshop.com"),
                                 string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
                                 
                             if(TO_DO.contains('heavy')) {
@@ -149,18 +147,6 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                         }
                     } // stage
                     
-                    stage('Execute "After Installation" Workarounds') {
-                        if (TO_DO.contains('heavy') || TO_DO.contains('install')) {
-                            if (INSTALLATION_BRANCH == 'master') {
-                                // this patches the webapp to use master image (v2.2.0 is used otherwise)
-                                sh """
-                                    oc login https://master.${YOURCITY}.openshiftworkshop.com -u admin@example.com -p Password1  --insecure-skip-tls-verify
-                                    oc patch deploymentconfig/tutorial-web-app -n webapp -p '{ "spec": { "template": { "spec": { "containers": [{ "name": "tutorial-web-app", "image": "quay.io/integreatly/tutorial-web-app:master" }]}}}}' || true
-                                """
-                            }
-                        }
-                    } // stage
-        
                     stage('Smoke Tests') {
                         if(TO_DO.contains('heavy') || TO_DO.contains('tests')) {
                             buildStatus = build(job: 'installation-smoke-tests', propagate: false, parameters: [
@@ -257,19 +243,6 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                             println 'Install #3 skipped'
                         }
                     } // stage
-
-                    stage('Execute "After Installation" Workarounds #2') {
-                        if (TO_DO.contains('heavy')) {
-                            if (INSTALLATION_BRANCH == 'master') {
-                                // this patches the webapp to use master image (v2.2.0 is used otherwise)
-                                sh """
-                                    oc login https://master.${YOURCITY}.openshiftworkshop.com -u admin@example.com -p Password1  --insecure-skip-tls-verify
-                                    oc patch deploymentconfig/tutorial-web-app -n webapp -p '{ "spec": { "template": { "spec": { "containers": [{ "name": "tutorial-web-app", "image": "quay.io/integreatly/tutorial-web-app:master" }]}}}}' || true
-                                """
-                            }
-                        }
-                    } // stage
-
                 } // node
             }}} // timeout, ansiColor, timestamps
         } catch (caughtError){
