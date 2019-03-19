@@ -25,13 +25,13 @@
           default: 'Password1'
           description: 'Password to login to Integreatly cluster.'
       - string:
-          name: RELEASE_VERSION
-          default: ''
-          description: 'Provide release version when testing particular release. Empty value means the master version is expected.'
-      - string:
-          name: WEBAPP_VERSION
-          default: ''
-          description: 'Provide webapp release version. Empty value means the master version is expected.'
+          name: MANIFEST_VERSION
+          default: 'master'
+          description: 'Provide release version when testing particular release.'
+      - bool:
+          name: TESTING_MASTER
+          default: true
+          description: 'Indicates whether to check master tags or compare versions from manifest file.'   
       - string:
           name: WALKTHROUGHS_VERSION
           default: ''
