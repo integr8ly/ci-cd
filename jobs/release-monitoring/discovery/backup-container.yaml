@@ -1,0 +1,38 @@
+---
+- job:
+    name: release-monitoring-discovery/backup-container
+    display-name: 'Backup Container'
+    project-type: pipeline
+    concurrent: false
+    triggers:
+      - timed: '@hourly'
+    parameters:
+      - string:
+          name: 'productVersionVar'
+          default: 'backup_version'
+          description: '[REQUIRED] The manifest variable to be used as the current component version'
+          read-only: true
+      - string:
+          name: 'projectOrg'
+          default: 'integr8ly'
+          description: '[REQUIRED] github project organization'
+          read-only: true
+      - string:
+          name: 'projectRepo'
+          default: 'backup-container-image'
+          description: '[REQUIRED] github project repostirory'
+          read-only: true
+      - string:
+          name: 'productName'
+          default: 'backup-container'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version if available'
+          read-only: true
+    pipeline-scm:
+      script-path: jobs/release-monitoring/discovery/github/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - master
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false
