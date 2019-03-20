@@ -1,0 +1,49 @@
+#!groovy
+
+def clusterOptions = [:]
+
+def verifyClusterOptions(clusterOptions) {
+    if (!clusterOptions.name || !clusterOptions.awsRegion) {
+        def userInput = input message: 'Cluster Options', parameters: [
+                string(defaultValue: (clusterOptions.name ?: ''), description: 'Cluster name', name: 'clusterName'),
+                string(defaultValue: (clusterOptions.awsRegion ?: 'eu-west-2'), description: 'AWS Region', name: 'awsRegion'),
+        ]
+        clusterOptions.name = userInput.clusterName
+        clusterOptions.awsRegion = userInput.awsRegion
+        verifyClusterOptions(clusterOptions)
+    }
+}
+
+stage("Cluster Options") {
+    clusterOptions.name = params.clusterName
+    clusterOptions.awsRegion = params.awsRegion
+    verifyClusterOptions(clusterOptions)
+    println "Cluster Options: ${clusterOptions}"
+    currentBuild.displayName = "${currentBuild.displayName} ${clusterOptions.name}"
+    currentBuild.description = "clusterName: ${clusterOptions.name}\nawsRegion: ${clusterOptions.awsRegion}"
+}
+
+node('cirhos_rhel7') {
+    cleanWs()
+    stage('Create OpenShift Cluster') {
+        println("Create OpenShift Cluster")
+        if (params.dryRun) {
+            println("Would call ansibleTower with: oo_clusterid: ${clusterOptions.name}, oo_sublocation: ${clusterOptions.awsRegion}")
+        } else {
+            wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
+                ansibleTower(
+                        towerServer: 'Dev Tower',
+                        jobTemplate: '[aws.eng] Cluster Create',
+                        templateType: 'workflow',
+                        importTowerLogs: true,
+                        removeColor: false,
+                        verbose: true,
+                        extraVars: """---
+                    oo_clusterid: ${clusterOptions.name}
+                    oo_sublocation: ${clusterOptions.awsRegion}
+                    survey_provision_logging: 'false'"""
+                )
+            }
+        }
+    }
+}
