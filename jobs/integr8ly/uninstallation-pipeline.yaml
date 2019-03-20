@@ -113,10 +113,8 @@
                                 sed -i 's/ansible_user=ec2-user/ansible_user=${ANSIBLE_USER}/g' ./evals/inventories/hosts
                             """
                             
-                            String masterUrls = MASTER_URLS.replaceAll(~/,[\s]*/, '\\\\n')
-                            
                             sh """
-                                sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\n${masterUrls}@;P;D' ./evals/inventories/hosts
+                                sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\n${MASTER_URL}@;P;D' ./evals/inventories/hosts
                             """
                             
                             String output = readFile('./evals/inventories/hosts')
