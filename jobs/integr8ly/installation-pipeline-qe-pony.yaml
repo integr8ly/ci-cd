@@ -47,6 +47,14 @@
             name: ADDITIONAL_ANSIBLE_PARAMS
             description: "Additional parameters passed to install playbook, e.g.'-e eval_seed_users_count=0'. Can be left empty"
     dsl: |
+        String[] intlyCompTags = ["rhsso_operator_release_tag", 
+                                  "msbroker_release_tag", 
+                                  "gitea_operator_release_tag",
+                                  "webapp_version",
+                                  "webapp_operator_release_tag",
+                                  "middleware_monitoring_operator_release_tag",
+                                  "backup_version"]
+
         timeout(60) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {        
                 stage('Verify input') {
@@ -94,6 +102,15 @@
                     
                         String output = readFile('./evals/inventories/hosts')
                         println output
+
+                        if (BRANCH == 'master') {   
+                            // patch all the integreatly components to use master tag version
+                            for(String tag in intlyCompTags){
+                                sh """
+                                    sed -i "/${tag}: /c\\${tag}: 'master'" inventories/group_vars/all/manifest.yaml
+                                """
+                            }
+                        }
                     } // dir
                 } // stage
             
@@ -111,6 +128,21 @@
                         """
                     } // dir
                 } // stage
+
+                 stage('Execute "After Installation" Workarounds') {
+                    if (BRANCH == 'master') {
+                        // this patches WALKTHROUGHS_LOCATIONS to use master tag
+                        sh """
+                            oc login ${CLUSTER_URL} -u ${OC_USER} -p ${OC_PASSWORD}
+
+                            oc patch webapp/tutorial-web-app-operator -n webapp --type merge -p '{ "spec": { "template": { "parameters": { "WALKTHROUGHS_LOCATION": "https://github.com/integr8ly/tutorial-web-app-walkthroughs#master" } } } }' || true
+
+                            # patch of tutorial-web-app, workaround for https://issues.jboss.org/browse/INTLY-1201
+                            oc patch deploymentconfig/tutorial-web-app -n webapp -p '{ "spec": { "template": { "spec": { "containers": [{ "name": "tutorial-web-app", "image": "quay.io/integreatly/tutorial-web-app:master" }]}}}}' || true
+                        """
+                    }
+                } // stage
+
             } // node
         }}} // timeout, ansiColor, timestamps
 
