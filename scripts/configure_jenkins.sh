@@ -33,6 +33,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/3scale
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/fuse-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/fuse-online-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/gitea-next.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/integreatly-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/msbroker-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/middleware-monitoring-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/rhsso-next.yaml
