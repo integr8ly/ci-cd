@@ -111,31 +111,6 @@ def getLatestRelease(gitOrg, gitRepo, gitTokenId, releaseFetchMethod, gaReleaseT
     }
 }
 
-def getLabelScore(label) {
-    if (!label) {
-        return 0
-    }
-
-    def score = 0
-    def scores = [
-            'GA': 1,
-            'redhat': 1
-    ]
-    def parts = label.tokenize('-')
-
-    parts.each { part ->
-        if (scores.containsKey(part)) {
-            score += scores[part]
-        }
-
-        if (!scores.containsKey(part) && part.isInteger()) {
-            score += part.toInteger()
-        }
-    }
-
-    return score
-}
-
 //checks if current semver is lower than the supposed latest one
 def hasNewGARelease(currentVersion, newVersion, productName) {
     def current = ""
@@ -155,8 +130,6 @@ def hasNewGARelease(currentVersion, newVersion, productName) {
     def latestMinor = latest[1] as Integer
     def currentPatch = current[2] as Integer
     def latestPatch = latest[2] as Integer
-    def currentLabel = current[3]
-    def latestLabel = latest[3]
 
     def previousVer = 0
     def currentVer = 0
@@ -176,13 +149,6 @@ def hasNewGARelease(currentVersion, newVersion, productName) {
         }
     }
 
-    def currentLabelScore = getLabelScore(currentLabel)
-    def latestLabelScore = getLabelScore(latestLabel)
-
-    if (latestLabelScore > currentLabelScore) {
-        return true
-    }
-
     return false
 }
 
@@ -198,12 +164,6 @@ def when(boolean condition, body) {
         body()
     } else {
         Utils.markStageSkippedForConditional(STAGE_NAME)
-    }
-}
-
-def ensureEvalsDir() {
-    if (!fileExists("evals")) {
-        sh "ln -s . evals"
     }
 }
 
@@ -232,8 +192,8 @@ def releaseFetchMethod = params.releaseFetchMethod
 def productVersionLocation = params.productVersionLocation
 def productVersionIdentifier = params.productVersionIdentifier
 def nextBranch = params.installationProductBranch ?: "${productName}-next"
-def installationManifestFile = './evals/inventories/group_vars/all/manifest.yaml'
 def gaReleaseTagRef = params.gaReleaseTagRef ?: ''
+def installationManifestFile = './inventories/group_vars/all/manifest.yaml'
 
 currentBuild.displayName = "${currentBuild.displayName} ${productName}"
 
@@ -244,7 +204,6 @@ node {
         cleanWs()
         dir('installation') {
             checkoutGitRepo(installationGitUrl, installationGitRef, githubCredentialsID)
-            ensureEvalsDir()
             releaseConfig = readYaml file: installationManifestFile
         }
     }

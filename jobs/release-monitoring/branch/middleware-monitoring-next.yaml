@@ -16,7 +16,7 @@
       - string:
           name: 'productName'
           default: 'middleware-monitoring'
-          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version if available'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
     pipeline-scm:
       script-path: jobs/release-monitoring/branch/Jenkinsfile
       scm:
