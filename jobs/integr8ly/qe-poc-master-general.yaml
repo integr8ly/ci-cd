@@ -122,16 +122,6 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                                 
                             sleep time: 3, unit: 'MINUTES'
                     } // stage
-                    
-                    stage('Execute "After Installation" Workarounds #2') {
-                        if (INSTALLATION_BRANCH == 'master') {
-                            // this patches the webapp to use master image
-                            sh """
-                                oc login ${CLUSTER_URL} -u ${OC_USER} -p ${OC_PASSWORD}  --insecure-skip-tls-verify
-                                oc patch deploymentconfig/tutorial-web-app -n webapp -p '{ "spec": { "template": { "spec": { "containers": [{ "name": "tutorial-web-app", "image": "quay.io/integreatly/tutorial-web-app:master" }]}}}}' || true
-                            """
-                        }
-                    } // stage
 
                     stage('Smoke Tests') {
                         buildStatus = build(job: 'installation-smoke-tests', propagate: false, parameters: [
