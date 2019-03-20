@@ -8,6 +8,10 @@
           name: 'clusterName'
           default: ''
           description: '[REQUIRED] The name of the cluster to create'
+      - string:
+          name: 'awsRegion'
+          default: 'eu-west-2'
+          description: '[REQUIRED] The AWS Region the cluster should be created in'
     pipeline-scm:
       script-path: jobs/openshift/cluster/create/Jenkinsfile
       scm:
