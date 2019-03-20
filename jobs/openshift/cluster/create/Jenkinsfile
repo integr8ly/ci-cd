@@ -3,7 +3,7 @@
 def clusterOptions = [:]
 
 def verifyClusterOptions(clusterOptions) {
-    if(!clusterOptions.name || !clusterOptions.awsRegion) {
+    if (!clusterOptions.name || !clusterOptions.awsRegion) {
         def userInput = input message: 'Cluster Options', parameters: [
                 string(defaultValue: (clusterOptions.name ?: ''), description: 'Cluster name', name: 'clusterName'),
                 string(defaultValue: (clusterOptions.awsRegion ?: 'eu-west-2'), description: 'AWS Region', name: 'awsRegion'),
@@ -27,21 +27,23 @@ node('cirhos_rhel7') {
     cleanWs()
     stage('Create OpenShift Cluster') {
         println("Create OpenShift Cluster")
-
-        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
-            ansibleTower(
-                    towerServer: 'Dev Tower',
-                    jobTemplate: '[aws.eng] Cluster Create',
-                    templateType: 'workflow',
-                    importTowerLogs: true,
-                    removeColor: false,
-                    verbose: true,
-                    extraVars: """---
+        if (params.dryRun) {
+            println("Would call ansibleTower with: oo_clusterid: ${clusterOptions.name}, oo_sublocation: ${clusterOptions.awsRegion}")
+        } else {
+            wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
+                ansibleTower(
+                        towerServer: 'Dev Tower',
+                        jobTemplate: '[aws.eng] Cluster Create',
+                        templateType: 'workflow',
+                        importTowerLogs: true,
+                        removeColor: false,
+                        verbose: true,
+                        extraVars: """---
                     oo_clusterid: ${clusterOptions.name}
                     oo_sublocation: ${clusterOptions.awsRegion}
                     survey_provision_logging: 'false'"""
-            )
+                )
+            }
         }
-
     }
 }

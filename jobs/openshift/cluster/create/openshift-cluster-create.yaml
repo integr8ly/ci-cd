@@ -12,6 +12,10 @@
           name: 'awsRegion'
           default: 'eu-west-2'
           description: '[REQUIRED] The AWS Region the cluster should be created in'
+      - bool:
+          name: 'dryRun'
+          default: false
+          description: '[OPTIONAL][Test] Dry run only, only prints what it would do!'
     pipeline-scm:
       script-path: jobs/openshift/cluster/create/Jenkinsfile
       scm:
