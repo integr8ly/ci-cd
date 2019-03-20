@@ -22,6 +22,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/repos/repos-delete-branches-and-
 generate_inline_script_job $SCRIPTS_DIR/../jobs/repos/repos-delete-docker-image-tags/repos-delete-docker-image-tags.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/3scale.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/backup-container.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/codeready.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/fuse.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/fuse-online.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/gitea.yaml
@@ -32,6 +33,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/web
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/discovery/amq-online.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/3scale-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/backup-container-next.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/codeready-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/fuse-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/fuse-online-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/gitea-next.yaml
