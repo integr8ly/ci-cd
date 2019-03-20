@@ -16,19 +16,16 @@
             default: 'master'
             description: "Branch of the installer repository"
         - string:
+            name: YOURCITY
+            description: "City or Customer (5 char min.) plus the generated hash, e.g. qebrno-5d10 [required]"    
+        - string:
             name: ANSIBLE_USER
             default: ec2-user
             description: "User for Ansible to access the master node of target cluster"
         - string:
-            name: MASTER_URLS
-            description: "Comma separated list of URLs for master nodes of target cluster to be used in Ansible inventory file"
-        - string:
             name: BASTION_USER
             default: ec2-user
             description: "User capable of SSH-ing to bastion server"
-        - string:
-            name: BASTION_URL
-            description: "URL for bastion server the target cluster is hidden behind"
         - string:
             name: BASTION_PRIVATE_KEY_ID
             description: "ID of SSH Credentials (private key) used for SSH-ing to bastion"
@@ -40,18 +37,16 @@
 
         import hudson.plugins.sshslaves.verifiers.*
 
+        String MASTER_URL = "master1.${YOURCITY}.internal"
+        String BASTION_URL = "bastion.${YOURCITY}.openshiftworkshop.com"    
         String bastionLabel = "${BASTION_URL}-slave"
 
         try {
             timeout(60) { ansiColor('gnome-terminal') { timestamps {
                 node('cirhos_rhel7') {        
                     stage('Verify input') {
-                        if (!MASTER_URLS) {
-                            throw new hudson.AbortException('MASTER_URLS parameter is required!')
-                        }
-                        
-                        if (!BASTION_URL) {
-                            throw new hudson.AbortException('BASTION_URL parameter is required!')
+                        if (!YOURCITY) {
+                            throw new hudson.AbortException('YOURCITY parameter is required!')
                         }
                     }
 

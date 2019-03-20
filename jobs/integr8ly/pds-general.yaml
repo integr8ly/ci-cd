@@ -74,9 +74,8 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                                 string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
                                 string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
                                 string(name: 'ANSIBLE_USER', value: 'ec2-user'),
-                                string(name: 'MASTER_URLS', value: "master1.${YOURCITY}.internal"),
+                                string(name: 'YOURCITY', value: "${YOURCITY}"),
                                 string(name: 'BASTION_USER', value: 'ec2-user'),
-                                string(name: 'BASTION_URL', value: "bastion.${YOURCITY}.openshiftworkshop.com"),
                                 string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
                                 
                             // Waiting for 5 minutes so that resources scheduled for termination are actually terminated
@@ -92,9 +91,8 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                                 string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
                                 string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
                                 string(name: 'ANSIBLE_USER', value: 'ec2-user'),
-                                string(name: 'MASTER_URLS', value: "master1.${YOURCITY}.internal"),
+                                string(name: 'YOURCITY', value: "${YOURCITY}"),
                                 string(name: 'BASTION_USER', value: 'ec2-user'),
-                                string(name: 'BASTION_URL', value: "bastion.${YOURCITY}.openshiftworkshop.com"),
                                 string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
                                 
                             // Waiting for 1 minute so that resources scheduled for termination are actually terminated
@@ -216,9 +214,8 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                                 string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
                                 string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
                                 string(name: 'ANSIBLE_USER', value: 'ec2-user'),
-                                string(name: 'MASTER_URLS', value: "master1.${YOURCITY}.internal"),
+                                string(name: 'YOURCITY', value: "${YOURCITY}"),
                                 string(name: 'BASTION_USER', value: 'ec2-user'),
-                                string(name: 'BASTION_URL', value: "bastion.${YOURCITY}.openshiftworkshop.com"),
                                 string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
 
                             sleep time: 3, unit: 'MINUTES'
