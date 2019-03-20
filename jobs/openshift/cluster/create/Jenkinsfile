@@ -1,0 +1,28 @@
+#!groovy
+
+def clusterName = params.clusterName
+
+currentBuild.displayName = "${currentBuild.displayName} ${clusterName}"
+
+node('cirhos_rhel7') {
+    cleanWs()
+    stage('Create OpenShift Cluster') {
+        println("Create OpenShift Cluster")
+
+        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
+            ansibleTower(
+                    towerServer: 'Dev Tower',
+                    jobTemplate: '[aws.eng] Cluster Create',
+                    templateType: 'workflow',
+                    importTowerLogs: true,
+                    removeColor: false,
+                    verbose: true,
+                    extraVars: """---
+                    oo_clusterid: ${clusterName}
+                    oo_sublocation: eu-west-2
+                    survey_provision_logging: 'false'"""
+            )
+        }
+
+    }
+}

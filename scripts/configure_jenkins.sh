@@ -44,6 +44,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/rhsso-
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/webapp-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/amq-online-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/github-events/release-monitoring-github-events.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/create/openshift-cluster-create.yaml
 
 #Folders
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/release-monitoring/release-monitoring-folders.yaml
@@ -71,3 +72,4 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/recreate-pipel
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/repos/
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/release/
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/monitoring/
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/openshift/
