@@ -32,6 +32,10 @@
           name: EVALS_USERNAME
           default: 'evals11@example.com'
           description: 'Evals account email address used to access the available consoles'
+      - string:
+          name: EVALS_PASSWORD
+          default: 'Password1'
+          description: 'Evals user password'
     dsl: |
         timeout(60) { ansiColor('gnome-terminal') { timestamps {
 
