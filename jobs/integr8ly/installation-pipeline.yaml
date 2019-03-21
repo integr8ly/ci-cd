@@ -120,6 +120,9 @@
                                 extensions: [],
                                 userRemoteConfigs: [[url: REPOSITORY]]
                             ])
+
+                            sh "git clean -xdf"
+
                             if(!fileExists("evals")) {
                                 sh "ln -s . evals"
                             }
