@@ -1,8 +1,8 @@
 ---
 
 - job:
-    name: enmasse-address-creation-test
-    description: 'Executes enmasse address creation test'
+    name: amq-online-address-creation-test
+    description: 'Executes AMQ Online address creation test'
     project-type: pipeline
     sandbox: true
     parameters:
