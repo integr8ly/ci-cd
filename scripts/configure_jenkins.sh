@@ -54,6 +54,7 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/generated/
 
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/after-first-login-tests.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/alerts-test.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/amq-online-address-creation-test.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/browser-based-test-executor.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/browser-based-testsuite-pipeline.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/clean-uninstallation-pipeline.yaml
