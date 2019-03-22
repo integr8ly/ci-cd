@@ -59,27 +59,14 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
               - none
     dsl: |
         def err = null
+        
         try {
             timeout(180) { ansiColor('gnome-terminal') { timestamps {
-                node('cirhos_rhel7') {        
-                    stage('Verify input') {
-                        if (!YOURCITY) {
-                            throw new hudson.AbortException('YOURCITY parameter is required!')
-                        } // if
-                    } // stage
+                node('cirhos_rhel7') {
                     
                     stage ('Uninstall #1') {
                         if(TO_DO.contains('heavy') || TO_DO.contains('uninstall')) {
-                            build job: 'uninstallation-pipeline', parameters: [
-                                string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
-                                string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
-                                string(name: 'ANSIBLE_USER', value: 'ec2-user'),
-                                string(name: 'YOURCITY', value: "${YOURCITY}"),
-                                string(name: 'BASTION_USER', value: 'ec2-user'),
-                                string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
-                                
-                            // Waiting for 5 minutes so that resources scheduled for termination are actually terminated
-                            sleep time: 5, unit: 'MINUTES'
+                            uninstall(5)
                         } else {
                             println 'Uninstall #1 skipped'
                         }
@@ -87,17 +74,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                     
                     stage ('Uninstall #2') {
                         if(TO_DO.contains('heavy') || TO_DO.count('uninstall') >= 2) {
-                            build job: 'uninstallation-pipeline', parameters: [
-                                string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
-                                string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
-                                string(name: 'ANSIBLE_USER', value: 'ec2-user'),
-                                string(name: 'YOURCITY', value: "${YOURCITY}"),
-                                string(name: 'BASTION_USER', value: 'ec2-user'),
-                                string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
-                                
-                            // Waiting for 1 minute so that resources scheduled for termination are actually terminated
-                            // Since this is 2nd uninstall there is no need for a long wait here
-                            sleep time: 1, unit: 'MINUTES'
+                            uninstall(1)
                         } else {
                             println 'Uninstall #2 skipped'
                         }
@@ -105,19 +82,10 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                     
                     stage('Install #1') {
                         if(TO_DO.contains('heavy') || TO_DO.contains('install')) {
-                            build job: 'installation-pipeline', parameters: [
-                                string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
-                                string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
-                                string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
-                                string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
-                                booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
-                                string(name: 'ANSIBLE_USER', value: 'ec2-user'),
-                                string(name: 'YOURCITY', value: "${YOURCITY}"),
-                                string(name: 'BASTION_USER', value: 'ec2-user'),
-                                string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
-                                
-                            if(TO_DO.contains('heavy') || TO_DO.contains('tests') || TO_DO.count('install') >= 2) {
-                                sleep time: 3, unit: 'MINUTES'
+                            if (TO_DO.contains('heavy') || TO_DO.contains('tests') || TO_DO.count('install') >= 2) {
+                                install(true) // sleep after install
+                            } else {
+                                install(false) // no sleep after install
                             }
                         } else {
                             println 'Install #1 skipped'
@@ -126,19 +94,10 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
 
                     stage('Install #2') {
                         if(TO_DO.contains('heavy') || TO_DO.count(' install') >= 2) {
-                            build job: 'installation-pipeline', parameters: [
-                                string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
-                                string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
-                                string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
-                                string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
-                                booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
-                                string(name: 'ANSIBLE_USER', value: 'ec2-user'),
-                                string(name: 'YOURCITY', value: "${YOURCITY}"),
-                                string(name: 'BASTION_USER', value: 'ec2-user'),
-                                string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
-                                
                             if(TO_DO.contains('heavy')) {
-                                sleep time: 3, unit: 'MINUTES'
+                                install(true) // sleep after install
+                            } else {
+                                install(false) // no sleep after install
                             }
                         } else {
                             println 'Install #2 skipped'
@@ -147,18 +106,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                     
                     stage('Smoke Tests') {
                         if(TO_DO.contains('heavy') || TO_DO.contains('tests')) {
-                            buildStatus = build(job: 'installation-smoke-tests', propagate: false, parameters: [
-                                string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
-                                string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
-                                string(name: 'CLUSTER_URL', value: "https://master.${YOURCITY}.openshiftworkshop.com"),
-                                string(name: 'ADMIN_USERNAME', value: 'admin@example.com'),
-                                string(name: 'ADMIN_PASSWORD', value: 'Password1')]).result
-                                
-                            println "Build finished with ${buildStatus}"
-                            
-                            if(buildStatus != 'SUCCESS') {
-                                currentBuild.result = 'UNSTABLE'
-                            }
+                            runTests('installation-smoke-tests')
                         } else {
                             println 'Smoke Tests skipped'
                         }
@@ -166,22 +114,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
 
                     stage('Browser Based Tests') {
                         if(TO_DO.contains('heavy') || TO_DO.contains('tests')) {
-                            buildStatus = build(job: 'browser-based-testsuite-pipeline', propagate: false, parameters: [
-                                string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
-                                string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
-                                string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-webapp.apps.${YOURCITY}.openshiftworkshop.com"),
-                                string(name: 'CLUSTER_URL', value: "https://master.${YOURCITY}.openshiftworkshop.com"),
-                                string(name: 'ADMIN_USERNAME', value: 'admin@example.com'),
-                                string(name: 'ADMIN_PASSWORD', value: 'Password1'),
-                                string(name: 'EVALS_PASSWORD', value: 'Password1'),
-                                string(name: 'EVALS_USERNAME', value: 'evals23@example.com')]).result
-                            
-                            println "Build finished with ${buildStatus}"
-                            
-                            if(buildStatus != 'SUCCESS') {
-                                currentBuild.result = 'UNSTABLE'
-                            }
-                            
+                            runTests('browser-based-testsuite-pipeline')
                             sleep time: 3, unit: 'MINUTES'
                         } else {
                             println 'Browser Based Tests skipped'
@@ -190,19 +123,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                     
                     stage('After First Login Tests') {
                         if(TO_DO.contains('heavy') || TO_DO.contains('tests')) {
-                            buildStatus = build(job: 'after-first-login-tests', propagate: false, parameters: [
-                                string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
-                                string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
-                                string(name: 'CLUSTER_URL', value: "https://master.${YOURCITY}.openshiftworkshop.com"),
-                                string(name: 'ADMIN_USERNAME', value: 'admin@example.com'),
-                                string(name: 'ADMIN_PASSWORD', value: 'Password1'),
-                                string(name: 'EVALS_USERNAME', value: 'evals23@example.com')]).result
-                            
-                            println "Build finished with ${buildStatus}"
-                                
-                            if(buildStatus != 'SUCCESS') {
-                                currentBuild.result = 'UNSTABLE'
-                            }
+                            runTests('after-first-login-tests')
                         } else {
                             println 'After First Login Tests skipped'
                         }
@@ -210,15 +131,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
 
                     stage ('Uninstall #3') {
                         if(TO_DO.contains('heavy')) {
-                            build job: 'uninstallation-pipeline', parameters: [
-                                string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
-                                string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
-                                string(name: 'ANSIBLE_USER', value: 'ec2-user'),
-                                string(name: 'YOURCITY', value: "${YOURCITY}"),
-                                string(name: 'BASTION_USER', value: 'ec2-user'),
-                                string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
-
-                            sleep time: 3, unit: 'MINUTES'
+                            uninstall(3)
                         } else {
                             println 'Uninstall #3 skipped'
                         }
@@ -226,17 +139,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                     
                     stage('Install #3') {
                         if(TO_DO.contains('heavy')) {
-                            build job: 'installation-pipeline', parameters: [
-                                string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
-                                string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
-                                string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
-                                string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
-                                booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
-                                string(name: 'ANSIBLE_USER', value: 'ec2-user'),
-                                string(name: 'MASTER_URLS', value: "master1.${YOURCITY}.internal"),
-                                string(name: 'BASTION_USER', value: 'ec2-user'),
-                                string(name: 'BASTION_URL', value: "bastion.${YOURCITY}.openshiftworkshop.com"),
-                                string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
+                            install(false) // no sleep after install
                         } else {
                             println 'Install #3 skipped'
                         }
@@ -248,6 +151,62 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             err = caughtError 
         } finally {
             notifyBuild(currentBuild.result, err)
+        }
+
+        // Waiting for ${sleepTime} minutes so that resources scheduled for termination are actually terminated
+        def uninstall(sleepTime) {
+            build job: 'uninstallation-pipeline', parameters: [
+                string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
+                string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
+                string(name: 'ANSIBLE_USER', value: 'ec2-user'),
+                string(name: 'YOURCITY', value: "${YOURCITY}"),
+                string(name: 'BASTION_USER', value: 'ec2-user'),
+                string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
+
+            sleep time: sleepTime, unit: 'MINUTES'
+        }
+
+        def install(sleepAfterInstall) {
+            build job: 'installation-pipeline', parameters: [
+                string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
+                string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
+                string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
+                string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
+                booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
+                string(name: 'ANSIBLE_USER', value: 'ec2-user'),
+                string(name: 'YOURCITY', value: "${YOURCITY}"),
+                string(name: 'BASTION_USER', value: 'ec2-user'),
+                string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
+            
+            if (sleepAfterInstall) {
+                sleep time: 3, unit: 'MINUTES'
+            }
+        }
+
+        def runTests(testPipeline) {
+            parameters = [
+                string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
+                string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                string(name: 'CLUSTER_URL', value: "https://master.${YOURCITY}.openshiftworkshop.com"),
+                string(name: 'ADMIN_USERNAME', value: 'admin@example.com'),
+                string(name: 'ADMIN_PASSWORD', value: 'Password1')
+            ]
+
+            if (testPipeline == 'after-first-login-tests' || testPipeline == 'browser-based-testsuite-pipeline') {
+                parameters.add(string(name: 'EVALS_USERNAME', value: 'evals23@example.com'))
+            }
+
+            if (testPipeline == 'browser-based-testsuite-pipeline') {
+                parameters.add(string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-webapp.apps.${YOURCITY}.openshiftworkshop.com"))
+                parameters.add(string(name: 'EVALS_PASSWORD', value: 'Password1'))
+            }
+
+            buildStatus = build(job: testPipeline, propagate: false, parameters: parameters).result
+            println "Build finished with ${buildStatus}"
+                            
+            if (buildStatus != 'SUCCESS') {
+                currentBuild.result = 'UNSTABLE'
+            }
         }
 
         def notifyBuild(String buildStatus, err) {
@@ -266,4 +225,3 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
 
             mail body: body, subject: subject, to: mailRecipients
         }
-
