@@ -1,0 +1,67 @@
+#!groovy
+
+def uninstallerOptions = [:]
+
+def verifyUninstallerOptions(uninstallerOptions) {
+    if (!uninstallerOptions.clusterName || !uninstallerOptions.openshiftMasterUrl || !uninstallerOptions.clusterAdminUsername || !uninstallerOptions.clusterAdminPassword ||
+        !uninstallerOptions.uninstallerGitUrl || !uninstallerOptions.uninstallerGitBranch) {
+        def userInput = input message: 'Installer Options', parameters: [
+            string(defaultValue: (uninstallerOptions.clusterName ?: ''), description: 'Cluster name', name: 'clusterName'),
+            string(defaultValue: (uninstallerOptions.openshiftMasterUrl ?: ''), description: 'OpenShift cluster public URL', name: 'openshiftMasterUrl'),
+            string(defaultValue: (uninstallerOptions.clusterAdminUsername ?: 'integreatly'), description: 'OpenShift cluster admin username', name: 'clusterAdminUsername'),
+            string(defaultValue: (uninstallerOptions.clusterAdminPassword ?: 'Password1'), description: 'OpenShift cluster admin password', name: 'clusterAdminPassword'),
+            string(defaultValue: (uninstallerOptions.uninstallerGitUrl ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly uninstaller Git URL', name: 'uninstallerGitUrl'),
+            string(defaultValue: (uninstallerOptions.uninstallerGitBranch ?: 'master'), description: 'Integreatly uninstaller Git branch', name: 'uninstallerGitBranch'),
+        ]
+        uninstallerOptions.clusterName = userInput.clusterName
+        uninstallerOptions.openshiftMasterUrl = userInput.openshiftMasterUrl
+        uninstallerOptions.clusterAdminUsername = userInput.clusterAdminUsername
+        uninstallerOptions.clusterAdminPassword = userInput.clusterAdminPassword
+        uninstallerOptions.uninstallerGitUrl = userInput.uninstallerGitUrl
+        uninstallerOptions.uninstallerGitBranch = userInput.uninstallerGitBranch
+        verifyUninstallerOptions(uninstallerOptions)
+    }
+}
+
+stage("Verify Uninstallation Options") {
+    uninstallerOptions.clusterName = params.clusterName
+    uninstallerOptions.openshiftMasterUrl = params.openshiftMasterUrl
+    uninstallerOptions.clusterAdminUsername = params.clusterAdminUsername
+    uninstallerOptions.clusterAdminPassword = params.clusterAdminPassword
+    uninstallerOptions.uninstallerGitUrl = params.uninstallerGitUrl
+    uninstallerOptions.uninstallerGitBranch = params.uninstallerGitBranch
+
+    verifyUninstallerOptions(uninstallerOptions)
+    println "Installer Options: ${uninstallerOptions}"
+    currentBuild.displayName = "${currentBuild.displayName} ${uninstallerOptions.clusterName}"
+    currentBuild.description = """clusterName: ${uninstallerOptions.clusterName}\nopenshiftMasterUrl: ${uninstallerOptions.openshiftMasterUrl}
+                                \nopenshiftUsername: ${uninstallerOptions.clusterAdminUsername}\nopenshiftPassword: ${uninstallerOptions.clusterAdminPassword}
+                                \nuninstallerGitUrl: ${uninstallerOptions.installerGitUrl}\nuninstallerGitBranch: ${uninstallerOptions.installerGitBranch}"""
+}
+
+node('cirhos_rhel7') {
+    cleanWs()
+    stage('Uninstall Integreatly') {
+        if (params.dryRun) {
+            println("Would call ansibleTower Integreatly Uninstall job template with the following unnstallation options: ${uninstallerOptions}")
+        } else {
+            wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
+              ansibleTower(
+                towerServer: 'Dev Tower',
+                jobTemplate: 'Integreatly Uninstall Template',
+                templateType: 'job',
+                importTowerLogs: true,
+                removeColor: false,
+                verbose: true,
+                extraVars: """---
+                  cluster_name: ${uninstallerOptions.clusterName}
+                  openshift_master_public_url: ${uninstallerOptions.openshiftMasterUrl}
+                  openshift_username: ${uninstallerOptions.clusterAdminUsername}
+                  openshift_password: ${uninstallerOptions.clusterAdminPassword}
+                  integreatly_project_uninstall_scm_url: ${uninstallerOptions.uninstallerGitUrl}
+                  integreatly_project_uninstall_scm_branch: ${uninstallerOptions.uninstallerGitBranch}"""
+              )
+            }
+        }
+    }
+}
