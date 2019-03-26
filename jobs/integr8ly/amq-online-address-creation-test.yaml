@@ -47,7 +47,7 @@
                     }
                     dir('tests/backend-testsuite'){    
                         sh '''
-                            gulp address-create | tee output.txt
+                            ../node_modules/gulp/bin/gulp.js address-create | tee output.txt
                         '''
                         String output = readFile("output.txt");
                         
