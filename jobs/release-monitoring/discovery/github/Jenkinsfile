@@ -270,7 +270,7 @@ node {
                     sh "git rebase origin/${installationGitRef}"
                 } catch (Exception e) {
                     sh "git rebase --abort"
-                    println "We were unable to automatically rebase the target branch '${installationGitRef}' into the source branch '${nextBranch}'. Please fix these conflicts locally and push the changes to ${nextBranch} before running this job again!"
+                    error "[ERROR] We were unable to automatically rebase the target branch '${installationGitRef}' into the source branch '${nextBranch}'. Please fix these conflicts locally and push the changes to ${nextBranch} before running this job again!"
                 }
             }
 
