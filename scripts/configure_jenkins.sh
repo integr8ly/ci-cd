@@ -43,7 +43,6 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/middle
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/rhsso-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/webapp-next.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/branch/amq-online-next.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/release-monitoring/github-events/release-monitoring-github-events.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/create/openshift-cluster-create.yaml
 
 #Folders
