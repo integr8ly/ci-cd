@@ -7,7 +7,7 @@
     project-type: pipeline
     concurrent: false
     triggers:
-      - timed: '@hourly'
+      - timed: 'H/10 * * * *'
     parameters:
       - string:
           name: 'productVersionVar'
