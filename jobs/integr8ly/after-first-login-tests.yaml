@@ -45,13 +45,12 @@
                     }
                 }
                 stage('Run the tests after login'){
-                    dir('tests'){
+                    dir('test-suites/backend-testsuite') {
                         sh '''
                             npm install
                         '''
-                    }
-                    dir('tests/backend-testsuite') {
-                        String output = sh returnStdout: true, script: '../node_modules/gulp/bin/gulp.js after-first-login || true'
+
+                        String output = sh returnStdout: true, script: './node_modules/gulp/bin/gulp.js after-first-login || true'
 
                         // To see the output in Jenkins build console log as well
                         println output
@@ -66,7 +65,7 @@
                 }
                 stage('Publish test results') {
                     if (publishTestResults) {
-                        dir('tests/backend-testsuite/reports/') {
+                        dir('test-suites/backend-testsuite/reports/') {
                             archiveArtifacts 'after-first-login.xml'                  
                             junit allowEmptyResults:true, testResults: 'after-first-login.xml'
                         } 
