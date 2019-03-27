@@ -2,6 +2,8 @@
 - job:
     name: release-monitoring-discovery/amq-online
     display-name: 'AMQ Online'
+    description: "Monitoring <a href=\"https://github.com/jboss-container-images/amq-online-images/releases\">https://github.com/jboss-container-images/amq-online-images/releases</a> for latest GA release.<br/>
+    Next Branch: <a href=\"https://github.com/integr8ly/installation/tree/amq-online-next\">https://github.com/integr8ly/installation/tree/amq-online-next</a> is being automatically tested by this <a href=\"/view/Product%20Release%20Monitoring/job/release-monitoring-branch/job/amq-online-next/\">next branch job</a>"
     project-type: pipeline
     concurrent: false
     triggers:

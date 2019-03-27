@@ -2,6 +2,7 @@
 - job:
     name: release-monitoring-branch/codeready-next
     display-name: 'CodeReady'
+    description: "Next Branch: <a href=\"https://github.com/integr8ly/installation/tree/codeready-next\">https://github.com/integr8ly/installation/tree/codeready-next</a> is being automatically updated by this <a href=\"/view/Product%20Release%20Monitoring/job/release-monitoring-discovery/job/codeready/\">discovery job</a>"
     project-type: pipeline
     concurrent: false
     parameters:

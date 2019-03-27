@@ -2,9 +2,29 @@
 - job:
     name: release-monitoring-discovery
     display-name: 'Release Discovery Jobs'
+    description: "Release discovery jobs are used to monitor the upstream repos for each component/product installed as part of Integreatly and check for new releases.
+                  <br/>
+                  Each job maintains an individual product/component \"next\" branch on the Integreatly installation repo, all of which can be viewed on GitHub <a href=\"https://github.com/integr8ly/installation/branches/all?utf8=%E2%9C%93&query=-next\">here</a>
+                  <br/>
+                  Each job will:
+                  <ul>
+                    <li>Create a product next branch in the Integreatly installation repo if one doesn't already exist</li>
+                    <li>Keep the next branch up to date with the base branch (master)</li>
+                    <li>Check for a new GA release in the upstream product/component repository being monitored</li>
+                    <li>Update the appropriate version meta data in the product next branch for any version found</li>
+                  </ul>"
     project-type: folder
 
 - job:
     name: release-monitoring-branch
     display-name: 'Next Branch Jobs'
+    description: "Next branch jobs are used to test the next available releases, if any, of all the products and component's that are installed as part of Integreatly.
+                  <br/>
+                  Each job tests an individual product/component \"next\" branch on the Integreatly installation repo, all of which can be viewed on GitHub <a href=\"https://github.com/integr8ly/installation/branches/all?utf8=%E2%9C%93&query=-next\">here</a>
+                  <br/>
+                  Each job will:
+                  <ul>
+                    <li>Checkout and test this version in an Integreatly environment (ToDo)</li>
+                    <li>Open a PR against master if it passes all tests.</li>
+                  </ul>"
     project-type: folder

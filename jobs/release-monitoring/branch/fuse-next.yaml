@@ -2,6 +2,7 @@
 - job:
     name: release-monitoring-branch/fuse-next
     display-name: 'Fuse'
+    description: "Next Branch: <a href=\"https://github.com/integr8ly/installation/tree/fuse-next\">https://github.com/integr8ly/installation/tree/fuse-next</a> is being automatically updated by this <a href=\"/view/Product%20Release%20Monitoring/job/release-monitoring-discovery/job/fuse/\">discovery job</a>"
     project-type: pipeline
     concurrent: false
     parameters:

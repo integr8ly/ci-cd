@@ -2,6 +2,7 @@
 - job:
     name: release-monitoring-branch/backup-container-next
     display-name: 'Backup Container'
+    description: "Next Branch: <a href=\"https://github.com/integr8ly/installation/tree/backup-container-next\">https://github.com/integr8ly/installation/tree/backup-container-next</a> is being automatically updated by this <a href=\"/view/Product%20Release%20Monitoring/job/release-monitoring-discovery/job/backup-container/\">discovery job</a>"
     project-type: pipeline
     concurrent: false
     parameters:

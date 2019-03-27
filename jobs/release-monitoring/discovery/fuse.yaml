@@ -2,6 +2,8 @@
 - job:
     name: release-monitoring-discovery/fuse
     display-name: 'Fuse'
+    description: "Monitoring <a href=\"https://github.com/jboss-fuse/application-templates/tags\">https://github.com/jboss-fuse/application-templates/tags</a> (Latest containing redhat) for latest GA release.<br/>
+    Next Branch: <a href=\"https://github.com/integr8ly/installation/tree/fuse-next\">https://github.com/integr8ly/installation/tree/fuse-next</a> is being automatically tested by this <a href=\"/view/Product%20Release%20Monitoring/job/release-monitoring-branch/job/fuse-next/\">next branch job</a>"
     project-type: pipeline
     concurrent: false
     triggers:
