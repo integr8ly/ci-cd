@@ -49,17 +49,17 @@
                 
                 docker.image('selenium/standalone-chrome:3.14.0-krypton').withRun('--name chrome_selenium -d -p 4444:4444 -v /dev/shm:/dev/shm -v "$PWD":"$PWD" -e SE_OPTS="-timeout 3600"') { c ->
                     stage('Test') {
-                        dir('integreatly-qe/tests') {
+                        dir('integreatly-qe/test-suites/ui-testsuite') {
                             try {
                                 sh """
                                 # Disable starting Selenium, Docker is used instead
                                 sed -i 's/"start_process" : true,/"start_process" : false,/g' nightwatch.json
-                                rm -rf ui-testsuite/screenshots ui-testsuite/reports # so that any leftovers from past builds are not archived
+                                rm -rf screenshots reports # so that any leftovers from past builds are not archived
                                 npm install
                                 npm test
                                 """   
                             } catch (Exception e) {
-                                String reportsDirEntriesCount = sh returnStdout: true, script: 'ls ui-testsuite/reports | wc -l'
+                                String reportsDirEntriesCount = sh returnStdout: true, script: 'ls reports | wc -l'
                                 if (reportsDirEntriesCount.trim() == '0') {
                                     currentBuild.result = 'FAILURE'
                                 }
@@ -69,14 +69,14 @@
                 }
 
                 stage('Publish test results') {
-                    dir('integreatly-qe/tests/ui-testsuite/reports') {
+                    dir('integreatly-qe/test-suites/ui-testsuite/reports') {
                         archiveArtifacts '**/*.xml'                  
                         junit allowEmptyResults:true, testResults: '**/*.xml'
                     }
                 }
                 
                 stage('Save screenshots for any failures/ errors') {
-                    dir('integreatly-qe/tests/ui-testsuite') {
+                    dir('integreatly-qe/test-suites/ui-testsuite') {
                         if (fileExists('screenshots')) {
                             archiveArtifacts 'screenshots/**'
                         } else {

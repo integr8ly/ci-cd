@@ -28,6 +28,13 @@
           name: EVALS_USERNAME
           default: 'evals11@example.com'
           description: 'Evals account email address used to access the available consoles. This test expects that this user started the Walkthrough 1A!!'
+      - string:
+          name: FUSE_NAMESPACE
+          description: 'name of the fuse namespace to test the integration (optional, defaults to "fuse")'
+      - bool:
+          name: CLEAN_RESOURCES
+          default: true
+          description: 'depending on whether the resources should be cleaned after the successful execution'
     dsl: |
         timeout(60) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){
@@ -40,13 +47,11 @@
                     }
                 }
                 stage('Run the Fuse tests'){
-                    dir('tests'){
+                    dir('test-suites/backend-testsuite') {
                         sh '''
                             npm install
-                        '''
-                    }
-                    dir('tests/backend-testsuite'){    
-                        String output = sh returnStdout: true, script: '../node_modules/gulp/bin/gulp.js fuse-w1A || true'
+                        '''  
+                        String output = sh returnStdout: true, script: './node_modules/gulp/bin/gulp.js fuse-w1A || true'
 
                         // To see the output in Jenkins build console log as well
                         println output
@@ -61,7 +66,7 @@
                 }
                 stage('Publish test results') {
                     if(publishTestResults) {
-                        dir('tests/backend-testsuite/reports/') {
+                        dir('test-suites/backend-testsuite/reports/') {
                             archiveArtifacts 'w1A-integration-test.xml'                  
                             junit allowEmptyResults:true, testResults: 'w1A-integration-test.xml'
                         }
