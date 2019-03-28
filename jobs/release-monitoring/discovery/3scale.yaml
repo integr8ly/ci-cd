@@ -2,6 +2,8 @@
 - job:
     name: release-monitoring-discovery/3scale
     display-name: '3Scale'
+    description: "Monitoring <a href=\"https://github.com/3scale/3scale-amp-openshift-templates/releases\">https://github.com/3scale/3scale-amp-openshift-templates/releases</a> for latest GA release.<br/>
+    Next Branch: <a href=\"https://github.com/integr8ly/installation/tree/3scale-next\">https://github.com/integr8ly/installation/tree/3scale-next</a> is being automatically tested by this <a href=\"/view/Product%20Release%20Monitoring/job/release-monitoring-branch/job/3scale-next/\">next branch job</a>"
     project-type: pipeline
     concurrent: false
     triggers:

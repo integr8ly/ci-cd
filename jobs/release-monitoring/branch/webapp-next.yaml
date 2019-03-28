@@ -2,6 +2,7 @@
 - job:
     name: release-monitoring-branch/webapp-next
     display-name: 'WebApp'
+    description: "Next Branch: <a href=\"https://github.com/integr8ly/installation/tree/webapp-next\">https://github.com/integr8ly/installation/tree/webapp-next</a> is being automatically updated by this <a href=\"/view/Product%20Release%20Monitoring/job/release-monitoring-discovery/job/webapp/\">discovery job</a>"
     project-type: pipeline
     concurrent: false
     parameters:

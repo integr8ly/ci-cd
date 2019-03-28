@@ -2,10 +2,12 @@
 - job:
     name: release-monitoring-discovery/backup-container
     display-name: 'Backup Container'
+    description: "Monitoring <a href=\"https://github.com/integr8ly/backup-container-image/releases\">https://github.com/integr8ly/backup-container-image/releases</a> for latest GA release.<br/>
+    Next Branch: <a href=\"https://github.com/integr8ly/installation/tree/backup-container-next\">https://github.com/integr8ly/installation/tree/backup-container-next</a> is being automatically tested by this <a href=\"/view/Product%20Release%20Monitoring/job/release-monitoring-branch/job/backup-container-next/\">next branch job</a>"
     project-type: pipeline
     concurrent: false
     triggers:
-      - timed: '@hourly'
+      - timed: 'H/10 * * * *'
     parameters:
       - string:
           name: 'productVersionVar'

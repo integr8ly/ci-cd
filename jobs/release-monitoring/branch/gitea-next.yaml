@@ -2,6 +2,7 @@
 - job:
     name: release-monitoring-branch/gitea-next
     display-name: 'Gitea'
+    description: "Next Branch: <a href=\"https://github.com/integr8ly/installation/tree/gitea-next\">https://github.com/integr8ly/installation/tree/gitea-next</a> is being automatically updated by this <a href=\"/view/Product%20Release%20Monitoring/job/release-monitoring-discovery/job/gitea/\">discovery job</a>"
     project-type: pipeline
     concurrent: false
     parameters:

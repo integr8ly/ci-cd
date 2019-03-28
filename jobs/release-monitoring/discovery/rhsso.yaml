@@ -2,10 +2,12 @@
 - job:
     name: release-monitoring-discovery/rhsso
     display-name: 'RHSSO'
+    description: "Monitoring <a href=\"https://github.com/integr8ly/keycloak-operator/releases\">https://github.com/integr8ly/keycloak-operator/releases</a> for latest GA release.<br/>
+    Next Branch: <a href=\"https://github.com/integr8ly/installation/tree/rhsso-next\">https://github.com/integr8ly/installation/tree/rhsso-next</a> is being automatically tested by this <a href=\"/view/Product%20Release%20Monitoring/job/release-monitoring-branch/job/rhsso-next/\">next branch job</a>"
     project-type: pipeline
     concurrent: false
     triggers:
-      - timed: '@hourly'
+      - timed: 'H/10 * * * *'
     parameters:
       - string:
           name: 'releaseTagVar'

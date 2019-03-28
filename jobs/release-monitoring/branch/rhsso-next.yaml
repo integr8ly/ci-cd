@@ -2,6 +2,7 @@
 - job:
     name: release-monitoring-branch/rhsso-next
     display-name: 'RHSSO'
+    description: "Next Branch: <a href=\"https://github.com/integr8ly/installation/tree/rhsso-next\">https://github.com/integr8ly/installation/tree/rhsso-next</a> is being automatically updated by this <a href=\"/view/Product%20Release%20Monitoring/job/release-monitoring-discovery/job/rhsso/\">discovery job</a>"
     project-type: pipeline
     concurrent: false
     parameters:

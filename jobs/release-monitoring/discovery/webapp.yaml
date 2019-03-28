@@ -2,10 +2,12 @@
 - job:
     name: release-monitoring-discovery/webapp
     display-name: 'WebApp'
+    description: "Monitoring <a href=\"https://github.com/integr8ly/tutorial-web-app-operator/releases\">https://github.com/integr8ly/tutorial-web-app-operator/releases</a> for latest GA release.<br/>
+    Next Branch: <a href=\"https://github.com/integr8ly/installation/tree/webapp-next\">https://github.com/integr8ly/installation/tree/webapp-next</a> is being automatically tested by this <a href=\"/view/Product%20Release%20Monitoring/job/release-monitoring-branch/job/webapp-next/\">next branch job</a>"
     project-type: pipeline
     concurrent: false
     triggers:
-      - timed: '@hourly'
+      - timed: 'H/10 * * * *'
     parameters:
       - string:
           name: 'releaseTagVar'

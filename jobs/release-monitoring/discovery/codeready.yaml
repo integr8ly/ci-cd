@@ -2,6 +2,8 @@
 - job:
     name: release-monitoring-discovery/codeready
     display-name: 'CodeReady'
+    description: "Monitoring <a href=\"https://github.com/redhat-developer/codeready-workspaces-deprecated/tags\">https://github.com/redhat-developer/codeready-workspaces-deprecated/tags</a> (Latest appended with .GA) for latest GA release.<br/>
+    Next Branch: <a href=\"https://github.com/integr8ly/installation/tree/codeready-next\">https://github.com/integr8ly/installation/tree/codeready-next</a> is being automatically tested by this <a href=\"/view/Product%20Release%20Monitoring/job/release-monitoring-branch/job/codeready-next/\">next branch job</a>"
     project-type: pipeline
     concurrent: false
     triggers:
