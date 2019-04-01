@@ -1,0 +1,75 @@
+---
+
+- job:
+    name: sso-user-create-tests
+    project-type: pipeline
+    sandbox: true
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
+          description: 'QE Git repository URL.'
+      - string:
+          name: BRANCH
+          default: 'master'
+          description: 'Branch of the repository'
+      - string:
+          name: SSO_URL
+          description: 'SSO URL for the cluster on which the tests will be executed.'
+      - string:
+          name: CUSTOMER_ADMIN_USERNAME
+          default: "customer-admin@example.com"
+          description: 'Customer admin account username.'
+      - string:
+          name: CUSTOMER_ADMIN_PASSWORD
+          default: "Password1"
+          description: 'Customer admin account password.'
+      - bool:
+          name: CLEAN_RESOURCES_USERS
+          default: true
+          description: 'Whether the users should be deleted after the successful execution or not.'
+      - string:
+          name: NUMBER_OF_USERS
+          default: "5"
+          description: 'Number of created users.'
+    dsl: |
+        timeout(60) { ansiColor('gnome-terminal') { timestamps {
+            node('cirhos_rhel7'){
+
+                Boolean publishTestResults = true
+
+                stage('Clone QE repository') {
+                    dir('.') {
+                        git branch: "${BRANCH}", url: "${REPOSITORY}"
+                    }
+                }
+                stage('Run the SSO user creation tests'){
+                    dir('test-suites/backend-testsuite') {
+                        sh '''
+                            npm install
+                        '''  
+                        String output = sh returnStdout: true, script: './node_modules/gulp/bin/gulp.js userCreate || true'
+
+                        // To see the output in Jenkins build console log as well
+                        println output
+                        
+                        if(!output.contains('SSO user create')) {
+                            currentBuild.result = 'FAILURE'
+                            publishTestResults = false
+                        } else if(output.contains('There were test failures')) {
+                            currentBuild.result = 'UNSTABLE'
+                        }
+                    }
+                }
+                stage('Publish test results') {
+                    if(publishTestResults) {
+                        dir('test-suites/backend-testsuite/reports/') {
+                            archiveArtifacts 'userCreate.xml'                  
+                            junit allowEmptyResults:true, testResults: 'userCreate.xml'
+                        }
+                    } else {
+                        println 'Publishing the results skipped. Probably due to an error.'
+                    }
+                }
+            }
+        }}}
