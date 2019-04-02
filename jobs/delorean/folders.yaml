@@ -129,7 +129,7 @@
     project-type: folder
 - job:
     name: delorean-suites/integration
-    display-name: 'Integeration'
+    display-name: 'Integration'
     project-type: folder
 - job:
     name: delorean-suites/integration/next
