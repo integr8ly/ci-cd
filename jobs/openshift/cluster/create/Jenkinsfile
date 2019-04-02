@@ -3,13 +3,16 @@
 def clusterOptions = [:]
 
 def verifyClusterOptions(clusterOptions) {
-    if (!clusterOptions.name || !clusterOptions.awsRegion) {
+    if (!clusterOptions.name || !clusterOptions.awsRegion || !clusterOptions.awsAccountName) {
+        choiceAWSAccountName = new ChoiceParameterDefinition('awsAccountName', ['fheng'] as String[], 'AWS Account Name')
         def userInput = input message: 'Cluster Options', parameters: [
                 string(defaultValue: (clusterOptions.name ?: ''), description: 'Cluster name', name: 'clusterName'),
                 string(defaultValue: (clusterOptions.awsRegion ?: 'eu-west-2'), description: 'AWS Region', name: 'awsRegion'),
+                choiceAWSAccountName
         ]
         clusterOptions.name = userInput.clusterName
         clusterOptions.awsRegion = userInput.awsRegion
+        clusterOptions.awsAccountName = userInput.awsAccountName
         verifyClusterOptions(clusterOptions)
     }
 }
@@ -17,6 +20,7 @@ def verifyClusterOptions(clusterOptions) {
 stage("Cluster Options") {
     clusterOptions.name = params.clusterName
     clusterOptions.awsRegion = params.awsRegion
+    clusterOptions.awsAccountName = params.awsAccountName
     verifyClusterOptions(clusterOptions)
     println "Cluster Options: ${clusterOptions}"
     currentBuild.displayName = "${currentBuild.displayName} ${clusterOptions.name}"
@@ -33,7 +37,7 @@ node('cirhos_rhel7') {
             wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
                 ansibleTower(
                         towerServer: 'Dev Tower',
-                        jobTemplate: '[aws.eng] Cluster Create',
+                        jobTemplate: 'Provision Cluster',
                         templateType: 'workflow',
                         importTowerLogs: true,
                         removeColor: false,
@@ -41,6 +45,7 @@ node('cirhos_rhel7') {
                         extraVars: """---
                     oo_clusterid: ${clusterOptions.name}
                     oo_sublocation: ${clusterOptions.awsRegion}
+                    cluster_credential_bundle_aws_name: ${clusterOptions.awsAccountName}
                     survey_provision_logging: 'false'"""
                 )
             }

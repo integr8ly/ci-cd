@@ -12,6 +12,11 @@
           name: 'awsRegion'
           default: 'eu-west-2'
           description: '[REQUIRED] The AWS Region the cluster should be created in'
+      - choice:
+          name: 'awsAccountName'
+          choices:
+            - fheng
+          description: '[REQUIRED] The AWS Account to use'
       - bool:
           name: 'dryRun'
           default: false
