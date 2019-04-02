@@ -28,11 +28,6 @@ args = generate_parser().parse_args()
 job =  os.path.abspath(args.job)
 outputDir = os.path.abspath(args.output) if args.output else os.path.dirname(job)
 
-outFileName = os.path.basename(job)
-outFilePath = os.path.join(outputDir, outFileName)
-
-print outFilePath
-
 if not os.path.exists(outputDir):
     os.makedirs(outputDir)
 
@@ -45,6 +40,8 @@ with open(job, 'r') as stream:
             data=myfile.read()
             y[0]['job']['dsl'] = literal(data)
             del y[0]['job']['pipeline-scm']
+        outFilePath = os.path.join(outputDir, jobName.replace("/", "-") + ".yaml")
+        print outFilePath
         with open(outFilePath, 'w') as outfile:
             yaml.dump(y, outfile, default_flow_style=False, allow_unicode=True)
     except yaml.YAMLError as exc:

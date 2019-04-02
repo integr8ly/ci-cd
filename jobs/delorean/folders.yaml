@@ -1,0 +1,143 @@
+---
+
+# 3Scale
+- job:
+    name: delorean-3scale
+    display-name: '3Scale'
+    project-type: folder
+- job:
+    name: delorean-3scale/next
+    display-name: 'next'
+    project-type: folder
+- job:
+    name: delorean-3scale/latest
+    display-name: 'latest'
+    project-type: folder
+
+# AMQ Online
+- job:
+    name: delorean-amq-online
+    display-name: 'AMQ Online'
+    project-type: folder
+- job:
+    name: delorean-amq-online/next
+    display-name: 'next'
+    project-type: folder
+
+# Backup Container
+- job:
+    name: delorean-backup-container
+    display-name: 'Backup Container'
+    project-type: folder
+- job:
+    name: delorean-backup-container/next
+    display-name: 'next'
+    project-type: folder
+
+# Code Ready
+- job:
+    name: delorean-codeready
+    display-name: 'CodeReady'
+    project-type: folder
+- job:
+    name: delorean-codeready/next
+    display-name: 'next'
+    project-type: folder
+
+# Fuse
+- job:
+    name: delorean-fuse
+    display-name: 'Fuse'
+    project-type: folder
+- job:
+    name: delorean-fuse/next
+    display-name: 'next'
+    project-type: folder
+
+# Fuse Online
+- job:
+    name: delorean-fuse-online
+    display-name: 'Fuse Online'
+    project-type: folder
+- job:
+    name: delorean-fuse-online/next
+    display-name: 'next'
+    project-type: folder
+
+# Gitea
+- job:
+    name: delorean-gitea
+    display-name: 'Gitea'
+    project-type: folder
+- job:
+    name: delorean-gitea/next
+    display-name: 'next'
+    project-type: folder
+
+# Middleware Monitoring
+- job:
+    name: delorean-middleware-monitoring
+    display-name: 'Middleware Monitoring'
+    project-type: folder
+- job:
+    name: delorean-middleware-monitoring/next
+    display-name: 'next'
+    project-type: folder
+
+# Managed Service Broker
+- job:
+    name: delorean-msbroker
+    display-name: 'Managed Service Broker'
+    project-type: folder
+- job:
+    name: delorean-msbroker/next
+    display-name: 'next'
+    project-type: folder
+
+# RHSSO
+- job:
+    name: delorean-rhsso
+    display-name: 'RHSSO'
+    project-type: folder
+- job:
+    name: delorean-rhsso/next
+    display-name: 'next'
+    project-type: folder
+
+# WebApp
+- job:
+    name: delorean-webapp
+    display-name: 'WebApp'
+    project-type: folder
+- job:
+    name: delorean-webapp/next
+    display-name: 'next'
+    project-type: folder
+
+# Suites
+- job:
+    name: delorean-suites
+    display-name: 'Suites'
+    project-type: folder
+- job:
+    name: delorean-suites/integreatly
+    display-name: 'Integreatly'
+    project-type: folder
+- job:
+    name: delorean-suites/integreatly/next
+    display-name: 'next'
+    project-type: folder
+- job:
+    name: delorean-suites/integration
+    display-name: 'Integeration'
+    project-type: folder
+- job:
+    name: delorean-suites/integration/next
+    display-name: 'next'
+    project-type: folder
+
+# Misc
+- job:
+    name: delorean-misc
+    display-name: 'Misc'
+    project-type: folder

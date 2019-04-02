@@ -1,0 +1,28 @@
+---
+- job:
+    name: delorean-amq-online/next/branch
+    display-name: 'amq-online-next-branch'
+    project-type: pipeline
+    concurrent: false
+    parameters:
+      - string:
+          name: 'installationGitUrl'
+          default: 'git@github.com:integr8ly/installation.git'
+          description: '[REQUIRED] The installation repo'
+      - string:
+          name: 'installationProductBranch'
+          default: 'amq-online-next'
+          description: '[REQUIRED] The installation git branch to push new version changes'
+      - string:
+          name: 'productName'
+          default: 'amq-online'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
+    pipeline-scm:
+      script-path: jobs/delorean/jenkinsfiles/branch/next/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - master
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

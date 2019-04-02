@@ -1,0 +1,15 @@
+---
+- job:
+    name: delorean-misc/github-events
+    display-name: 'GitHub Events Monitor'
+    project-type: pipeline
+    concurrent: true
+    pipeline-scm:
+      script-path: jobs/delorean/misc/github-events/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - master
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false
