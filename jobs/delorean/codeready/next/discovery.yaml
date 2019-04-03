@@ -1,0 +1,48 @@
+---
+- job:
+    name: delorean-codeready/next/discovery
+    display-name: 'codeready-next-discovery'
+    project-type: pipeline
+    concurrent: false
+    triggers:
+      - timed: '@hourly'
+    parameters:
+      - string:
+          name: 'productVersionVar'
+          default: 'che_version'
+          description: '[REQUIRED] The manifest variable to be used as the current component version'
+          read-only: true
+      - string:
+          name: 'projectOrg'
+          default: 'redhat-developer'
+          description: '[REQUIRED] github project organization'
+          read-only: true
+      - string:
+          name: 'projectRepo'
+          default: 'codeready-workspaces-deprecated'
+          description: '[REQUIRED] github project repository'
+          read-only: true
+      - string:
+          name: 'productName'
+          default: 'codeready'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
+          read-only: true
+      - string:
+          name: 'releaseFetchMethod'
+          default: 'tag'
+          description: '[REQUIRED] Method to fetch latest release which can either be by tag or by release'
+          read-only: true
+      - string:
+          name: 'gaReleaseTagRef'
+          default: 'GA'
+          description: '[REQUIRED] Reference used to filter GA releases from the repository tags'
+          read-only: true
+    pipeline-scm:
+      script-path: jobs/delorean/jenkinsfiles/discovery/next/github/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - master
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false
