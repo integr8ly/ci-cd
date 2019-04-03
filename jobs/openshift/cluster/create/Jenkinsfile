@@ -25,6 +25,20 @@ stage("Cluster Options") {
     println "Cluster Options: ${clusterOptions}"
     currentBuild.displayName = "${currentBuild.displayName} ${clusterOptions.name}"
     currentBuild.description = "clusterName: ${clusterOptions.name}\nawsRegion: ${clusterOptions.awsRegion}"
+    clusterOptions.nodes = [
+        'master': [
+            'instance_type': "${master_instance_type}",
+            'group_size': "${master_group_size}"
+        ],
+        'compute': [
+            'instance_type': "${compute_instance_type}",
+            'group_size': "${compute_group_size}"
+        ],
+        'infra': [
+            'instance_type': "${infra_instance_type}",
+            'group_size': "${infra_group_size}"
+        ]
+    ]
 }
 
 node('cirhos_rhel7') {
@@ -34,7 +48,7 @@ node('cirhos_rhel7') {
         if (params.dryRun) {
             println("Would call ansibleTower with: oo_clusterid: ${clusterOptions.name}, oo_sublocation: ${clusterOptions.awsRegion}")
         } else {
-            wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
+            wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
                 ansibleTower(
                         towerServer: 'Dev Tower',
                         jobTemplate: 'Provision Cluster',
@@ -46,7 +60,13 @@ node('cirhos_rhel7') {
                     oo_clusterid: ${clusterOptions.name}
                     oo_sublocation: ${clusterOptions.awsRegion}
                     cluster_credential_bundle_aws_name: ${clusterOptions.awsAccountName}
-                    survey_provision_logging: 'false'"""
+                    survey_provision_logging: 'false'
+                    master_instance_size: ${clusterOptions.nodes.master.instance_type}
+                    compute_instance_size: ${clusterOptions.nodes.compute.instance_type}
+                    infra_instance_size: ${clusterOptions.nodes.infra.instance_type}
+                    openshift_aws_master_group_desired_size: ${clusterOptions.nodes.master.group_size}
+                    openshift_aws_compute_group_desired_size: ${clusterOptions.nodes.compute.group_size}
+                    openshift_aws_infra_group_desired_size: ${clusterOptions.nodes.infra.group_size}"""
                 )
             }
         }
