@@ -52,6 +52,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/suites/integreatly/next
 
 #OpenShift Cluster Jobs
 generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/create/openshift-cluster-create.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/deprovision/openshift-cluster-deprovision.yaml
 
 #Delorean Folders
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/delorean/folders.yaml

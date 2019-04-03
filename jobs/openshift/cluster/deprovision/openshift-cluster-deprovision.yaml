@@ -1,0 +1,39 @@
+---
+- job:
+    name: openshift-cluster-deprovision
+    display-name: 'OpenShift Cluster Deprovision'
+    project-type: pipeline
+    parameters:
+      - string:
+          name: 'clusterName'
+          default: ''
+          description: '[REQUIRED] The name of the cluster to deprovision'
+      - choice:
+          name: 'awsRegion'
+          choices:
+            - 'us-east-1'
+            - 'eu-west-1'
+            - 'eu-west-2'
+          description: '[REQUIRED] The AWS Region the cluster was provisioned in'
+      - choice:
+          name: 'awsAccountName'
+          choices:
+            - fheng.AWS
+          description: '[REQUIRED] The AWS Account to use'
+      - string:
+          name: 'clusterDomainName'
+          default: 'skunkhenry.com'
+          description: '[REQUIRED] The domain name used by the provisioned cluster'
+      - bool:
+          name: 'dryRun'
+          default: false
+          description: '[OPTIONAL][Test] Dry run only, only prints what it would do!'
+    pipeline-scm:
+      script-path: jobs/openshift/cluster/deprovision/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

@@ -1,0 +1,62 @@
+#!groovy
+
+def deprovisionOptions = [:]
+
+def verifyDeprovisionOptions(deprovisionOptions) {
+  if (!deprovisionOptions.clusterName || !deprovisionOptions.awsRegion || !deprovisionOptions.awsAccountName || !deprovisionOptions.clusterDomainName) {
+    choiceAWSAccountName = new ChoiceParameterDefinition('awsAccountName', ['fheng.AWS'] as String[], 'AWS Account Name')
+    choiceAWSRegion = new ChoiceParameterDefinition('awsRegion', ['us-east-1', 'eu-west-1', 'eu-west-2'] as String[], 'AWS Region')
+
+    def userInput = input message: 'Deprovision Options', parameters: [
+      string(defaultValue: (deprovisionOptions.clusterName ?: ''), description: 'Cluster Name', name: 'clusterName'),
+      choiceAWSRegion,
+      choiceAWSAccountName,
+      string(defaultValue: (deprovisionOptions.clusterDomainName ?: 'skunkhenry.com'), description: 'Cluster Domain Name', name: 'clusterDomainName'),
+    ]
+
+    deprovisionOptions.clusterName = userInput.clusterName
+    deprovisionOptions.awsRegion = userInput.awsRegion
+    deprovisionOptions.awsAccountName = userInput.awsAccountName
+    deprovisionOptions.clusterDomainName = userInput.clusterDomainName
+    verifyDeprovisionOptions(deprovisionOptions)
+  }
+}
+
+stage("Cluster Options") {
+    deprovisionOptions.clusterName = params.clusterName
+    deprovisionOptions.awsRegion = params.awsRegion
+    deprovisionOptions.awsAccountName = params.awsAccountName
+    deprovisionOptions.clusterDomainName = params.clusterDomainName
+    verifyDeprovisionOptions(deprovisionOptions)
+
+    println "Deprovision Options: ${deprovisionOptions}"
+    currentBuild.displayName = "${currentBuild.displayName} ${deprovisionOptions.clusterName}"
+    currentBuild.description = """clusterName: ${deprovisionOptions.name}\nawsRegion: ${deprovisionOptions.awsRegion}
+                                \nawsAccountName: ${deprovisionOptions.awsAccountName}\nclusterDomainName:${deprovisionOptions.clusterDomainName}"""
+}
+
+node('cirhos_rhel7') {
+  cleanWs()
+  stage('Deprovision OpenShift Cluster') {
+    if (params.dryRun) {
+      println("""Would trigger the job 'Deprovision Cluster' in ansibleTower with the following parameters:
+                \naws_cluster_name: ${deprovisionOptions.clusterName}, aws_region: ${deprovisionOptions.awsRegion}, cluster_credential_bundle_aws_name: ${deprovisionOptions.awsAccountName}, aws_dns_zone: ${deprovisionOptions.clusterDomainName}""")
+    } else {
+      wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
+        ansibleTower(
+          towerServer: 'Dev Tower',
+          jobTemplate: 'Deprovision Cluster',
+          templateType: 'workflow',
+          importTowerLogs: true,
+          removeColor: false,
+          verbose: true,
+          extraVars: """---
+            aws_cluster_name: ${deprovisionOptions.clusterName}
+            aws_region: ${deprovisionOptions.awsRegion}
+            cluster_credential_bundle_aws_name: ${deprovisionOptions.awsAccountName}
+            aws_dns_zone: ${deprovisionOptions.clusterDomainName}"""
+        )
+      }
+    }
+  }
+}
