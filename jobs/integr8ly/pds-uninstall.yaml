@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: uninstallation-pipeline
+    name: pds-uninstall
     project-type: pipeline
     description: "Uninstalls Integreatly by using bastion server as Jenkins slave and executing Ansible uninstallation playbook there."
     sandbox: false

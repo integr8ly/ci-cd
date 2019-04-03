@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: clean-uninstallation-pipeline
+    name: psi-clean-uninstall
     description: 'Uninstalls Integreatly by using master node as Jenkins slave (preconfigured) and executing Ansible uninstallation playbook there. Small single node Openstack based OpenShift living in rhmobile tenant where Integreatly has never been installed is used.'
     project-type: pipeline
     sandbox: false
