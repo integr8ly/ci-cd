@@ -1,0 +1,74 @@
+#!groovy
+
+def installerOptions = [:]
+
+def verifyInstallerOptions(installerOptions) {
+    if (!installerOptions.clusterName || !installerOptions.openshiftMasterUrl || !installerOptions.clusterAdminUsername || !installerOptions.clusterAdminPassword ||
+        !installerOptions.installerGitUrl || !installerOptions.installerGitBranch) {
+        def userInput = input message: 'Installer Options', parameters: [
+            string(defaultValue: (installerOptions.clusterName ?: ''), description: 'Cluster name', name: 'clusterName'),
+            string(defaultValue: (installerOptions.openshiftMasterUrl ?: ''), description: 'OpenShift cluster public URL', name: 'openshiftMasterUrl'),
+            string(defaultValue: (installerOptions.clusterAdminUsername ?: 'integreatly'), description: 'OpenShift cluster admin username', name: 'clusterAdminUsername'),
+            string(defaultValue: (installerOptions.clusterAdminPassword ?: 'Password1'), description: 'OpenShift cluster admin password', name: 'clusterAdminPassword'),
+            string(defaultValue: (installerOptions.installerGitUrl ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly installer Git URL', name: 'installerGitUrl'),
+            string(defaultValue: (installerOptions.installerGitBranch ?: 'master'), description: 'Integreatly installer Git branch', name: 'installerGitBranch'),
+        ]
+        installerOptions.clusterName = userInput.clusterName
+        installerOptions.openshiftMasterUrl = userInput.openshiftMasterUrl
+        installerOptions.clusterAdminUsername = userInput.clusterAdminUsername
+        installerOptions.clusterAdminPassword = userInput.clusterAdminPassword
+        installerOptions.installerGitUrl = userInput.installerGitUrl
+        installerOptions.installerGitBranch = userInput.installerGitBranch
+        verifyInstallerOptions(installerOptions)
+    }
+}
+
+stage("Verify Installation Options") {
+    installerOptions.clusterName = params.clusterName
+    installerOptions.openshiftMasterUrl = params.openshiftMasterUrl
+    installerOptions.clusterAdminUsername = params.clusterAdminUsername
+    installerOptions.clusterAdminPassword = params.clusterAdminPassword
+    installerOptions.installerGitUrl = params.installerGitUrl
+    installerOptions.installerGitBranch = params.installerGitBranch
+    installerOptions.userCount = params.userCount
+    installerOptions.selfSignedCerts = params.selfSignedCerts ? 'true': 'false'
+    installerOptions.awsCredentials = 'fheng.AWS'
+
+    verifyInstallerOptions(installerOptions)
+    println "Installer Options: ${installerOptions}"
+    currentBuild.displayName = "${currentBuild.displayName} ${installerOptions.clusterName}"
+    currentBuild.description = """clusterName: ${installerOptions.clusterName}\nopenshiftMasterUrl: ${installerOptions.openshiftMasterUrl}
+                                \nopenshiftUsername: ${installerOptions.clusterAdminUsername}\nopenshiftPassword: ${installerOptions.clusterAdminPassword}
+                                \ninstallerGitUrl: ${installerOptions.installerGitUrl}\ninstallerGitBranch: ${installerOptions.installerGitBranch}
+                                \nselfSignedCerts: ${installerOptions.selfSignedCerts}\nawsCredentials:${installerOptions.awsCredentials}"""
+}
+
+node('cirhos_rhel7') {
+    cleanWs()
+    stage('Install Integreatly') {
+        if (params.dryRun) {
+            println("Would call ansibleTower Integreatly Install Workflow template with the following installer options: ${installerOptions}")
+        } else {
+            wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
+              ansibleTower(
+                towerServer: 'Dev Tower',
+                jobTemplate: 'Integreatly Install Workflow',
+                templateType: 'workflow',
+                importTowerLogs: true,
+                removeColor: false,
+                verbose: true,
+                extraVars: """---
+                  cluster_name: ${installerOptions.clusterName}
+                  openshift_master_public_url: ${installerOptions.openshiftMasterUrl}
+                  openshift_username: ${installerOptions.clusterAdminUsername}
+                  openshift_password: ${installerOptions.clusterAdminPassword}
+                  integreatly_project_install_scm_url: ${installerOptions.installerGitUrl}
+                  integreatly_project_install_scm_branch: ${installerOptions.installerGitBranch}
+                  eval_seed_users_count: ${installerOptions.userCount}
+                  eval_self_signed_certs: '${installerOptions.selfSignedCerts}'
+                  integreatly_inventory_source_aws_credentials: ${installerOptions.awsCredentials}"""
+              )
+            }
+        }
+    }
+}
