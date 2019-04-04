@@ -118,10 +118,6 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                             println 'Install #3 skipped'
                         }
                     } // stage
-
-
-
-
                 } // node
             }}} // timeout, ansiColor, timestamps
         } catch (caughtError){
