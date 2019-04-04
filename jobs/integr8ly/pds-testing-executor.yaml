@@ -46,17 +46,11 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             description: "Branch of a repository of Integreatly test suites"
         - choice:
             name: TO_DO
-            description: "It specifies what stages of the pipeline will be executed.
-'heavy' means uninstall + uninstall + install + install + tests + uninstall + install"
+            description: "It specifies what stages of the pipeline will be executed. 'full' means uninstall + uninstall + install + install + tests + uninstall + install"
             choices:
-              - heavy
-              - uninstall + uninstall
-              - install + install
-              - uninstall + install
-              - tests only
+              - full
               - install + tests
               - uninstall + install + tests
-              - none
     dsl: |
         def err = null
         
@@ -65,7 +59,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 node('cirhos_rhel7') {
                     
                     stage ('Uninstall #1') {
-                        if(TO_DO.contains('heavy') || TO_DO.contains('uninstall')) {
+                        if (TO_DO.contains('full') || TO_DO.contains('uninstall')) {
                             uninstall(5)
                         } else {
                             println 'Uninstall #1 skipped'
@@ -73,77 +67,61 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                     } // stage
                     
                     stage ('Uninstall #2') {
-                        if(TO_DO.contains('heavy') || TO_DO.count('uninstall') >= 2) {
+                        if (TO_DO.contains('full')) {
                             uninstall(1)
                         } else {
                             println 'Uninstall #2 skipped'
                         }
                     } // stage
                     
-                    stage('Install #1') {
-                        if(TO_DO.contains('heavy') || TO_DO.contains('install')) {
-                            if (TO_DO.contains('heavy') || TO_DO.contains('tests') || TO_DO.count('install') >= 2) {
-                                install(true) // sleep after install
-                            } else {
-                                install(false) // no sleep after install
-                            }
+                    stage ('Install #1') {
+                        if (TO_DO.contains('full')) {
+                            install(true) // sleep after install
                         } else {
-                            println 'Install #1 skipped'
+                            install(false) // no sleep after install
                         }
                     } // stage
 
-                    stage('Install #2') {
-                        if(TO_DO.contains('heavy') || TO_DO.count(' install') >= 2) {
-                            if(TO_DO.contains('heavy')) {
-                                install(true) // sleep after install
-                            } else {
-                                install(false) // no sleep after install
-                            }
+                    stage ('Install #2') {
+                        if (TO_DO.contains('full')) {
+                            install(true) // sleep after install
                         } else {
                             println 'Install #2 skipped'
                         }
                     } // stage
                     
-                    stage('Smoke Tests') {
-                        if(TO_DO.contains('heavy') || TO_DO.contains('tests')) {
-                            runTests('installation-smoke-tests')
-                        } else {
-                            println 'Smoke Tests skipped'
-                        }
+                    stage ('Smoke Tests') {
+                        runTests('installation-smoke-tests')
                     } // stage
 
-                    stage('Browser Based Tests') {
-                        if(TO_DO.contains('heavy') || TO_DO.contains('tests')) {
-                            runTests('browser-based-testsuite-pipeline')
-                            sleep time: 3, unit: 'MINUTES'
-                        } else {
-                            println 'Browser Based Tests skipped'
-                        }
+                    stage ('Browser Based Tests') {
+                        runTests('browser-based-testsuite-pipeline')
+                        sleep time: 3, unit: 'MINUTES'
                     } // stage
                     
-                    stage('After First Login Tests') {
-                        if(TO_DO.contains('heavy') || TO_DO.contains('tests')) {
-                            runTests('after-first-login-tests')
-                        } else {
-                            println 'After First Login Tests skipped'
-                        }
+                    stage ('After First Login Tests') {
+                        runTests('after-first-login-tests')
                     } // stage 
 
                     stage ('Uninstall #3') {
-                        if(TO_DO.contains('heavy')) {
+                        if (TO_DO.contains('full')) {
                             uninstall(3)
                         } else {
                             println 'Uninstall #3 skipped'
                         }
                     } // stage
                     
-                    stage('Install #3') {
-                        if(TO_DO.contains('heavy')) {
+                    stage ('Install #3') {
+                        if (TO_DO.contains('full')) {
                             install(false) // no sleep after install
                         } else {
                             println 'Install #3 skipped'
                         }
                     } // stage
+
+
+
+
                 } // node
             }}} // timeout, ansiColor, timestamps
         } catch (caughtError){
