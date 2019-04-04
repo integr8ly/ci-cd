@@ -62,8 +62,8 @@ node('cirhos_rhel7') {
                   openshift_master_public_url: ${installerOptions.openshiftMasterUrl}
                   openshift_username: ${installerOptions.clusterAdminUsername}
                   openshift_password: ${installerOptions.clusterAdminPassword}
-                  integreatly_project_bootstrap_cluster_scm_url: ${installerOptions.installerGitUrl}
-                  integreatly_project_bootstrap_cluster_scm_branch: ${installerOptions.installerGitBranch}
+                  integreatly_project_install_scm_url: ${installerOptions.installerGitUrl}
+                  integreatly_project_install_scm_branch: ${installerOptions.installerGitBranch}
                   eval_seed_users_count: ${installerOptions.userCount}
                   eval_self_signed_certs: '${installerOptions.selfSignedCerts}'
                   integreatly_inventory_source_aws_credentials: ${installerOptions.awsCredentials}"""
