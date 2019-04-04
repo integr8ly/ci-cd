@@ -1,7 +1,7 @@
 ---
 - job:
-    name: delorean-suites/integreatly/next/branch
-    display-name: 'integreatly-next-branch'
+    name: delorean-suites/integration/next/branch
+    display-name: 'integration-next-branch'
     project-type: pipeline
     concurrent: false
     parameters:
@@ -11,8 +11,12 @@
           description: '[REQUIRED] The installation repo'
       - string:
           name: 'suiteBranch'
-          default: 'integreatly-next'
+          default: 'integration-next'
           description: '[REQUIRED] The installation git branch to push new version changes'
+      - string:
+          name: 'productBranches'
+          default: '3scale-next, amq-online-next, fuse-online-next, fuse-next'
+          description: '[OPTIONAL] List of the branches to be installed in the suite branch'
     pipeline-scm:
       script-path: jobs/delorean/jenkinsfiles/branch/suite-next/Jenkinsfile
       scm:

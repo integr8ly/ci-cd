@@ -1,0 +1,112 @@
+#!groovy
+
+// Ensure required parameters are provided
+def verifyParameters(suiteParams) {
+  if (!suiteParams.gitUrl || !suiteParams.suiteBranch) {
+      def userInput = input message: 'Suites Next Options', parameters: [
+        string(defaultValue: (suiteParams.gitUrl ?: 'git@github.com:integr8ly/installation.git'), description: 'The installation repo git url', name: 'installationGitUrl'),
+        string(defaultValue: (suiteParams.suiteBranch ?: ''), description: 'Desired name for the suite branch', name: 'suiteBranch'),
+      ]
+      suiteParams.gitUrl = userInput.installationGitUrl
+      suiteParams.suiteBranch = userInput.suiteBranch
+      verifyParameters(suiteParams)
+  }
+}
+
+// Checkout remote repository
+def checkoutGitRepo(gitUrl, gitRef, credentialsID) {
+  checkout([$class: 'GitSCM', branches: [[name: gitRef]],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [],
+            submoduleCfg: [],
+            userRemoteConfigs: [[credentialsId: credentialsID, url: gitUrl]]])
+}
+
+// Get product next branches available in the installation repo
+def getProductNextBranches(gitOrg, gitRepo, sourceBranch) {
+  nextBranches = sh(returnStdout: true, script: "git ls-remote origin | grep next | awk '{print \$2}'").replaceAll("refs/heads/", "").split()
+
+  // Do not include the source branch in the next branches list
+  productNextBranches = nextBranches.minus(sourceBranch)
+  return productNextBranches
+}
+
+def gitCreateAndCheckoutBranch(branchName, pushOnCreate = false) {
+  sh "git checkout -b ${branchName}"
+
+  if (pushOnCreate) {
+    sh "git push origin ${branchName}"
+  }
+}
+
+def gitDeleteBranch(branchName) {
+  String remoteBranchCommit = sh(returnStdout: true, script: "git ls-remote origin refs/heads/${branchName} | cut -f 1").trim()
+  if (remoteBranchCommit) {
+    sh "git push origin --delete ${branchName}"
+  }
+}
+
+def suiteParams = [:]
+def ghOwner = "integr8ly"
+def ghRepo = 'installation'
+def githubSSHCredentialsID = 'jenkinsgithub'
+def masterBranch = 'master'
+def suiteBranchList = ['integreatly-next', 'integration-next']
+
+node {
+  cleanWs()
+  stage('Ensure Suite Parameters Provided') {
+    suiteParams.gitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
+    suiteParams.suiteBranch = params.suiteBranch
+    suiteParams.productBranches = params.productBranches // Product branch names separated by ',', if not defined = Install all products
+    verifyParameters(suiteParams)
+    println "Suite Options: ${suiteParams}"
+  }
+
+  dir('installation') {
+    stage('Fetch Installation Repo') {
+      checkoutGitRepo(suiteParams.gitUrl, masterBranch, githubSSHCredentialsID)
+    }
+
+    sshagent([githubSSHCredentialsID]) {
+      sh 'git config --global user.name "Automatron"'
+      sh 'git config --global user.email "github.eng@feedhenry.com"'
+
+      stage('Delete Suite Branch') {
+        // Ensures that the branch to be deleted is a suite branch
+        def isSuiteBranch = suiteBranchList.contains(suiteParams.suiteBranch)
+
+        if (!isSuiteBranch) {
+          error "The branch ${suiteParams.suiteBranch} is not a suite branch. Please specify a branch from the following list: ${suiteBranchList}"
+        }
+
+        gitDeleteBranch(suiteParams.suiteBranch)
+      }
+
+      stage('Create and Checkout Suite Branch') {
+        gitCreateAndCheckoutBranch(suiteParams.suiteBranch, true)
+      }
+
+      // Merge product-next branches into suite-next branch
+      stage('Merge Product Next Branches') {
+        def productBranches = []
+        if (suiteParams.productBranches) {
+          productBranches = suiteParams.productBranches.replaceAll(" ", "").split(',')
+        } else {
+          productBranches = getProductNextBranches(ghOwner, ghRepo, suiteParams.suiteBranch)
+        }
+
+        println "[INFO] Merging the following product branches into ${suiteParams.suiteBranch}:\n${productBranches}"
+        for (i = 0; i < productBranches.size(); i++) {        
+          try {
+            sh "git pull --no-edit origin ${productBranches[i]}"
+          } catch (Exception e) {
+            error "We were unable to merge the branch '${productBranches[i]}' into the source branch '${suiteParams.suiteBranch}'"
+          }
+        }
+
+        sh "git push origin ${suiteParams.suiteBranch}"
+      }
+    }
+  }
+}
