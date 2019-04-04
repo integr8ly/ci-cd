@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: pds-general
+    name: pds-testing-executor
     project-type: pipeline
     description: "General pipeline for PDS testing."
     sandbox: false
@@ -155,7 +155,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
 
         // Waiting for ${sleepTime} minutes so that resources scheduled for termination are actually terminated
         def uninstall(sleepTime) {
-            build job: 'uninstallation-pipeline', parameters: [
+            build job: 'pds-uninstall', parameters: [
                 string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
                 string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
                 string(name: 'ANSIBLE_USER', value: 'ec2-user'),
@@ -167,7 +167,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
         }
 
         def install(sleepAfterInstall) {
-            build job: 'installation-pipeline', parameters: [
+            build job: 'pds-install', parameters: [
                 string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
                 string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
                 string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),

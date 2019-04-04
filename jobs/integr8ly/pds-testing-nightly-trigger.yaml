@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: nightly-pds-heavy
+    name: pds-testing-nightly-trigger
     project-type: pipeline
     description: "Nightly pipeline for heavy PDS testing."
     sandbox: false
@@ -27,7 +27,7 @@
         timeout(180) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {
                 stage ('Trigger PDS Pipeline') {
-                    buildStatus = build(job: 'pds-general', propagate: false, parameters: [
+                    buildStatus = build(job: 'pds-testing-executor', propagate: false, parameters: [
                         string(name: 'YOURCITY', value: "${YOURCITY}"),
                         string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
                         string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),

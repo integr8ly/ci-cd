@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: qe-poc-master-general
+    name: poc-testing-executor
     project-type: pipeline
     description: "Nightly pipeline for testing on POC (originally Pony) clusters."
     sandbox: false
@@ -79,7 +79,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                     } // stage
                     
                     stage ('Uninstall #1') {
-                        build job: 'uninstallation-pipeline-qe-pony', parameters: [
+                        build job: 'poc-uninstall', parameters: [
                             string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
                             string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
                             string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
@@ -93,7 +93,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                     } // stage
                     
                     stage ('Uninstall #2') {
-                        build job: 'uninstallation-pipeline-qe-pony', parameters: [
+                        build job: 'poc-uninstall', parameters: [
                             string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
                             string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
                             string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
@@ -108,7 +108,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                     } // stage
 
                     stage('Install #1') {
-                        build job: 'installation-pipeline-qe-pony', parameters: [
+                        build job: 'poc-install', parameters: [
                             string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
                             string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
                             string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),

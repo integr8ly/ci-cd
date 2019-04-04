@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: installation-pipeline-qe-pony
+    name: poc-install
     project-type: pipeline
     description: "Installs Integreatly remotely from Jenkins slave to QE Pony cluster."
     sandbox: false

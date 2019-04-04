@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: installation-pipeline
+    name: pds-install
     project-type: pipeline
     description: "Installs Integreatly by using bastion server as Jenkins slave and executing Ansible installation playbook there."
     sandbox: false

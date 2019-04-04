@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: browser-based-test-executor
+    name: browser-based-single-test
     project-type: pipeline
     description: 'Executes browser based testsuite against Integreatly Tutorial Web App.'
     sandbox: true

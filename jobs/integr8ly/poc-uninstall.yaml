@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: uninstallation-pipeline-qe-pony
+    name: poc-uninstall
     project-type: pipeline
     description: "Uninstalls Integreatly remotely from QE Pony cluster by executing Ansible uninstallation playbook."
     sandbox: false
