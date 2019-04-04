@@ -53,10 +53,11 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             description: "User for Ansible to access the master node of target cluster"
         - string:
             name: OC_USER
-            default: trepel
+            default: integreatly
             description: "Default OpenShift admin user when Integr8ly is not installed."
         - string:
             name: OC_PASSWORD
+            default: Password1
             description: "Default OpenShift admin password when Integr8ly is not installed."
         - choice:
             name: TO_DO
