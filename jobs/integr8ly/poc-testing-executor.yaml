@@ -57,7 +57,14 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             description: "Default OpenShift admin user when Integr8ly is not installed."
         - string:
             name: OC_PASSWORD
-            description: "Default OpenShift admin password when Integr8ly is not installed."    
+            description: "Default OpenShift admin password when Integr8ly is not installed."
+        - choice:
+            name: TO_DO
+            description: "It specifies what stages of the pipeline will be executed. 'full' means uninstall + uninstall + install + install + tests + uninstall + install"
+            choices:
+              - full
+              - install + tests
+              - uninstall + install + tests    
     dsl: |
         def err = null
         try {
@@ -77,103 +84,67 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                             throw new hudson.AbortException('OC_PASSWORD parameter is required!')
                         } // if
                     } // stage
-                    
+
                     stage ('Uninstall #1') {
-                        build job: 'poc-uninstall', parameters: [
-                            string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
-                            string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
-                            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
-                            string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
-                            string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
-                            string(name: 'OC_USER', value: "${OC_USER}"),
-                            string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}")]
-                                
-                        // Waiting for 5 minutes so that resources scheduled for termination are actually terminated
-                        sleep time: 5, unit: 'MINUTES'
+                        if (TO_DO.contains('full') || TO_DO.contains('uninstall')) {
+                            uninstall(5)
+                        } else {
+                            println 'Uninstall #1 skipped'
+                        }
                     } // stage
                     
                     stage ('Uninstall #2') {
-                        build job: 'poc-uninstall', parameters: [
-                            string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
-                            string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
-                            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
-                            string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
-                            string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
-                            string(name: 'OC_USER', value: "${OC_USER}"),
-                            string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}")]
-
-                        // Waiting for 1 minute so that resources scheduled for termination are actually terminated
-                        // Since this is 2nd uninstall there is no need for a long wait here
-                        sleep time: 1, unit: 'MINUTES'
+                        if (TO_DO.contains('full')) {
+                            uninstall(1)
+                        } else {
+                            println 'Uninstall #2 skipped'
+                        }
                     } // stage
-
-                    stage('Install #1') {
-                        build job: 'poc-install', parameters: [
-                            string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
-                            string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
-                            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
-                            string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
-                            string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
-                            booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
-                            string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
-                            string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
-                            string(name: 'OC_USER', value: "${OC_USER}"),
-                            string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}")]
-                                
-                            sleep time: 3, unit: 'MINUTES'
-                    } // stage
-
-                    stage('Smoke Tests') {
-                        buildStatus = build(job: 'installation-smoke-tests', propagate: false, parameters: [
-                            string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
-                            string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
-                            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
-                            string(name: 'ADMIN_USERNAME', value: "${OC_USER}"),
-                            string(name: 'ADMIN_PASSWORD', value: "${OC_PASSWORD}")]).result
-                                
-                        println "Build finished with ${buildStatus}"
-                            
-                        if(buildStatus != 'SUCCESS') {
-                            currentBuild.result = 'UNSTABLE'
+                    
+                    stage ('Install #1') {
+                        if (TO_DO.contains('full')) {
+                            install(true) // sleep after install
+                        } else {
+                            install(false) // no sleep after install
                         }
                     } // stage
 
-                    stage('Browser Based Tests') {
-                        CLUSTER_URI = "${CLUSTER_URL}".replace("https://","")
-                        buildStatus = build(job: 'browser-based-testsuite-pipeline', propagate: false, parameters: [
-                            string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
-                            string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
-                            string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-webapp.apps.${CLUSTER_URI}"),
-                            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
-                            string(name: 'ADMIN_USERNAME', value: "${OC_USER}"),
-                            string(name: 'ADMIN_PASSWORD', value: "${OC_PASSWORD}"),
-                            string(name: 'EVALS_PASSWORD', value: 'Password1'),
-                            string(name: 'EVALS_USERNAME', value: 'evals11@example.com')]).result
-                            
-                        println "Build finished with ${buildStatus}"
-                            
-                        if(buildStatus != 'SUCCESS') {
-                            currentBuild.result = 'UNSTABLE'
+                    stage ('Install #2') {
+                        if (TO_DO.contains('full')) {
+                            install(true) // sleep after install
+                        } else {
+                            println 'Install #2 skipped'
                         }
-                            
+                    } // stage
+                    
+                    stage ('Smoke Tests') {
+                        runTests('installation-smoke-tests')
+                    } // stage
+
+                    stage ('Browser Based Tests') {
+                        runTests('browser-based-testsuite-pipeline')
                         sleep time: 3, unit: 'MINUTES'
                     } // stage
-
-                    stage('After First Login Tests') {
-                        buildStatus = build(job: 'after-first-login-tests', propagate: false, parameters: [
-                            string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
-                            string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
-                            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
-                            string(name: 'ADMIN_USERNAME', value: "${OC_USER}"),
-                            string(name: 'ADMIN_PASSWORD', value: "${OC_PASSWORD}"),
-                            string(name: 'EVALS_USERNAME', value: 'evals11@example.com')]).result
-                            
-                        println "Build finished with ${buildStatus}"
-                                
-                        if(buildStatus != 'SUCCESS') {
-                            currentBuild.result = 'UNSTABLE'
-                        }
+                    
+                    stage ('After First Login Tests') {
+                        runTests('after-first-login-tests')
                     } // stage 
+
+                    stage ('Uninstall #3') {
+                        if (TO_DO.contains('full')) {
+                            uninstall(3)
+                        } else {
+                            println 'Uninstall #3 skipped'
+                        }
+                    } // stage
+                    
+                    stage ('Install #3') {
+                        if (TO_DO.contains('full')) {
+                            install(false) // no sleep after install
+                        } else {
+                            println 'Install #3 skipped'
+                        }
+                    } // stage
 
                 } // node
             }}} // timeout, ansiColor, timestamps
@@ -182,6 +153,64 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             err = caughtError 
         } finally {
             notifyBuild(currentBuild.result, err)
+        }
+
+                // Waiting for ${sleepTime} minutes so that resources scheduled for termination are actually terminated
+        def uninstall(sleepTime) {
+            build job: 'poc-uninstall', parameters: [
+                string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
+                string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
+                string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
+                string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
+                string(name: 'OC_USER', value: "${OC_USER}"),
+                string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}")]
+
+            sleep time: sleepTime, unit: 'MINUTES'
+        }
+
+        def install(sleepAfterInstall) {
+            build job: 'poc-install', parameters: [
+                string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
+                string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
+                string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
+                string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
+                booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
+                string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
+                string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
+                string(name: 'OC_USER', value: "${OC_USER}"),
+                string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}")]
+            
+            if (sleepAfterInstall) {
+                sleep time: 3, unit: 'MINUTES'
+            }
+        }
+
+        def runTests(testPipeline) {
+            parameters = [
+                string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
+                string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                string(name: 'ADMIN_USERNAME', value: "${OC_USER}"),
+                string(name: 'ADMIN_PASSWORD', value: "${OC_PASSWORD}"),
+            ]
+
+            if (testPipeline == 'after-first-login-tests' || testPipeline == 'browser-based-testsuite-pipeline') {
+                parameters.add(string(name: 'EVALS_USERNAME', value: 'evals11@example.com'))
+            }
+
+            if (testPipeline == 'browser-based-testsuite-pipeline') {
+                parameters.add(string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-webapp.apps.${CLUSTER_URI}"))
+                parameters.add(string(name: 'EVALS_PASSWORD', value: 'Password1'))
+            }
+
+            buildStatus = build(job: testPipeline, propagate: false, parameters: parameters).result
+            println "Build finished with ${buildStatus}"
+                            
+            if (buildStatus != 'SUCCESS') {
+                currentBuild.result = 'UNSTABLE'
+            }
         }
 
         def notifyBuild(String buildStatus, err) {
