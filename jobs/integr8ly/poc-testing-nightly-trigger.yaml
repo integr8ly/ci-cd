@@ -1,0 +1,58 @@
+---
+
+- job:
+    name: poc-testing-nightly-trigger
+    project-type: pipeline
+    description: "Nightly pipeline trigger for QE POC cluster testing."
+    sandbox: false
+    concurrent: false
+    triggers:
+      - timed: "H H(0-3) * * *"
+    properties:
+      - build-discarder:
+          num-to-keep: 56
+      - inject:
+          properties-content: |
+            GH_CLIENT_ID=yourclientid
+            GH_CLIENT_SECRET=yourclientsecret
+            SELF_SIGNED_CERTS=false
+            RECIPIENTS=integreatly-qe@redhat.com
+            INSTALLATION_REPOSITORY=https://github.com/integr8ly/installation.git
+            INSTALLATION_BRANCH=master
+            TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
+            TEST_SUITES_BRANCH=master
+            CLUSTER_URL=https://integreatly-qe.opentry.me
+            MASTER_URLS=ec2-34-254-96-122.eu-west-1.compute.amazonaws.com,ec2-52-212-118-30.eu-west-1.compute.amazonaws.com,ec2-63-35-216-72.eu-west-1.compute.amazonaws.com
+            ANSIBLE_USER=root
+            OC_USER=integreatly
+            OC_PASSWORD=Password1
+    dsl: |
+        timeout(180) { ansiColor('gnome-terminal') { timestamps {
+            node('cirhos_rhel7') {
+                stage ('Trigger POC Pipeline') {
+                    buildStatus = build(job: 'poc-testing-executor', propagate: false, parameters: [
+                        string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
+                        string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
+                        string(name: 'SELF_SIGNED_CERTS', value: "${SELF_SIGNED_CERTS}"),
+                        string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
+                        string(name: 'INSTALLATION_REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
+                        string(name: 'INSTALLATION_BRANCH', value: "${INSTALLATION_BRANCH}"),
+                        string(name: 'TEST_SUITES_REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
+                        string(name: 'TEST_SUITES_BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                        string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                        string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
+                        string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
+                        string(name: 'OC_USER', value: "${OC_USER}"),
+                        string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}")
+                    ]).result
+
+                    if(buildStatus == 'UNSTABLE') {
+                        currentBuild.result = 'UNSTABLE'
+                    } else if(buildStatus == 'SUCCESS') {
+                        currentBuild.result = 'SUCCESS'
+                    } else {
+                        currentBuild.result = 'FAILURE'
+                    }
+                } // stage
+            }// node
+        }}} // timeout, ansiColor, timestamps
