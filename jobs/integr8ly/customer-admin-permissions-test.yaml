@@ -30,7 +30,7 @@
           default: 'customer-admin@example.com'
           description: 'customer-admin username to login to Integreatly cluster.'
       - string:
-          name: EVALS_PASSWORD
+          name: CUSTOMER_ADMIN_PASSWORD
           default: 'Password1'
           description: 'Password to login to Integreatly cluster.'
     dsl: |
