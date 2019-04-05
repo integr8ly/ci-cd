@@ -25,7 +25,7 @@
           default: "Password1"
           description: 'Customer admin account password.'
       - bool:
-          name: CLEAN_RESOURCES_USERS
+          name: CLEAN_RESOURCES
           default: true
           description: 'Whether the users should be deleted after the successful execution or not.'
       - string:
@@ -48,7 +48,7 @@
                         sh '''
                             npm install
                         '''  
-                        String output = sh returnStdout: true, script: './node_modules/gulp/bin/gulp.js userCreate || true'
+                        String output = sh returnStdout: true, script: './node_modules/gulp/bin/gulp.js create-users || true'
 
                         // To see the output in Jenkins build console log as well
                         println output
@@ -64,8 +64,8 @@
                 stage('Publish test results') {
                     if(publishTestResults) {
                         dir('test-suites/backend-testsuite/reports/') {
-                            archiveArtifacts 'userCreate.xml'                  
-                            junit allowEmptyResults:true, testResults: 'userCreate.xml'
+                            archiveArtifacts 'create-users.xml'                  
+                            junit allowEmptyResults:true, testResults: 'create-users.xml'
                         }
                     } else {
                         println 'Publishing the results skipped. Probably due to an error.'
