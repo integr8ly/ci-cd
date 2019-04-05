@@ -22,7 +22,7 @@
             INSTALLATION_BRANCH=master
             TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
             TEST_SUITES_BRANCH=master
-            TO_DO=heavy
+            TO_DO=full
     dsl: |
         timeout(180) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {

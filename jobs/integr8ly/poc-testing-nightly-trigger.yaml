@@ -26,6 +26,7 @@
             ANSIBLE_USER=root
             OC_USER=integreatly
             OC_PASSWORD=Password1
+            TO_DO=full
     dsl: |
         timeout(180) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {
@@ -43,7 +44,8 @@
                         string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
                         string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
                         string(name: 'OC_USER', value: "${OC_USER}"),
-                        string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}")
+                        string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}"),
+                        string(name: 'TO_DO', value: "${TO_DO}")
                     ]).result
 
                     if(buildStatus == 'UNSTABLE') {
