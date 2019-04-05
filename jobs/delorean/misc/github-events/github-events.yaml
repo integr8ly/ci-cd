@@ -4,6 +4,13 @@
     display-name: 'GitHub Events Monitor'
     project-type: pipeline
     concurrent: true
+    triggers:
+    - raw:
+        xml: |
+          <io.relution.jenkins.awssqs.SQSTrigger plugin="aws-sqs@2.0.1">
+            <spec></spec>
+            <queueUuid>b122060c-a518-4e46-939c-7ba8cbd8ce54</queueUuid>
+          </io.relution.jenkins.awssqs.SQSTrigger>
     pipeline-scm:
       script-path: jobs/delorean/misc/github-events/Jenkinsfile
       scm:
