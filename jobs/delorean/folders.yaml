@@ -104,6 +104,16 @@
     display-name: 'next'
     project-type: folder
 
+# Keycloak
+- job:
+    name: delorean-keycloak
+    display-name: 'Keycloak'
+    project-type: folder
+- job:
+    name: delorean-keycloak/next
+    display-name: 'next'
+    project-type: folder
+
 # WebApp
 - job:
     name: delorean-webapp

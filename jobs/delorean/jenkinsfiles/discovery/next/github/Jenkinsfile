@@ -194,6 +194,7 @@ def productVersionIdentifier = params.productVersionIdentifier
 def nextBranch = params.installationProductBranch ?: "${productName}-next"
 def gaReleaseTagRef = params.gaReleaseTagRef ?: ''
 def installationManifestFile = './inventories/group_vars/all/manifest.yaml'
+def isProduct = params.isProduct ?: false
 
 currentBuild.displayName = "${currentBuild.displayName} ${productName}"
 
@@ -204,20 +205,24 @@ node {
         cleanWs()
         dir('installation') {
             checkoutGitRepo(installationGitUrl, installationGitRef, githubCredentialsID)
-            releaseConfig = readYaml file: installationManifestFile
+            if (!isProduct) {
+                releaseConfig = readYaml file: installationManifestFile
+            }
         }
     }
 
     stage('Fetch Current Integreatly Release') {
-        if (releaseTagVar) {
-            componentRelease = releaseConfig[releaseTagVar]
-        } else {
-            componentRelease = releaseConfig[productVersionVar]
+        when(!isProduct) {
+            if (releaseTagVar) {
+                componentRelease = releaseConfig[releaseTagVar]
+            } else {
+                componentRelease = releaseConfig[productVersionVar]
+            }
+            if (!componentRelease) {
+                error "[ERROR] Unable to retrieve current release version!"
+            }
+            println "[INFO] componentRelease = ${componentRelease}"
         }
-        if (!componentRelease) {
-            error "[ERROR] Unable to retrieve current release version!"
-        }
-        println "[INFO] componentRelease = ${componentRelease}"
     }
 
     stage('Fetch Latest GitHub Release') {
@@ -226,7 +231,6 @@ node {
             error "[ERROR] Unable to retrieve latest release version!"
         }
         println "[INFO] latestRelease = ${latestRelease}"
-        isGARelease = hasNewGARelease(componentRelease, latestRelease, productName)
     }
 
     stage('Fetch Component Product Version') {
@@ -246,6 +250,13 @@ node {
                 productVersion = productVersion.replaceAll("v", "")
             }
 
+            if (productName == 'redhat-sso-7-openshift-image') {
+                dir('installation') {
+                    productVersion = sh(returnStdout: true, script: "cat '${productVersionLocation}' | grep '${productVersionIdentifier}' | awk -F '=' '{print \$2}'")
+                    productVersion = productVersion.replaceAll("\"", "").replaceAll('v', '')
+                }
+            }
+
             productVersion = productVersion.trim()
 
             if (!productVersion) {
@@ -254,6 +265,14 @@ node {
         } else {
             productVersion = latestRelease
         }
+
+        if (isProduct) {
+            isGARelease = hasNewGARelease(productVersion, latestRelease, productName)
+            componentRelease = productVersion
+        } else {
+            isGARelease = hasNewGARelease(componentRelease, productVersion, productName)
+        }
+
         println "[INFO] product version: ${productVersion}"
     }
 
@@ -275,12 +294,29 @@ node {
             }
 
             stage('Product Version Update') {
-                when(isGARelease) {
+                when(isGARelease && !isProduct) {
                     gitCommitWhenChanges("Updated ${productName} product version to ${latestRelease}") { msgs ->
                         manifestFileTxt = readFile(installationManifestFile)
                         manifestFileTxt = updateManifestVariable(manifestFileTxt, releaseTagVar, latestRelease)
                         manifestFileTxt = updateManifestVariable(manifestFileTxt, productVersionVar, productVersion)
                         writeFile file: installationManifestFile, text: manifestFileTxt
+                    }
+                }
+
+                when(isGARelease && isProduct) {
+                    gitCommitWhenChanges("Updated ${productName} product version to ${productVersion} in ${productVersionLocation}") { msgs ->
+                        if (productName == 'redhat-sso-7-openshift-image') {
+                            sh "sed -i 's/${productVersion}/${latestRelease}/' ${productVersionLocation}"
+                            sh 'mkdir -p /tmp/sso'
+                            sh "wget 'https://github.com/jboss-container-images/redhat-sso-7-openshift-image/archive/${productVersion}.zip' -O /tmp/sso/sso.zip"
+                            unzip glob: '', zipFile: '/tmp/sso/sso.zip'
+                            def tmpl = sh(returnStdout: true, script: "find /tmp/sso -name 'sso*-x509-postgresql-persistent.json'")
+                            tmpl = tmpl.trim()
+                            fname = tmpl.split('/').last()
+                            sh "cp ${tmpl} installation/deploy/template/"
+                            sh "sed -ri 's/(\\s+SSO_TEMPLATE_NAME\\s+=\\s?)\"[a-zA-Z0-9\\-]+\\.json\"/\\1\"${fname}\"/' ${productVersionLocation}"
+                            sh 'rm -rf /tmp/sso'
+                        }
                     }
                 }
             }
@@ -292,7 +328,6 @@ node {
                     //We should be using force-with-lease, but the agents appear to have a really old git version in them.
                     sh "git push --force origin ${nextBranch}"
                 }
-
             }
         }
     }
