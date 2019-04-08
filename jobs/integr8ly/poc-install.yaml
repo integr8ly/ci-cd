@@ -118,18 +118,22 @@
                 } // stage
             
                 stage('Execute playbook') {
-                    dir('installation/evals') {
-                    
-                        String ansibleParams = ''
-                        if(GH_CLIENT_ID && GH_CLIENT_SECRET) {
-                            ansibleParams = "-e github_client_id=${GH_CLIENT_ID} -e github_client_secret=${GH_CLIENT_SECRET}"
-                        }
-                        ansibleParams = ansibleParams + " -e threescale_pvc_rwx_storageclassname=nfs -e che_persistent_volume_storageclassname=nfs ${ADDITIONAL_ANSIBLE_PARAMS}"
+                    withCredentials([string(credentialsId: 'qe-poc-aws-s3-key-id', variable: 'AWS_S3_KEY_ID')]) {
+                        withCredentials([string(credentialsId: 'qe-poc-aws-s3-secret', variable: 'AWS_S3_SECRET')]) {
+                            dir('installation/evals') {
 
-                        sh """
-                            sudo ansible-playbook -i ./inventories/hosts ./playbooks/install.yml ${ansibleParams} -e create_cluster_admin=false -e eval_self_signed_certs=${SELF_SIGNED_CERTS} -e openshift_login=true -e openshift_username=${OC_USER} -e openshift_password=${OC_PASSWORD} -e openshift_master_public_url=${CLUSTER_URL}
-                        """
-                    } // dir
+                                String ansibleParams = ''
+                                if(GH_CLIENT_ID && GH_CLIENT_SECRET) {
+                                    ansibleParams = "-e github_client_id=${GH_CLIENT_ID} -e github_client_secret=${GH_CLIENT_SECRET}"
+                                }
+                                ansibleParams = ansibleParams + " -e threescale_pvc_rwx_storageclassname=nfs -e che_persistent_volume_storageclassname=nfs ${ADDITIONAL_ANSIBLE_PARAMS}"
+
+                                sh """
+                                    sudo ansible-playbook -i ./inventories/hosts ./playbooks/install.yml ${ansibleParams} -e create_cluster_admin=false -e eval_self_signed_certs=${SELF_SIGNED_CERTS} -e openshift_login=true -e openshift_username=${OC_USER} -e openshift_password=${OC_PASSWORD} -e openshift_master_public_url=${CLUSTER_URL}
+                                """
+                            } // dir
+                        } // withCredentials AWS S3 SECRET
+                    } // withCredentials AWS S3 KEY ID 
                 } // stage
 
                  stage('Execute "After Installation" Workarounds') {
