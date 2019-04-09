@@ -42,9 +42,9 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             default: master
             description: "Branch of a repository of Integreatly test suites"
         - string:
-            name: YOURCITY
-            default: integreatly-qe.opentry.me
-            description: "City or Customer (5 char min.) plus the generated hash, e.g. qebrno-5d10 [required]"
+            name: CLUSTER_HOSTNAME
+            default: integreatly-qe.rhmi.io
+            description: "Hostname of the POC cluster"
         - string:
             name: MASTER_URLS
             description: "Comma separated list of URLs for master nodes of target cluster to be used in Ansible inventory file"
@@ -76,8 +76,8 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                         if (!MASTER_URLS) {
                             throw new hudson.AbortException('MASTER_URLS parameter is required!')
                         } // if
-                        if (!YOURCITY) {
-                            throw new hudson.AbortException('YOURCITY parameter is required!')
+                        if (!CLUSTER_HOSTNAME) {
+                            throw new hudson.AbortException('CLUSTER_HOSTNAME parameter is required!')
                         } // if
                         if (!OC_USER) {
                             throw new hudson.AbortException('OC_USER parameter is required!')
@@ -162,7 +162,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             build job: 'poc-uninstall', parameters: [
                 string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
                 string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
-                string(name: 'CLUSTER_URL', value: "https://${YOURCITY}"),
+                string(name: 'CLUSTER_URL', value: "https://${CLUSTER_HOSTNAME}"),
                 string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
                 string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
                 string(name: 'OC_USER', value: "${OC_USER}"),
@@ -175,7 +175,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             build job: 'poc-install', parameters: [
                 string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
                 string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
-                string(name: 'CLUSTER_URL', value: "https://${YOURCITY}"),
+                string(name: 'CLUSTER_URL', value: "https://${CLUSTER_HOSTNAME}"),
                 string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
                 string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
                 booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
@@ -193,7 +193,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             parameters = [
                 string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
                 string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
-                string(name: 'CLUSTER_URL', value: "https://${YOURCITY}"),
+                string(name: 'CLUSTER_URL', value: "https://${CLUSTER_HOSTNAME}"),
                 string(name: 'ADMIN_USERNAME', value: "${OC_USER}"),
                 string(name: 'ADMIN_PASSWORD', value: "${OC_PASSWORD}"),
             ]
@@ -203,7 +203,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             }
 
             if (testPipeline == 'browser-based-testsuite-pipeline') {
-                parameters.add(string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-webapp.apps.${YOURCITY}"))
+                parameters.add(string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-webapp.apps.${CLUSTER_HOSTNAME}"))
                 parameters.add(string(name: 'EVALS_PASSWORD', value: 'Password1'))
             }
 
