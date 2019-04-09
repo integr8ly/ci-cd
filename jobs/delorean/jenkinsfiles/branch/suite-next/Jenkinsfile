@@ -49,7 +49,7 @@ node {
   stage('Ensure Suite Parameters Provided') {
     suiteParams.gitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
     suiteParams.suiteBranch = params.suiteBranch
-    suiteParams.productBranches = params.productBranches // Product branch names separated by ',', if not defined = Install all products
+    suiteParams.productBranches = params.productBranches
     verifyParameters(suiteParams)
     println "Suite Options: ${suiteParams}"
   }
