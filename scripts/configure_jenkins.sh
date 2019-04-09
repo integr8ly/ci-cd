@@ -49,6 +49,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/rhsso/next/discovery.ya
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/webapp/next/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/webapp/next/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/suites/integreatly/next/branch.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/suites/integration/next/branch.yaml
 
 #OpenShift Cluster Jobs
 generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/create/openshift-cluster-create.yaml
