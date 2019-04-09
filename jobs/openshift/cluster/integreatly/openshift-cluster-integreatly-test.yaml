@@ -1,0 +1,27 @@
+---
+- job:
+    name: openshift-cluster-integreatly-test
+    display-name: 'Openshift Cluster Integreatly Test'
+    project-type: pipeline
+    parameters:
+      - string:
+          name: 'installerGitUrl'
+          default: 'https://github.com/integr8ly/installation.git'
+          description: '[REQUIRED] Integreatly installer Git URL'
+      - string:
+          name: 'installerGitBranch'
+          default: ''
+          description: '[REQUIRED] The name of the git branch to be used for installing Integreatly'
+      - bool:
+          name: 'dryRun'
+          default: false
+          description: '[OPTIONAL][Test] Dry run only, only prints what it would do!'
+    pipeline-scm:
+      script-path: jobs/openshift/cluster/integreatly/test/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false
