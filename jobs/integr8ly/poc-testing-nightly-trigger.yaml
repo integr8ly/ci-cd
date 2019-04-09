@@ -21,7 +21,7 @@
             INSTALLATION_BRANCH=master
             TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
             TEST_SUITES_BRANCH=master
-            CLUSTER_URL=https://integreatly-qe.opentry.me
+            CLUSTER_HOSTNAME=integreatly-qe.rhmi.io
             MASTER_URLS=ec2-34-254-96-122.eu-west-1.compute.amazonaws.com,ec2-52-212-118-30.eu-west-1.compute.amazonaws.com,ec2-63-35-216-72.eu-west-1.compute.amazonaws.com
             ANSIBLE_USER=root
             OC_USER=integreatly
@@ -40,7 +40,7 @@
                         string(name: 'INSTALLATION_BRANCH', value: "${INSTALLATION_BRANCH}"),
                         string(name: 'TEST_SUITES_REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
                         string(name: 'TEST_SUITES_BRANCH', value: "${TEST_SUITES_BRANCH}"),
-                        string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                        string(name: 'CLUSTER_HOSTNAME', value: "${CLUSTER_HOSTNAME}"),
                         string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
                         string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
                         string(name: 'OC_USER', value: "${OC_USER}"),
