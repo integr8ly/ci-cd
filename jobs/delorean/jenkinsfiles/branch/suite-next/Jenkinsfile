@@ -39,13 +39,6 @@ def gitCreateAndCheckoutBranch(branchName, pushOnCreate = false) {
   }
 }
 
-def gitDeleteBranch(branchName) {
-  String remoteBranchCommit = sh(returnStdout: true, script: "git ls-remote origin refs/heads/${branchName} | cut -f 1").trim()
-  if (remoteBranchCommit) {
-    sh "git push origin --delete ${branchName}"
-  }
-}
-
 def suiteParams = [:]
 def ghOwner = "integr8ly"
 def ghRepo = 'installation'
@@ -65,47 +58,62 @@ node {
 
   dir('installation') {
     stage('Fetch Installation Repo') {
-      checkoutGitRepo(suiteParams.gitUrl, masterBranch, githubSSHCredentialsID)
+      if (params.dryRun) {
+        println "Would clone the git repository with the url '${suiteParams.gitUrl}' and branch '${masterBranch}'"
+      } else {
+        checkoutGitRepo(suiteParams.gitUrl, masterBranch, githubSSHCredentialsID)
+      }
     }
 
     sshagent([githubSSHCredentialsID]) {
       sh 'git config --global user.name "Automatron"'
       sh 'git config --global user.email "github.eng@feedhenry.com"'
 
-      stage('Delete Suite Branch') {
-        // Ensures that the branch to be deleted is a suite branch
-        def isSuiteBranch = suiteBranchList.contains(suiteParams.suiteBranch)
+      // Ensures that the branch to be worked on is a suite branch
+      stage('Ensure Suite Branch') {
+        if (params.dryRun) {
+          println "Would check if the branch provided is one of the following suite branches: ${suiteBranchList}"
+        } else {
+          def isSuiteBranch = suiteBranchList.contains(suiteParams.suiteBranch)
 
-        if (!isSuiteBranch) {
-          error "The branch ${suiteParams.suiteBranch} is not a suite branch. Please specify a branch from the following list: ${suiteBranchList}"
+          if (!isSuiteBranch) {
+            error "The branch ${suiteParams.suiteBranch} is not a suite branch. Please specify a branch from the following list: ${suiteBranchList}"
+          }
         }
-
-        gitDeleteBranch(suiteParams.suiteBranch)
       }
 
       stage('Create and Checkout Suite Branch') {
-        gitCreateAndCheckoutBranch(suiteParams.suiteBranch, true)
+        if (params.dryRun) {
+          println "Would create the branch '${suiteParams.suiteBranch}' in the '${suiteParams.gitUrl}' repository"
+        } else {
+          gitCreateAndCheckoutBranch(suiteParams.suiteBranch, true)
+        }
       }
 
       // Merge product-next branches into suite-next branch
       stage('Merge Product Next Branches') {
-        def productBranches = []
-        if (suiteParams.productBranches) {
-          productBranches = suiteParams.productBranches.replaceAll(" ", "").split(',')
+        if (params.dryRun) {
+          println "Would merge the following branches into ${suiteParams.suiteBranch}:\n${suiteParams.productBranches}"
+          println "Would fail if any of the branches fails to be merged into the targeted branch"
         } else {
-          productBranches = getProductNextBranches(ghOwner, ghRepo, suiteParams.suiteBranch)
-        }
-
-        println "[INFO] Merging the following product branches into ${suiteParams.suiteBranch}:\n${productBranches}"
-        for (i = 0; i < productBranches.size(); i++) {        
-          try {
-            sh "git pull --no-edit origin ${productBranches[i]}"
-          } catch (Exception e) {
-            error "We were unable to merge the branch '${productBranches[i]}' into the source branch '${suiteParams.suiteBranch}'"
+          def productBranches = []
+          if (suiteParams.productBranches) {
+            productBranches = suiteParams.productBranches.replaceAll(" ", "").split(',')
+          } else {
+            productBranches = getProductNextBranches(ghOwner, ghRepo, suiteParams.suiteBranch)
           }
-        }
 
-        sh "git push origin ${suiteParams.suiteBranch}"
+          // If a merge fails, the whole job will fail
+          for (i = 0; i < productBranches.size(); i++) {        
+            try {
+              sh "git pull --no-edit origin ${productBranches[i]}"
+            } catch (Exception e) {
+              error "We were unable to merge the branch '${productBranches[i]}' into the source branch '${suiteParams.suiteBranch}'"
+            }
+          }
+
+          sh "git push origin ${suiteParams.suiteBranch} -f"
+        }
       }
     }
   }
