@@ -2,13 +2,16 @@
 
 // Ensure required parameters are provided
 def verifyParameters(suiteParams) {
-  if (!suiteParams.gitUrl || !suiteParams.suiteBranch) {
+  if (!suiteParams.gitUrl || !suiteParams.suiteBranch || !suiteParams.productBranches) {
+      def productNextBranches = '3scale-next, amq-online-next, backup-container-next, codeready-next, fuse-next, fuse-online-next, gitea-next, middleware-monitoring-next, msbroker-next, rhsso-next, webapp-next'
       def userInput = input message: 'Suites Next Options', parameters: [
         string(defaultValue: (suiteParams.gitUrl ?: 'git@github.com:integr8ly/installation.git'), description: 'The installation repo git url', name: 'installationGitUrl'),
         string(defaultValue: (suiteParams.suiteBranch ?: ''), description: 'Desired name for the suite branch', name: 'suiteBranch'),
+        string(defaultValue: (suiteParams.productBranches ?: productNextBranches), description: 'List of the branches to be installed in the suite branch', name: 'productBranches'),
       ]
       suiteParams.gitUrl = userInput.installationGitUrl
       suiteParams.suiteBranch = userInput.suiteBranch
+      suiteParams.productBranches = userInput.productBranches
       verifyParameters(suiteParams)
   }
 }
@@ -22,20 +25,15 @@ def checkoutGitRepo(gitUrl, gitRef, credentialsID) {
             userRemoteConfigs: [[credentialsId: credentialsID, url: gitUrl]]])
 }
 
-// Get product next branches available in the installation repo
-def getProductNextBranches(gitOrg, gitRepo, sourceBranch) {
-  nextBranches = sh(returnStdout: true, script: "git ls-remote origin | grep next | awk '{print \$2}'").replaceAll("refs/heads/", "").split()
-
-  // Do not include the source branch in the next branches list
-  productNextBranches = nextBranches.minus(sourceBranch)
-  return productNextBranches
-}
-
 def gitCreateAndCheckoutBranch(branchName, pushOnCreate = false) {
   sh "git checkout -b ${branchName}"
 
   if (pushOnCreate) {
-    sh "git push origin ${branchName}"
+    if (params.dryRun) {
+      println "Would push '${branchName}' to remote branch"
+    } else {
+      sh "git push origin ${branchName}"
+    }
   }
 }
 
@@ -58,11 +56,7 @@ node {
 
   dir('installation') {
     stage('Fetch Installation Repo') {
-      if (params.dryRun) {
-        println "Would clone the git repository with the url '${suiteParams.gitUrl}' and branch '${masterBranch}'"
-      } else {
-        checkoutGitRepo(suiteParams.gitUrl, masterBranch, githubSSHCredentialsID)
-      }
+      checkoutGitRepo(suiteParams.gitUrl, masterBranch, githubSSHCredentialsID)
     }
 
     sshagent([githubSSHCredentialsID]) {
@@ -71,47 +65,37 @@ node {
 
       // Ensures that the branch to be worked on is a suite branch
       stage('Ensure Suite Branch') {
-        if (params.dryRun) {
-          println "Would check if the branch provided is one of the following suite branches: ${suiteBranchList}"
-        } else {
-          def isSuiteBranch = suiteBranchList.contains(suiteParams.suiteBranch)
+        def isSuiteBranch = suiteBranchList.contains(suiteParams.suiteBranch)
 
-          if (!isSuiteBranch) {
-            error "The branch ${suiteParams.suiteBranch} is not a suite branch. Please specify a branch from the following list: ${suiteBranchList}"
-          }
+        if (!isSuiteBranch) {
+          error "The branch ${suiteParams.suiteBranch} is not a suite branch. Please specify a branch from the following list: ${suiteBranchList}"
         }
       }
 
       stage('Create and Checkout Suite Branch') {
-        if (params.dryRun) {
-          println "Would create the branch '${suiteParams.suiteBranch}' in the '${suiteParams.gitUrl}' repository"
-        } else {
-          gitCreateAndCheckoutBranch(suiteParams.suiteBranch, true)
-        }
+        gitCreateAndCheckoutBranch(suiteParams.suiteBranch)
       }
 
       // Merge product-next branches into suite-next branch
       stage('Merge Product Next Branches') {
+        def productBranches = suiteParams.productBranches.replaceAll(" ", "").split(',')
+
+        if (productBranches.size() == 0) {
+          error "No product branches to merge to ${suiteParams.suiteBranch}"
+        }
+
+        // If a merge fails, the whole job will fail
+        for (i = 0; i < productBranches.size(); i++) {        
+          try {
+            sh "git pull --no-edit origin ${productBranches[i]}"
+          } catch (Exception e) {
+            error "We were unable to merge the branch '${productBranches[i]}' into the source branch '${suiteParams.suiteBranch}'"
+          }
+        }
+
         if (params.dryRun) {
-          println "Would merge the following branches into ${suiteParams.suiteBranch}:\n${suiteParams.productBranches}"
-          println "Would fail if any of the branches fails to be merged into the targeted branch"
+          println "Would force push '${suiteParams.suiteBranch}' to remote branch"
         } else {
-          def productBranches = []
-          if (suiteParams.productBranches) {
-            productBranches = suiteParams.productBranches.replaceAll(" ", "").split(',')
-          } else {
-            productBranches = getProductNextBranches(ghOwner, ghRepo, suiteParams.suiteBranch)
-          }
-
-          // If a merge fails, the whole job will fail
-          for (i = 0; i < productBranches.size(); i++) {        
-            try {
-              sh "git pull --no-edit origin ${productBranches[i]}"
-            } catch (Exception e) {
-              error "We were unable to merge the branch '${productBranches[i]}' into the source branch '${suiteParams.suiteBranch}'"
-            }
-          }
-
           sh "git push origin ${suiteParams.suiteBranch} -f"
         }
       }

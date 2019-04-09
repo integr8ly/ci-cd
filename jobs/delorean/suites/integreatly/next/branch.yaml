@@ -13,6 +13,10 @@
           name: 'suiteBranch'
           default: 'integreatly-next'
           description: '[REQUIRED] The installation git branch to push new version changes'
+      - string:
+          name: 'productBranches'
+          default: '3scale-next, amq-online-next, backup-container-next, codeready-next, fuse-next, fuse-online-next, gitea-next, middleware-monitoring-next, msbroker-next, rhsso-next, webapp-next'
+          description: '[REQUIRED] List of the branches to be installed in the suite branch'
       - bool:
           name: 'dryRun'
           default: false

@@ -16,7 +16,7 @@
       - string:
           name: 'productBranches'
           default: '3scale-next, amq-online-next, fuse-online-next, fuse-next'
-          description: '[OPTIONAL] List of the branches to be installed in the suite branch'
+          description: '[REQUIRED] List of the branches to be installed in the suite branch'
       - bool:
           name: 'dryRun'
           default: false
