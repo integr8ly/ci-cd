@@ -6,7 +6,7 @@ def verifyParameters(testOptions) {
   if (!testOptions.gitUrl || !testOptions.gitBranch) {
     def userInput = input message: 'Integreatly Test Options', parameters: [
       string(defaultValue: (testOptions.gitUrl ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly installer Git URL', name: 'installerGitUrl'),
-      string(defaultValue: (testOptions.gitBranch ?: ''), description: 'Integreatly Git Branch', name: 'installerGitBranch'),
+      string(defaultValue: (testOptions.gitBranch ?: 'master'), description: 'Integreatly Git Branch', name: 'installerGitBranch'),
     ]
 
     testOptions.gitUrl = userInput.installerGitUrl
@@ -22,8 +22,6 @@ def buildJob(jobName, jobParams) {
 }
 
 stage('Verify Parameters') {
-  testOptions.adminUsername = 'integreatly'
-  testOptions.adminPassword = 'Password1'
   testOptions.awsRegion = 'eu-west-2'
   testOptions.awsAccountName = 'fheng.AWS'
   testOptions.clusterName = params.installerGitBranch
@@ -39,18 +37,10 @@ node('cirhos_rhel7') {
   stage('Create Cluster') {
     println "[INFO] Creating ${testOptions.clusterName} cluster"
     def jobName = 'openshift-cluster-create'
-    def instanceType = 'm4.xlarge'
-    def instanceGroupSize = '3'
     def jobParams = [
       [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
       [$class: 'StringParameterValue', name: 'awsRegion', value: testOptions.awsRegion],
       [$class: 'StringParameterValue', name: 'awsAccountName', value: testOptions.awsAccountName],
-      [$class: 'StringParameterValue', name: 'master_instance_type', value: instanceType],
-      [$class: 'StringParameterValue', name: 'compute_instance_type', value: instanceType],
-      [$class: 'StringParameterValue', name: 'infra_instance_type', value: instanceType],
-      [$class: 'StringParameterValue', name: 'master_group_size', value: instanceGroupSize],
-      [$class: 'StringParameterValue', name: 'compute_group_size', value: instanceGroupSize],
-      [$class: 'StringParameterValue', name: 'infra_group_size', value: instanceGroupSize],
       [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
     ]
     buildJob(jobName, jobParams)
@@ -59,17 +49,11 @@ node('cirhos_rhel7') {
   stage('Install Integreatly') {
     println "[INFO] Installing Integreatly in ${testOptions.clusterName} cluster"
     def jobName = 'openshift-cluster-integreatly-install'
-    def userCount = '50'
-    def selfSignedCerts = false
     def jobParams = [
       [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
       [$class: 'StringParameterValue', name: 'openshiftMasterUrl', value: testOptions.openshiftMasterUrl],
-      [$class: 'StringParameterValue', name: 'clusterAdminUsername', value: testOptions.adminUsername],
-      [$class: 'StringParameterValue', name: 'clusterAdminPassword', value: testOptions.adminPassword],
       [$class: 'StringParameterValue', name: 'installerGitUrl', value: testOptions.gitUrl],
       [$class: 'StringParameterValue', name: 'installerGitBranch', value: testOptions.gitBranch],
-      [$class: 'StringParameterValue', name: 'userCount', value: userCount],
-      [$class: 'BooleanParameterValue', name: 'selfSignedCerts', value: selfSignedCerts],
       [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
     ]
     buildJob(jobName, jobParams)
@@ -85,8 +69,6 @@ node('cirhos_rhel7') {
     def jobParams = [
       [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
       [$class: 'StringParameterValue', name: 'openshiftMasterUrl', value: testOptions.openshiftMasterUrl],
-      [$class: 'StringParameterValue', name: 'clusterAdminUsername', value: testOptions.adminUsername],
-      [$class: 'StringParameterValue', name: 'clusterAdminPassword', value: testOptions.adminPassword],
       [$class: 'StringParameterValue', name: 'uninstallerGitUrl', value: testOptions.gitUrl],
       [$class: 'StringParameterValue', name: 'uninstallerGitBranch', value: testOptions.gitBranch],
       [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
