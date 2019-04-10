@@ -1,5 +1,3 @@
-#!groovy
-
 def testOptions = [:]
 
 def verifyParameters(testOptions) {
@@ -17,75 +15,110 @@ def verifyParameters(testOptions) {
   }
 }
 
-def buildJob(jobName, jobParams) {
-  build job: jobName, parameters: jobParams
-}
-
-stage('Verify Parameters') {
-  testOptions.awsRegion = 'eu-west-2'
-  testOptions.awsAccountName = 'fheng.AWS'
-  testOptions.clusterName = params.installerGitBranch
-  testOptions.domainName = 'skunkhenry.com'
-  testOptions.gitUrl = params.installerGitUrl
-  testOptions.gitBranch = params.installerGitBranch
-  testOptions.openshiftMasterUrl = "https://${params.installerGitBranch}.${testOptions.domainName}"
-  verifyParameters(testOptions)
-}
-
-node('cirhos_rhel7') {
-  cleanWs()
-  stage('Create Cluster') {
-    println "[INFO] Creating ${testOptions.clusterName} cluster"
-    def jobName = 'openshift-cluster-create'
-    def jobParams = [
-      [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
-      [$class: 'StringParameterValue', name: 'awsRegion', value: testOptions.awsRegion],
-      [$class: 'StringParameterValue', name: 'awsAccountName', value: testOptions.awsAccountName],
-      [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
-    ]
-    buildJob(jobName, jobParams)
+pipeline {
+  agent {
+    node {
+      label 'cirhos_rhel7'
+    }
   }
 
-  stage('Install Integreatly') {
-    println "[INFO] Installing Integreatly in ${testOptions.clusterName} cluster"
-    def jobName = 'openshift-cluster-integreatly-install'
-    def jobParams = [
-      [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
-      [$class: 'StringParameterValue', name: 'openshiftMasterUrl', value: testOptions.openshiftMasterUrl],
-      [$class: 'StringParameterValue', name: 'installerGitUrl', value: testOptions.gitUrl],
-      [$class: 'StringParameterValue', name: 'installerGitBranch', value: testOptions.gitBranch],
-      [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
-    ]
-    buildJob(jobName, jobParams)
+  parameters {
+    string(defaultValue: 'https://github.com/integr8ly/installation.git', description: '[REQUIRED] Integreatly installer Git URL', name: 'installerGitUrl')
+    string(defaultValue: 'master', description: '[REQUIRED] The name of the git branch to be used for installing Integreatly', name: 'installerGitBranch')
+    booleanParam(defaultValue: false, description: '[OPTIONAL][Test] Dry run only, only prints what it would do!', name: 'dryRun')
   }
 
-  stage('Test Integreatly') {
-    println "[INFO] Testing Integreatly"
+  stages {
+    stage('Verify Parameters') {
+      steps {
+        script {
+          testOptions.awsAccountName = 'fheng.AWS'
+          testOptions.awsRegion = 'eu-west-2'
+          testOptions.clusterName = params.installerGitBranch
+          testOptions.domainName = 'skunkhenry.com'
+          testOptions.gitUrl = params.installerGitUrl
+          testOptions.gitBranch = params.installerGitBranch
+          testOptions.openshiftMasterUrl = "https://${params.installerGitBranch}.${testOptions.domainName}"
+          verifyParameters(testOptions)
+        }
+      }
+    }
+
+    stage('Cluster Create') {
+      steps {
+        echo "[INFO] Creating ${testOptions.clusterName} cluster"
+        script {
+          def jobName = 'openshift-cluster-create'
+          def jobParams = [
+            [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
+            [$class: 'StringParameterValue', name: 'awsRegion', value: testOptions.awsRegion],
+            [$class: 'StringParameterValue', name: 'awsAccountName', value: testOptions.awsAccountName],
+            [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
+          ]
+          build job: jobName, parameters: jobParams
+        }
+      }
+    }
+
+    stage('Install Integreatly') {
+      steps {
+        echo "[INFO] Installing Integreatly in ${testOptions.clusterName} cluster"
+        script {
+          jobName = 'openshift-cluster-integreatly-install'
+          jobParams = [
+            [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
+            [$class: 'StringParameterValue', name: 'openshiftMasterUrl', value: testOptions.openshiftMasterUrl],
+            [$class: 'StringParameterValue', name: 'installerGitUrl', value: testOptions.gitUrl],
+            [$class: 'StringParameterValue', name: 'installerGitBranch', value: testOptions.gitBranch],
+            [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
+          ]
+          build job: jobName, parameters: jobParams
+        }
+      }
+    }
+
+    stage('Test Integreatly') {
+      steps {
+        echo "[INFO] Running Tests on Integreatly"
+      }
+    }
+
+    stage('Uninstall Integreatly') {
+      steps {
+        echo "[INFO] Uninstalling Integreatly from ${testOptions.clusterName}"
+        script {
+          jobName = 'openshift-cluster-integreatly-uninstall'
+          jobParams = [
+            [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
+            [$class: 'StringParameterValue', name: 'openshiftMasterUrl', value: testOptions.openshiftMasterUrl],
+            [$class: 'StringParameterValue', name: 'uninstallerGitUrl', value: testOptions.gitUrl],
+            [$class: 'StringParameterValue', name: 'uninstallerGitBranch', value: testOptions.gitBranch],
+            [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
+          ]
+          build job: jobName, parameters: jobParams
+        }
+      }
+    }
   }
 
-  stage('Uninstall Integreatly') {
-    println "[INFO] Uninstalling Integreatly from ${testOptions.clusterName}"
-    def jobName = 'openshift-cluster-integreatly-uninstall'
-    def jobParams = [
-      [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
-      [$class: 'StringParameterValue', name: 'openshiftMasterUrl', value: testOptions.openshiftMasterUrl],
-      [$class: 'StringParameterValue', name: 'uninstallerGitUrl', value: testOptions.gitUrl],
-      [$class: 'StringParameterValue', name: 'uninstallerGitBranch', value: testOptions.gitBranch],
-      [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
-    ]
-    buildJob(jobName, jobParams)
-  }
-
-  stage('Deprovision Cluster') {
-    println "[INFO] Deprovision ${testOptions.clusterName} cluster"
-    def jobName = 'openshift-cluster-deprovision'
-    def jobParams = [
-      [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
-      [$class: 'StringParameterValue', name: 'awsRegion', value: testOptions.awsRegion],
-      [$class: 'StringParameterValue', name: 'awsAccountName', value: testOptions.awsAccountName],
-      [$class: 'StringParameterValue', name: 'clusterDomainName', value: testOptions.domainName],
-      [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
-    ]
-    buildJob(jobName, jobParams)
+  post {
+    always {
+      echo "[INFO] Deprovision ${testOptions.clusterName} cluster"
+      script {
+        if (testOptions.clusterName) {
+          jobName = 'openshift-cluster-deprovision'
+          jobParams = [
+            [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
+            [$class: 'StringParameterValue', name: 'awsRegion', value: testOptions.awsRegion],
+            [$class: 'StringParameterValue', name: 'awsAccountName', value: testOptions.awsAccountName],
+            [$class: 'StringParameterValue', name: 'clusterDomainName', value: testOptions.domainName],
+            [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
+          ]
+          build job: jobName, parameters: jobParams
+        } else {
+          println "[INFO] Cluster name not available, skipping deprovision"
+        }
+      }
+    }
   }
 }
