@@ -66,7 +66,8 @@ node('cirhos_rhel7') {
                     infra_instance_size: ${clusterOptions.nodes.infra.instance_type}
                     openshift_aws_master_group_desired_size: ${clusterOptions.nodes.master.group_size}
                     openshift_aws_compute_group_desired_size: ${clusterOptions.nodes.compute.group_size}
-                    openshift_aws_infra_group_desired_size: ${clusterOptions.nodes.infra.group_size}"""
+                    openshift_aws_infra_group_desired_size: ${clusterOptions.nodes.infra.group_size}
+                    openshift_hosted_router_replicas: ${clusterOptions.nodes.infra.group_size}"""
                 )
             }
         }

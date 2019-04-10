@@ -8,9 +8,12 @@
           name: 'clusterName'
           default: ''
           description: '[REQUIRED] The name of the cluster to create'
-      - string:
+      - choice:
           name: 'awsRegion'
-          default: 'eu-west-2'
+          choices:
+            - 'us-east-1'
+            - 'eu-west-1'
+            - 'eu-west-2'
           description: '[REQUIRED] The AWS Region the cluster should be created in'
       - choice:
           name: 'awsAccountName'
@@ -35,15 +38,15 @@
           description: '[REQUIRED] the AWS instance type for infra node(s)'
       - string:
           name: 'master_group_size'
-          default: '3'
+          default: '1'
           description: '[REQUIRED] The amount of AWS master nodes to be created'
       - string:
           name: 'compute_group_size'
-          default: '3'
+          default: '2'
           description: '[REQUIRED] The amount of AWS compute nodes to be created'
       - string:
           name: 'infra_group_size'
-          default: '3'
+          default: '2'
           description: '[REQUIRED] The amount of AWS infra nodes to be created'
     pipeline-scm:
       script-path: jobs/openshift/cluster/create/Jenkinsfile
