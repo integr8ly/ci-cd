@@ -92,6 +92,58 @@ boolean prHasLabel(GHPullRequest pr, String labelName) {
         }
     }
     return hasLabel
+
+def hasJiraUpdateIssue(credentials, product) {
+    def query = "project = INTLY AND status = Open AND labels=product-update AND labels=${product}"
+    def body = """{
+        "jql": "${query}"
+    }"""
+    def url = 'https://issues.jboss.org/rest/api/2/search'
+    def res = httpRequest quiet: true, authentication: credentials, consoleLogResponseBody: true, contentType: 'APPLICATION_JSON', httpMode: 'POST', requestBody: body, responseHandle: 'NONE', timeout: 60, url: url, validResponseCodes: '200'
+    def data = readJSON text: "${res.content}"
+    
+    def found = res.status == 200 && data.total > 0
+    def key = ''
+    if (found) {
+        key = data.issues[0].key
+    }
+
+    return [found, key]
+}
+
+def createJiraIssue(credentials, gitUrl, product) {
+    def (found, key) = hasJiraUpdateIssue(credentials, product)
+    if (found) {
+        println "[INFO] Issue already open for ${product}: https://issues.jboss.org/browse/${key}"
+        return
+    }
+    def body = """{
+        "fields": {
+            "project": {
+                "id": "12321620",
+                "key": "INTLY",
+                "name": "Integreatly"
+            },
+            "summary": "New version available for ${product}",
+            "description": "${gitUrl}",
+            "labels": [
+                "product-update",
+                "${product}"
+            ],
+            "issuetype": {
+                "name": "Task"
+            },
+            "priority": {
+                "id": "3",
+                "name": "Major"
+            },
+            "customfield_12310220": "${gitUrl}"
+        }
+    }"""
+    def url = 'https://issues.jboss.org/rest/api/2/issue'
+    def res = httpRequest authentication: credentials, consoleLogResponseBody: true, contentType: 'APPLICATION_JSON', httpMode: 'POST', requestBody: body, responseHandle: 'NONE', timeout: 60, url: url, validResponseCodes: '201'
+    def data = readJSON text: "${res.content}"
+    println "[INFO] Issue created: https://issues.jboss.org/browse/${data.key}"
 }
 
 //Helper methods
@@ -111,6 +163,7 @@ String prUrl
 final String ghCommitStatusContext = 'delorean/ga/integration-tests'
 String integrationTestsGHLabel = "integration tests"
 String productUpdateGHLabel = "product update"
+def jiraUserPass = params.jiraUserPass ?: 'integreatly-jira-bot'
 
 node {
     cleanWs()
@@ -192,6 +245,8 @@ node {
                         .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
                         .build()
                 ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.SUCCESS, env.BUILD_URL, 'Success', ghCommitStatusContext)
+                println "Component Update PR = ${pr.getHtmlUrl()}"
+                createJiraIssue(jiraUserPass, pr.getHtmlUrl(), productName)
             }
         }
     }
