@@ -28,6 +28,10 @@
       - string:
           name: EVALS_USERNAME
           description: 'evals username used to create the address'
+      - bool:
+          name: CLEAN_RESOURCES
+          default: true
+          description: 'depending on whether the resources should be cleaned after the successful execution'
     dsl: |
         timeout(60) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){

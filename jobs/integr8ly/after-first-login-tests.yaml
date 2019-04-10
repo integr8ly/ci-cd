@@ -18,17 +18,13 @@
           name: CLUSTER_URL
           description: 'URL of cluster on which the smoke tests will be executed.'
       - string:
-          name: ADMIN_USERNAME
-          default: 'admin@example.com'
-          description: 'Username to login to Integreatly cluster.'
-      - string:
-          name: ADMIN_PASSWORD
-          default: 'Password1'
-          description: 'Password to login to Integreatly cluster.'
-      - string:
           name: EVALS_USERNAME
           default: 'evals11@example.com'
           description: 'Evals account email address for checking created namespaces.'    
+      - string:
+          name: EVALS_PASSWORD
+          default: 'Password1'
+          description: 'Evals user password'    
       - string:
           name: RELEASE_VERSION
           default: 'master'
