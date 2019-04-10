@@ -6,8 +6,8 @@
     display-name: '3Scale'
     project-type: folder
 - job:
-    name: delorean-3scale/next
-    display-name: 'next'
+    name: delorean-3scale/ga
+    display-name: 'GA'
     project-type: folder
 - job:
     name: delorean-3scale/latest
@@ -20,8 +20,8 @@
     display-name: 'AMQ Online'
     project-type: folder
 - job:
-    name: delorean-amq-online/next
-    display-name: 'next'
+    name: delorean-amq-online/ga
+    display-name: 'GA'
     project-type: folder
 
 # Backup Container
@@ -30,8 +30,8 @@
     display-name: 'Backup Container'
     project-type: folder
 - job:
-    name: delorean-backup-container/next
-    display-name: 'next'
+    name: delorean-backup-container/ga
+    display-name: 'GA'
     project-type: folder
 
 # Code Ready
@@ -40,8 +40,8 @@
     display-name: 'CodeReady'
     project-type: folder
 - job:
-    name: delorean-codeready/next
-    display-name: 'next'
+    name: delorean-codeready/ga
+    display-name: 'GA'
     project-type: folder
 
 # Fuse
@@ -50,8 +50,8 @@
     display-name: 'Fuse'
     project-type: folder
 - job:
-    name: delorean-fuse/next
-    display-name: 'next'
+    name: delorean-fuse/ga
+    display-name: 'GA'
     project-type: folder
 
 # Fuse Online
@@ -60,8 +60,8 @@
     display-name: 'Fuse Online'
     project-type: folder
 - job:
-    name: delorean-fuse-online/next
-    display-name: 'next'
+    name: delorean-fuse-online/ga
+    display-name: 'GA'
     project-type: folder
 
 # Gitea
@@ -70,8 +70,8 @@
     display-name: 'Gitea'
     project-type: folder
 - job:
-    name: delorean-gitea/next
-    display-name: 'next'
+    name: delorean-gitea/ga
+    display-name: 'GA'
     project-type: folder
 
 # Middleware Monitoring
@@ -80,8 +80,8 @@
     display-name: 'Middleware Monitoring'
     project-type: folder
 - job:
-    name: delorean-middleware-monitoring/next
-    display-name: 'next'
+    name: delorean-middleware-monitoring/ga
+    display-name: 'GA'
     project-type: folder
 
 # Managed Service Broker
@@ -90,8 +90,8 @@
     display-name: 'Managed Service Broker'
     project-type: folder
 - job:
-    name: delorean-msbroker/next
-    display-name: 'next'
+    name: delorean-msbroker/ga
+    display-name: 'GA'
     project-type: folder
 
 # RHSSO
@@ -100,8 +100,8 @@
     display-name: 'RHSSO'
     project-type: folder
 - job:
-    name: delorean-rhsso/next
-    display-name: 'next'
+    name: delorean-rhsso/ga
+    display-name: 'GA'
     project-type: folder
 
 # Keycloak
@@ -110,8 +110,8 @@
     display-name: 'Keycloak'
     project-type: folder
 - job:
-    name: delorean-keycloak/next
-    display-name: 'next'
+    name: delorean-keycloak/ga
+    display-name: 'GA'
     project-type: folder
 
 # WebApp
@@ -120,8 +120,8 @@
     display-name: 'WebApp'
     project-type: folder
 - job:
-    name: delorean-webapp/next
-    display-name: 'next'
+    name: delorean-webapp/ga
+    display-name: 'GA'
     project-type: folder
 
 # Suites
@@ -134,16 +134,16 @@
     display-name: 'Integreatly'
     project-type: folder
 - job:
-    name: delorean-suites/integreatly/next
-    display-name: 'next'
+    name: delorean-suites/integreatly/ga
+    display-name: 'GA'
     project-type: folder
 - job:
     name: delorean-suites/integration
     display-name: 'Integration'
     project-type: folder
 - job:
-    name: delorean-suites/integration/next
-    display-name: 'next'
+    name: delorean-suites/integration/ga
+    display-name: 'GA'
     project-type: folder
 
 # Misc

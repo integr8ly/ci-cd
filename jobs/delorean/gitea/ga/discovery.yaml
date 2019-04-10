@@ -1,0 +1,53 @@
+---
+- job:
+    name: delorean-gitea/ga/discovery
+    display-name: 'gitea-ga-discovery'
+    project-type: pipeline
+    concurrent: false
+    triggers:
+      - timed: 'H/10 * * * *'
+    parameters:
+      - string:
+          name: 'releaseTagVar'
+          default: 'gitea_operator_release_tag'
+          description: '[OPTIONAL] The manifest variable to be used as the current component release tag'
+          read-only: true
+      - string:
+          name: 'productVersionVar'
+          default: 'gitea_version'
+          description: '[REQUIRED] The manifest variable to be used as the current component product version'
+          read-only: true
+      - string:
+          name: 'projectOrg'
+          default: 'integr8ly'
+          description: '[REQUIRED] github project organization'
+          read-only: true
+      - string:
+          name: 'projectRepo'
+          default: 'gitea-operator'
+          description: '[REQUIRED] github project repository'
+          read-only: true
+      - string:
+          name: 'productName'
+          default: 'gitea'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
+          read-only: true
+      - string:
+          name: 'productVersionLocation'
+          default: 'pkg/controller/gitea/templateHelper.go'
+          description: '[OPTIONAL] Path to the file where the product version of the component is declared'
+          read-only: true
+      - string:
+          name: 'productVersionIdentifier'
+          default: 'GiteaVersion'
+          description: '[OPTIONAL] Identifier to be used to retrieve the product version from the productVersionLocation'
+          read-only: true
+    pipeline-scm:
+      script-path: jobs/delorean/jenkinsfiles/discovery/ga/github/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - master
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

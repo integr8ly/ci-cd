@@ -19,7 +19,7 @@ def when(boolean condition, body) {
 
 String githubEventStr = params.sqs_body
 String gitBranch = ""
-boolean isNextBranch = false
+boolean isGABranch = false
 
 currentBuild.description = "sqsMessageId: ${params.sqs_messageId}"
 
@@ -28,13 +28,13 @@ node {
     stage('Parse GitHub Event') {
         def ghEvent = readJSON text: githubEventStr
         gitBranch = ghEvent['ref'].tokenize('/').last()
-        isNextBranch = gitBranch.endsWith("-next")
+        isGABranch = gitBranch.endsWith("-ga")
         isLatestBranch = gitBranch.endsWith("-latest")
         currentBuild.description = "${currentBuild.description}\nbranch: ${gitBranch}"
     }
 
-    stage('Trigger next branch job') {
-        when(isNextBranch || isLatestBranch) {
+    stage('Trigger ga branch job') {
+        when(isGABranch || isLatestBranch) {
             def branchType = gitBranch.split("-").last()
             def productName = gitBranch.minus("-${branchType}")
             jobName = "delorean-${productName}/${branchType}/branch"
