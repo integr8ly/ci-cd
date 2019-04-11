@@ -3,40 +3,53 @@
 def uninstallerOptions = [:]
 
 def verifyUninstallerOptions(uninstallerOptions) {
-    if (!uninstallerOptions.clusterName || !uninstallerOptions.openshiftMasterUrl || !uninstallerOptions.clusterAdminUsername || !uninstallerOptions.clusterAdminPassword ||
-        !uninstallerOptions.installationGitBranch || !uninstallerOptions.installationGitBranch) {
-        def userInput = input message: 'Installer Options', parameters: [
-            string(defaultValue: (uninstallerOptions.clusterName ?: ''), description: 'Cluster name', name: 'clusterName'),
-            string(defaultValue: (uninstallerOptions.openshiftMasterUrl ?: ''), description: 'OpenShift cluster public URL', name: 'openshiftMasterUrl'),
-            string(defaultValue: (uninstallerOptions.clusterAdminUsername ?: 'integreatly'), description: 'OpenShift cluster admin username', name: 'clusterAdminUsername'),
-            string(defaultValue: (uninstallerOptions.clusterAdminPassword ?: 'Password1'), description: 'OpenShift cluster admin password', name: 'clusterAdminPassword'),
-            string(defaultValue: (uninstallerOptions.installationGitBranch ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly uninstaller Git URL', name: 'installationGitBranch'),
-            string(defaultValue: (uninstallerOptions.installationGitBranch ?: 'master'), description: 'Integreatly uninstaller Git branch', name: 'installationGitBranch'),
-        ]
-        uninstallerOptions.clusterName = userInput.clusterName
-        uninstallerOptions.openshiftMasterUrl = userInput.openshiftMasterUrl
-        uninstallerOptions.clusterAdminUsername = userInput.clusterAdminUsername
-        uninstallerOptions.clusterAdminPassword = userInput.clusterAdminPassword
-        uninstallerOptions.installationGitBranch = userInput.installationGitBranch
-        uninstallerOptions.installationGitBranch = userInput.installationGitBranch
-        verifyUninstallerOptions(uninstallerOptions)
-    }
+  if (!uninstallerOptions.clusterName || !uninstallerOptions.openshiftMasterUrl || !uninstallerOptions.clusterAdminUsername ||
+      !uninstallerOptions.clusterAdminPassword || !uninstallerOptions.installationGitBranch || !uninstallerOptions.installationGitBranch) {
+    def clusterAdminCredentials = setClusterAdminCredentials()
+    def userInput = input message: 'Installer Options', parameters: [
+      string(defaultValue: (uninstallerOptions.clusterName ?: ''), description: 'Cluster name', name: 'clusterName'),
+      string(defaultValue: (uninstallerOptions.openshiftMasterUrl ?: ''), description: 'OpenShift cluster public URL', name: 'openshiftMasterUrl'),
+      string(defaultValue: (uninstallerOptions.clusterAdminUsername ?: clusterAdminCredentials.clusterAdminUsername), description: 'OpenShift cluster admin username', name: 'clusterAdminUsername'),
+      string(defaultValue: (uninstallerOptions.clusterAdminPassword ?: clusterAdminCredentials.clusterAdminPassword), description: 'OpenShift cluster admin password', name: 'clusterAdminPassword'),
+      string(defaultValue: (uninstallerOptions.installationGitUrl ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly uninstaller Git URL', name: 'installationGitUrl'),
+      string(defaultValue: (uninstallerOptions.installationGitBranch ?: 'master'), description: 'Integreatly uninstaller Git branch', name: 'installationGitBranch'),
+    ]
+    uninstallerOptions.clusterName = userInput.clusterName
+    uninstallerOptions.openshiftMasterUrl = userInput.openshiftMasterUrl
+    uninstallerOptions.clusterAdminUsername = userInput.clusterAdminUsername
+    uninstallerOptions.clusterAdminPassword = userInput.clusterAdminPassword
+    uninstallerOptions.installationGitUrl = userInput.installationGitUrl
+    uninstallerOptions.installationGitBranch = userInput.installationGitBranch
+    verifyUninstallerOptions(uninstallerOptions)
+  }
+}
+
+def setClusterAdminCredentials() {
+  def integreatlyCredentialsID = 'tower-openshift-cluster-credentials'
+  def clusterAdminCredentials = [:]
+  withCredentials([usernamePassword(credentialsId: integreatlyCredentialsID, usernameVariable: 'CLUSTER_ADMIN_USERNAME', passwordVariable: 'CLUSTER_ADMIN_PASSWORD')]) {
+    clusterAdminCredentials.clusterAdminUsername = "${CLUSTER_ADMIN_USERNAME}"
+    clusterAdminCredentials.clusterAdminPassword = "${CLUSTER_ADMIN_PASSWORD}"
+  }
+
+  return clusterAdminCredentials
 }
 
 stage("Verify Uninstallation Options") {
+    def clusterAdminCredentials = setClusterAdminCredentials()
     uninstallerOptions.clusterName = params.clusterName
     uninstallerOptions.openshiftMasterUrl = params.openshiftMasterUrl
-    uninstallerOptions.clusterAdminUsername = params.clusterAdminUsername
-    uninstallerOptions.clusterAdminPassword = params.clusterAdminPassword
-    uninstallerOptions.installationGitBranch = params.installationGitBranch
+    uninstallerOptions.clusterAdminUsername = params.clusterAdminUsername ?: clusterAdminCredentials.clusterAdminUsername
+    uninstallerOptions.clusterAdminPassword = params.clusterAdminPassword ?: clusterAdminCredentials.clusterAdminPassword
+    uninstallerOptions.installationGitUrl = params.installationGitUrl
     uninstallerOptions.installationGitBranch = params.installationGitBranch
 
     verifyUninstallerOptions(uninstallerOptions)
-    println "Installer Options: ${uninstallerOptions}"
+    println "Uninstallation Options: ${uninstallerOptions}"
     currentBuild.displayName = "${currentBuild.displayName} ${uninstallerOptions.clusterName}"
     currentBuild.description = """clusterName: ${uninstallerOptions.clusterName}\nopenshiftMasterUrl: ${uninstallerOptions.openshiftMasterUrl}
                                 \nopenshiftUsername: ${uninstallerOptions.clusterAdminUsername}\nopenshiftPassword: ${uninstallerOptions.clusterAdminPassword}
-                                \ninstallationGitBranch: ${uninstallerOptions.installationGitUrl}\ninstallationGitBranch: ${uninstallerOptions.installationGitBranch}"""
+                                \ninstallationGitUrl: ${uninstallerOptions.installationGitUrl}\ninstallationGitBranch: ${uninstallerOptions.installationGitBranch}"""
 }
 
 node('cirhos_rhel7') {
@@ -58,7 +71,7 @@ node('cirhos_rhel7') {
                   openshift_master_public_url: ${uninstallerOptions.openshiftMasterUrl}
                   openshift_username: ${uninstallerOptions.clusterAdminUsername}
                   openshift_password: ${uninstallerOptions.clusterAdminPassword}
-                  integreatly_project_uninstall_scm_url: ${uninstallerOptions.installationGitBranch}
+                  integreatly_project_uninstall_scm_url: ${uninstallerOptions.installationGitUrl}
                   integreatly_project_uninstall_scm_branch: ${uninstallerOptions.installationGitBranch}"""
               )
             }

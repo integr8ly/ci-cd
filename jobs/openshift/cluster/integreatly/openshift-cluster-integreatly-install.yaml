@@ -14,12 +14,12 @@
           description: '[REQUIRED] The public URL of the target OpenShift cluster'
       - string:
           name: 'clusterAdminUsername'
-          default: 'integreatly'
-          description: '[REQUIRED] Username of the cluster admin account'
+          default: ''
+          description: '[OPTIONAL] Username of the cluster admin account. Defaults to the username stored in tower-openshift-cluster-credentials'
       - string:
           name: 'clusterAdminPassword'
-          default: 'Password1'
-          description: '[REQUIRED] Password of the cluster admin account'
+          default: ''
+          description: '[OPTIONAL] Password of the cluster admin account. Defaults to the password stored in tower-openshift-cluster-credentials'
       - string:
           name: 'installationGitUrl'
           default: 'https://github.com/integr8ly/installation.git'
