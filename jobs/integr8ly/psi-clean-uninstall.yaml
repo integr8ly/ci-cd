@@ -2,7 +2,7 @@
 
 - job:
     name: psi-clean-uninstall
-    description: 'Uninstalls Integreatly by using master node as Jenkins slave (preconfigured) and executing Ansible uninstallation playbook there. Small single node Openstack based OpenShift living in rhmobile tenant where Integreatly has never been installed is used.'
+    description: 'Uninstalls Integreatly by using master node as Jenkins slave (preconfigured) and executing Ansible uninstallation playbook there. Small single node OpenShift backed by PSI (Upshift) Openstack living in integreatly-qe tenant where Integreatly has never been installed is used.'
     project-type: pipeline
     sandbox: false
     parameters:
@@ -45,7 +45,7 @@
                             """
             
                             sh """
-                                sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\ntrepel-merrn-1@;P;D' ./evals/inventories/hosts
+                                sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\nclean-uninstall-merrn-1@;P;D' ./evals/inventories/hosts
                             """
                             
                             String output = readFile('./evals/inventories/hosts')
