@@ -104,8 +104,8 @@ node {
         // Will trigger a build of the integreatly test job to run E2E tests using the suite branch provided
         def jobName = 'openshift-cluster-integreatly-test'
         def jobParams = [
-          [$class: 'StringParameterValue', name: 'installerGitUrl', value: suiteParams.gitUrl],
-          [$class: 'StringParameterValue', name: 'installerGitBranch', value: suiteParams.suiteBranch],
+          [$class: 'StringParameterValue', name: 'installationGitUrl', value: suiteParams.gitUrl],
+          [$class: 'StringParameterValue', name: 'installationGitBranch', value: suiteParams.suiteBranch],
           [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
         ]
         build job: jobName, parameters: jobParams

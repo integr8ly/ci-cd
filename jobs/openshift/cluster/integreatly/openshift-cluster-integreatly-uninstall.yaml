@@ -21,11 +21,11 @@
           default: 'Password1'
           description: '[REQUIRED] Password of the cluster admin account'
       - string:
-          name: 'uninstallerGitUrl'
+          name: 'installationGitBranch'
           default: 'https://github.com/integr8ly/installation.git'
           description: '[REQUIRED] Integreatly uninstaller Git URL'
       - string:
-          name: 'uninstallerGitBranch'
+          name: 'installationGitBranch'
           default: 'master'
           description: '[REQUIRED] The name of the git branch to be used for the Integreatly uninstaller'
       - bool:

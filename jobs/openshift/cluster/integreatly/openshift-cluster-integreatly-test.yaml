@@ -5,11 +5,11 @@
     project-type: pipeline
     parameters:
       - string:
-          name: 'installerGitUrl'
+          name: 'installationGitUrl'
           default: 'https://github.com/integr8ly/installation.git'
           description: '[REQUIRED] Integreatly installer Git URL'
       - string:
-          name: 'installerGitBranch'
+          name: 'installationGitBranch'
           default: 'master'
           description: '[REQUIRED] The name of the git branch to be used for installing Integreatly'
       - bool:
