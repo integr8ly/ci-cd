@@ -166,12 +166,14 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 string(name: 'ADMIN_PASSWORD', value: 'Password1')
             ]
 
-            if (testPipeline == 'after-first-login-tests' || testPipeline == 'browser-based-testsuite-pipeline') {
+            if (testPipeline == 'after-first-login-tests') {
                 parameters.add(string(name: 'EVALS_USERNAME', value: 'evals23@example.com'))
+                parameters.add(string(name: 'EVALS_PASSWORD', value: 'Password1'))
             }
 
             if (testPipeline == 'browser-based-testsuite-pipeline') {
                 parameters.add(string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-webapp.apps.${YOURCITY}.openshiftworkshop.com"))
+                parameters.add(string(name: 'EVALS_USERNAME', value: 'evals23@example.com'))
                 parameters.add(string(name: 'EVALS_PASSWORD', value: 'Password1'))
             }
 

@@ -28,9 +28,6 @@
           name: EVALS_USERNAME
           default: 'evals11@example.com'
           description: 'Evals account email address used to access the available consoles. This test expects that this user started the Walkthrough 1A!!'
-      - string:
-          name: FUSE_NAMESPACE
-          description: 'name of the fuse namespace to test the integration (optional, defaults to "fuse")'
       - bool:
           name: CLEAN_RESOURCES
           default: true
