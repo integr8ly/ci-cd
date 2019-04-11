@@ -3,14 +3,14 @@ def testOptions = [:]
 def verifyParameters(testOptions) {
   if (!testOptions.gitUrl || !testOptions.gitBranch) {
     def userInput = input message: 'Integreatly Test Options', parameters: [
-      string(defaultValue: (testOptions.gitUrl ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly installer Git URL', name: 'installerGitUrl'),
-      string(defaultValue: (testOptions.gitBranch ?: 'master'), description: 'Integreatly Git Branch', name: 'installerGitBranch'),
+      string(defaultValue: (testOptions.gitUrl ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly installer Git URL', name: 'installationGitUrl'),
+      string(defaultValue: (testOptions.gitBranch ?: 'master'), description: 'Integreatly Git Branch', name: 'installationGitBranch'),
     ]
 
-    testOptions.gitUrl = userInput.installerGitUrl
-    testOptions.gitBranch = userInput.installerGitBranch
-    testOptions.clusterName = userInput.installerGitBranch
-    testOptions.openshiftMasterUrl = "https://${userInput.installerGitBranch}.${testOptions.domainName}"
+    testOptions.gitUrl = userInput.installationGitUrl
+    testOptions.gitBranch = userInput.installationGitBranch
+    testOptions.clusterName = userInput.installationGitBranch
+    testOptions.openshiftMasterUrl = "https://${userInput.installationGitBranch}.${testOptions.domainName}"
     verifyParameters(testOptions)
   }
 }
@@ -22,23 +22,17 @@ pipeline {
     }
   }
 
-  parameters {
-    string(defaultValue: 'https://github.com/integr8ly/installation.git', description: '[REQUIRED] Integreatly installer Git URL', name: 'installerGitUrl')
-    string(defaultValue: 'master', description: '[REQUIRED] The name of the git branch to be used for installing Integreatly', name: 'installerGitBranch')
-    booleanParam(defaultValue: false, description: '[OPTIONAL][Test] Dry run only, only prints what it would do!', name: 'dryRun')
-  }
-
   stages {
     stage('Verify Parameters') {
       steps {
         script {
           testOptions.awsAccountName = 'fheng.AWS'
           testOptions.awsRegion = 'eu-west-2'
-          testOptions.clusterName = params.installerGitBranch
+          testOptions.clusterName = params.installationGitBranch
           testOptions.domainName = 'skunkhenry.com'
-          testOptions.gitUrl = params.installerGitUrl
-          testOptions.gitBranch = params.installerGitBranch
-          testOptions.openshiftMasterUrl = "https://${params.installerGitBranch}.${testOptions.domainName}"
+          testOptions.gitUrl = params.installationGitUrl
+          testOptions.gitBranch = params.installationGitBranch
+          testOptions.openshiftMasterUrl = "https://${params.installationGitBranch}.${testOptions.domainName}"
           verifyParameters(testOptions)
         }
       }
@@ -68,8 +62,8 @@ pipeline {
           jobParams = [
             [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
             [$class: 'StringParameterValue', name: 'openshiftMasterUrl', value: testOptions.openshiftMasterUrl],
-            [$class: 'StringParameterValue', name: 'installerGitUrl', value: testOptions.gitUrl],
-            [$class: 'StringParameterValue', name: 'installerGitBranch', value: testOptions.gitBranch],
+            [$class: 'StringParameterValue', name: 'installationGitUrl', value: testOptions.gitUrl],
+            [$class: 'StringParameterValue', name: 'installationGitBranch', value: testOptions.gitBranch],
             [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
           ]
           build job: jobName, parameters: jobParams
@@ -91,8 +85,8 @@ pipeline {
           jobParams = [
             [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
             [$class: 'StringParameterValue', name: 'openshiftMasterUrl', value: testOptions.openshiftMasterUrl],
-            [$class: 'StringParameterValue', name: 'uninstallerGitUrl', value: testOptions.gitUrl],
-            [$class: 'StringParameterValue', name: 'uninstallerGitBranch', value: testOptions.gitBranch],
+            [$class: 'StringParameterValue', name: 'installationGitBranch', value: testOptions.gitUrl],
+            [$class: 'StringParameterValue', name: 'installationGitBranch', value: testOptions.gitBranch],
             [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
           ]
           build job: jobName, parameters: jobParams
