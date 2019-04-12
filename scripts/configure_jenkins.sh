@@ -83,6 +83,7 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/poc-uninstall.
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/psi-clean-uninstall.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/recreate-pipelines.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/sso-user-create.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/w1-test-executor.yaml
 
 #Views
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/repos/
