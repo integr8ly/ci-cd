@@ -59,15 +59,17 @@ node('cirhos_rhel7') {
                     openshift_aws_master_group_desired_size: ${clusterOptions.nodes.master.group_size}
                     openshift_aws_compute_group_desired_size: ${clusterOptions.nodes.compute.group_size}
                     openshift_aws_infra_group_desired_size: ${clusterOptions.nodes.infra.group_size}"""
-            if ((clusterOptions.nodes.compute.group_size as Integer) == '1') {
+            if ((clusterOptions.nodes.compute.group_size as Integer) == 1) {
                 extraVars = """${extraVars}
                 openshift_aws_compute_group_min_size=1"""
             }
 
-            if ((clusterOptions.nodes.infra.group_size as Integer) == '1') {
+            if ((clusterOptions.nodes.infra.group_size as Integer) == 1) {
                 extraVars = """${extraVars}
                 openshift_aws_infra_group_desired_size=1"""
             }
+
+            println extraVars
 
             wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
                 ansibleTower(
