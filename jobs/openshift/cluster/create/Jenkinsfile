@@ -48,15 +48,7 @@ node('cirhos_rhel7') {
         if (params.dryRun) {
             println("Would call ansibleTower with: oo_clusterid: ${clusterOptions.name}, oo_sublocation: ${clusterOptions.awsRegion}")
         } else {
-            wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
-                ansibleTower(
-                        towerServer: 'Dev Tower',
-                        jobTemplate: 'Provision Cluster',
-                        templateType: 'workflow',
-                        importTowerLogs: true,
-                        removeColor: false,
-                        verbose: true,
-                        extraVars: """---
+            def extraVars = """---
                     oo_clusterid: ${clusterOptions.name}
                     oo_sublocation: ${clusterOptions.awsRegion}
                     cluster_credential_bundle_aws_name: ${clusterOptions.awsAccountName}
@@ -66,8 +58,26 @@ node('cirhos_rhel7') {
                     infra_instance_size: ${clusterOptions.nodes.infra.instance_type}
                     openshift_aws_master_group_desired_size: ${clusterOptions.nodes.master.group_size}
                     openshift_aws_compute_group_desired_size: ${clusterOptions.nodes.compute.group_size}
-                    openshift_aws_infra_group_desired_size: ${clusterOptions.nodes.infra.group_size}
-                    openshift_hosted_router_replicas: ${clusterOptions.nodes.infra.group_size}"""
+                    openshift_aws_infra_group_desired_size: ${clusterOptions.nodes.infra.group_size}"""
+            if ((clusterOptions.nodes.compute.group_size as Integer) == '1') {
+                extraVars = """${extraVars}
+                openshift_aws_compute_group_min_size=1"""
+            }
+
+            if ((clusterOptions.nodes.infra.group_size as Integer) == '1') {
+                extraVars = """${extraVars}
+                openshift_aws_infra_group_desired_size=1"""
+            }
+
+            wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+                ansibleTower(
+                        towerServer: 'Dev Tower',
+                        jobTemplate: 'Provision Cluster',
+                        templateType: 'workflow',
+                        importTowerLogs: true,
+                        removeColor: false,
+                        verbose: true,
+                        extraVars: extraVars
                 )
             }
         }
