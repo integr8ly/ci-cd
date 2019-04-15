@@ -42,7 +42,7 @@
           description: '[REQUIRED] The amount of AWS master nodes to be created'
       - string:
           name: 'compute_group_size'
-          default: '2'
+          default: '3'
           description: '[REQUIRED] The amount of AWS compute nodes to be created'
       - string:
           name: 'infra_group_size'
