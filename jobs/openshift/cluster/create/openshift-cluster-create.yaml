@@ -15,6 +15,7 @@
             - 'eu-west-1'
             - 'eu-west-2'
           description: '[REQUIRED] The AWS Region the cluster should be created in'
+          default: 'eu-west-2'
       - choice:
           name: 'awsAccountName'
           choices:
