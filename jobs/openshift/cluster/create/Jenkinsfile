@@ -49,6 +49,7 @@ node('cirhos_rhel7') {
             println("Would call ansibleTower with: oo_clusterid: ${clusterOptions.name}, oo_sublocation: ${clusterOptions.awsRegion}")
         } else {
             def extraVars = [
+                "tower_environment: dev",
                 "oo_clusterid: ${clusterOptions.name}",
                 "oo_sublocation: ${clusterOptions.awsRegion}",
                 "cluster_credential_bundle_aws_name: ${clusterOptions.awsAccountName}",

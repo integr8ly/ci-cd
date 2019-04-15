@@ -67,6 +67,7 @@ node('cirhos_rhel7') {
                 removeColor: false,
                 verbose: true,
                 extraVars: """---
+                  tower_environment: dev
                   cluster_name: ${uninstallerOptions.clusterName}
                   openshift_master_public_url: ${uninstallerOptions.openshiftMasterUrl}
                   openshift_username: ${uninstallerOptions.clusterAdminUsername}
