@@ -70,7 +70,7 @@ node('cirhos_rhel7') {
             }
 
             def parsedVars = extraVars.join("\n")
-            println parsedVars
+            println "---VARS BEGIN---\n${parsedVars}\n---VARS END---"
 
             wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
                 ansibleTower(
