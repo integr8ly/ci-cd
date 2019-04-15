@@ -3,31 +3,45 @@
 def installerOptions = [:]
 
 def verifyInstallerOptions(installerOptions) {
-    if (!installerOptions.clusterName || !installerOptions.openshiftMasterUrl || !installerOptions.clusterAdminUsername || !installerOptions.clusterAdminPassword ||
-        !installerOptions.installationGitUrl || !installerOptions.installationGitBranch) {
-        def userInput = input message: 'Installer Options', parameters: [
-            string(defaultValue: (installerOptions.clusterName ?: ''), description: 'Cluster name', name: 'clusterName'),
-            string(defaultValue: (installerOptions.openshiftMasterUrl ?: ''), description: 'OpenShift cluster public URL', name: 'openshiftMasterUrl'),
-            string(defaultValue: (installerOptions.clusterAdminUsername ?: 'integreatly'), description: 'OpenShift cluster admin username', name: 'clusterAdminUsername'),
-            string(defaultValue: (installerOptions.clusterAdminPassword ?: 'Password1'), description: 'OpenShift cluster admin password', name: 'clusterAdminPassword'),
-            string(defaultValue: (installerOptions.installationGitUrl ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly installer Git URL', name: 'installationGitUrl'),
-            string(defaultValue: (installerOptions.installationGitBranch ?: 'master'), description: 'Integreatly installer Git branch', name: 'installationGitBranch'),
-        ]
-        installerOptions.clusterName = userInput.clusterName
-        installerOptions.openshiftMasterUrl = userInput.openshiftMasterUrl
-        installerOptions.clusterAdminUsername = userInput.clusterAdminUsername
-        installerOptions.clusterAdminPassword = userInput.clusterAdminPassword
-        installerOptions.installationGitUrl = userInput.installationGitUrl
-        installerOptions.installationGitBranch = userInput.installationGitBranch
-        verifyInstallerOptions(installerOptions)
-    }
+  if (!installerOptions.clusterName || !installerOptions.openshiftMasterUrl || !installerOptions.clusterAdminUsername || 
+      !installerOptions.clusterAdminPassword || !installerOptions.installationGitUrl || !installerOptions.installationGitBranch) {
+      def clusterAdminCredentials = setClusterAdminCredentials()
+      def userInput = input message: 'Installer Options', parameters: [
+        string(defaultValue: (installerOptions.clusterName ?: ''), description: 'Cluster name', name: 'clusterName'),
+        string(defaultValue: (installerOptions.openshiftMasterUrl ?: ''), description: 'OpenShift cluster public URL', name: 'openshiftMasterUrl'),
+        string(defaultValue: (installerOptions.clusterAdminUsername ?: clusterAdminCredentials.clusterAdminUsername), description: 'OpenShift cluster admin username', name: 'clusterAdminUsername'),
+        string(defaultValue: (installerOptions.clusterAdminPassword ?: clusterAdminCredentials.clusterAdminPassword), description: 'OpenShift cluster admin password', name: 'clusterAdminPassword'),
+        string(defaultValue: (installerOptions.installationGitUrl ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly installer Git URL', name: 'installationGitUrl'),
+        string(defaultValue: (installerOptions.installationGitBranch ?: 'master'), description: 'Integreatly installer Git branch', name: 'installationGitBranch'),
+      ]
+
+      installerOptions.clusterName = userInput.clusterName
+      installerOptions.openshiftMasterUrl = userInput.openshiftMasterUrl
+      installerOptions.clusterAdminUsername = userInput.clusterAdminUsername
+      installerOptions.clusterAdminPassword = userInput.clusterAdminPassword
+      installerOptions.installationGitUrl = userInput.installationGitUrl
+      installerOptions.installationGitBranch = userInput.installationGitBranch
+      verifyInstallerOptions(installerOptions)
+  }
+}
+
+def setClusterAdminCredentials() {
+  def integreatlyCredentialsID = 'tower-openshift-cluster-credentials'
+  def clusterAdminCredentials = [:]
+  withCredentials([usernamePassword(credentialsId: integreatlyCredentialsID, usernameVariable: 'CLUSTER_ADMIN_USERNAME', passwordVariable: 'CLUSTER_ADMIN_PASSWORD')]) {
+    clusterAdminCredentials.clusterAdminUsername = "${CLUSTER_ADMIN_USERNAME}"
+    clusterAdminCredentials.clusterAdminPassword = "${CLUSTER_ADMIN_PASSWORD}"
+  }
+
+  return clusterAdminCredentials
 }
 
 stage("Verify Installation Options") {
+    def clusterAdminCredentials = setClusterAdminCredentials()
     installerOptions.clusterName = params.clusterName
     installerOptions.openshiftMasterUrl = params.openshiftMasterUrl
-    installerOptions.clusterAdminUsername = params.clusterAdminUsername
-    installerOptions.clusterAdminPassword = params.clusterAdminPassword
+    installerOptions.clusterAdminUsername = params.clusterAdminUsername ?: clusterAdminCredentials.clusterAdminUsername // Defaults to the username stored in tower-openshift-cluster-credentials
+    installerOptions.clusterAdminPassword = params.clusterAdminPassword ?: clusterAdminCredentials.clusterAdminPassword // Defaults to the password stored in tower-openshift-cluster-credentials
     installerOptions.installationGitUrl = params.installationGitUrl
     installerOptions.installationGitBranch = params.installationGitBranch
     installerOptions.userCount = params.userCount
