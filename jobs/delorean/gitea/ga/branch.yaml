@@ -17,6 +17,10 @@
           name: 'productName'
           default: 'gitea'
           description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
+      - bool:
+          name: 'dryRun'
+          default: false
+          description: '[OPTIONAL][Test] Dry run only, only prints what it would do!'
     pipeline-scm:
       script-path: jobs/delorean/jenkinsfiles/branch/ga/Jenkinsfile
       scm:
