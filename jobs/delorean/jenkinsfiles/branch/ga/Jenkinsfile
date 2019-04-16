@@ -62,6 +62,7 @@ GHPullRequest ghFindOrCreatePullRequest(GHRepository repo, String head, String b
     return pr
 }
 
+<<<<<<< HEAD
 @NonCPS
 GHPullRequest ghGetPullRequestFromUrl(GitHub gitHub, String prUrl) {
     URL url = new URL(prUrl)
@@ -93,8 +94,8 @@ boolean prHasLabel(GHPullRequest pr, String labelName) {
     }
     return hasLabel
 
-def hasJiraUpdateIssue(credentials, product) {
-    def query = "project = INTLY AND status = Open AND labels=product-update AND labels=${product}"
+def hasJiraUpdateIssue(credentials, product, productVersion) {
+    def query = "project = INTLY AND status = Open AND labels=product-update AND labels=${product} AND labels='${product}:${productVersion}'"
     def body = """{
         "jql": "${query}"
     }"""
@@ -111,7 +112,7 @@ def hasJiraUpdateIssue(credentials, product) {
     return [found, key]
 }
 
-def createJiraIssue(credentials, gitUrl, product) {
+def createJiraIssue(credentials, gitUrl, product, version) {
     def body = """{
         "fields": {
             "project": {
@@ -124,7 +125,7 @@ def createJiraIssue(credentials, gitUrl, product) {
             "labels": [
                 "product-update",
                 "${product}",
-                "product-update-${product}"
+                "{product}:${productVersion}"
             ],
             "issuetype": {
                 "name": "Task"
@@ -140,6 +141,11 @@ def createJiraIssue(credentials, gitUrl, product) {
     def res = httpRequest authentication: credentials, consoleLogResponseBody: true, contentType: 'APPLICATION_JSON', httpMode: 'POST', requestBody: body, responseHandle: 'NONE', timeout: 60, url: url, validResponseCodes: '201'
     def data = readJSON text: "${res.content}"
     println "[INFO] Issue created: https://issues.jboss.org/browse/${data.key}"
+}
+
+def getProductVersion(yamlVar) {
+    def yaml = readYaml file: './inventories/group_vars/all/manifest.yaml'
+    return yaml[yamlVar]
 }
 
 //Helper methods
@@ -160,6 +166,7 @@ final String ghCommitStatusContext = 'delorean/ga/integration-tests'
 String integrationTestsGHLabel = "integration tests"
 String productUpdateGHLabel = "product update"
 def jiraUserPass = params.jiraUserPass ?: 'integreatly-jira-bot'
+def productVersionVar = params.productVersionVar
 
 node {
     cleanWs()
@@ -242,9 +249,10 @@ node {
                         .build()
                 ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.SUCCESS, env.BUILD_URL, 'Success', ghCommitStatusContext)
                 println "Component Update PR = ${pr.getHtmlUrl()}"
-                def (found, key) = hasJiraUpdateIssue(credentials, productName)
+                def productVersion = getProductVersion(productVersionVar)
+                def (found, key) = hasJiraUpdateIssue(jiraUserPass, productName, productVersion)
                 if (!found) {
-                    createJiraIssue(jiraUserPass, pr.getHtmlUrl(), productName)
+                    createJiraIssue(jiraUserPass, pr.getHtmlUrl(), productName, productVersion)
                 } else {
                     println "[INFO] Issue already open for ${productName}: https://issues.jboss.org/browse/${key}"
                 }
