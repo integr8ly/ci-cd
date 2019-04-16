@@ -142,10 +142,24 @@
                         sh """
                             oc login ${CLUSTER_URL} -u ${OC_USER} -p ${OC_PASSWORD}
 
-                            oc patch webapp/tutorial-web-app-operator -n webapp --type merge -p '{ "spec": { "template": { "parameters": { "WALKTHROUGHS_LOCATION": "https://github.com/integr8ly/tutorial-web-app-walkthroughs#master" } } } }' || true
+                            # patch webapp tutorial to use master branch
+                            sudo oc patch webapp tutorial-web-app-operator -n webapp --type=merge -p '{ "spec": { "template": { "parameters": { "WALKTHROUGH_LOCATIONS": "https://github.com/integr8ly/tutorial-web-app-walkthroughs.git#master" }}}}' || true
 
                             # patch of tutorial-web-app, workaround for https://issues.jboss.org/browse/INTLY-1201
-                            oc patch deploymentconfig/tutorial-web-app -n webapp -p '{ "spec": { "template": { "spec": { "containers": [{ "name": "tutorial-web-app", "image": "quay.io/integreatly/tutorial-web-app:master" }]}}}}' || true
+                            sudo oc patch deploymentconfig/tutorial-web-app -n webapp -p '{ "spec": { "template": { "spec": { "containers": [{ "name": "tutorial-web-app", "image": "quay.io/integreatly/tutorial-web-app:master" }]}}}}' || true
+                            
+                            # patch grafana-operator to use master tag
+                            sudo oc scale --replicas=0 deployment grafana-operator -n middleware-monitoring
+                            sudo oc patch deployment grafana-operator -n middleware-monitoring -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "grafana-operator", "image": "quay.io/integreatly/grafana-operator:master" }]}}}}'
+                            sudo oc scale --replicas=1 deployment grafana-operator -n middleware-monitoring
+                            
+                            # patch application-monitoring-operator to use master tag
+                            sudo oc scale --replicas=0 deployment application-monitoring-operator -n middleware-monitoring
+                            sudo oc patch deployment application-monitoring-operator -n middleware-monitoring -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "application-monitoring-operator", "image": "quay.io/integreatly/application-monitoring-operator:master" }]}}}}'
+                            sudo oc scale --replicas=1 deployment application-monitoring-operator -n middleware-monitoring
+                            
+                            # patch keycloak-operator to use master tag
+                            sudo oc patch deployment keycloak-operator -n sso -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "keycloak-operator", "image": "quay.io/integreatly/keycloak-operator:master" }]}}}}'
                         """
                     }
                 } // stage
