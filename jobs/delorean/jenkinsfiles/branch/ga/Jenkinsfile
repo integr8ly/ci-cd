@@ -123,7 +123,8 @@ def createJiraIssue(credentials, gitUrl, product) {
             "description": "${gitUrl}",
             "labels": [
                 "product-update",
-                "${product}"
+                "${product}",
+                "product-update-${product}"
             ],
             "issuetype": {
                 "name": "Task"
