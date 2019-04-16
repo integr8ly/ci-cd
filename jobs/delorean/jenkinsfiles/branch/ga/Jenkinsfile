@@ -112,11 +112,6 @@ def hasJiraUpdateIssue(credentials, product) {
 }
 
 def createJiraIssue(credentials, gitUrl, product) {
-    def (found, key) = hasJiraUpdateIssue(credentials, product)
-    if (found) {
-        println "[INFO] Issue already open for ${product}: https://issues.jboss.org/browse/${key}"
-        return
-    }
     def body = """{
         "fields": {
             "project": {
@@ -246,7 +241,12 @@ node {
                         .build()
                 ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.SUCCESS, env.BUILD_URL, 'Success', ghCommitStatusContext)
                 println "Component Update PR = ${pr.getHtmlUrl()}"
-                createJiraIssue(jiraUserPass, pr.getHtmlUrl(), productName)
+                def (found, key) = hasJiraUpdateIssue(credentials, productName)
+                if (!found) {
+                    createJiraIssue(jiraUserPass, pr.getHtmlUrl(), productName)
+                } else {
+                    println "[INFO] Issue already open for ${productName}: https://issues.jboss.org/browse/${key}"
+                }
             }
         }
     }
