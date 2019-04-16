@@ -136,7 +136,7 @@
                     } // withCredentials AWS S3 KEY ID 
                 } // stage
 
-                 stage('Execute "After Installation" Workarounds') {https://master.ppaszki-7f6a.openshiftworkshop.comhttps://master.ppaszki-7f6a.openshiftworkshop.com
+                 stage('Execute "After Installation" Workarounds') {
                     if (BRANCH == 'master') {
                         sleep time: 2, unit: 'MINUTES' // to make sure that everything is ready to be patched
                         sh """
