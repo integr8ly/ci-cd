@@ -1,0 +1,91 @@
+---
+
+- job:
+    name: w1-test-executor
+    project-type: pipeline
+    sandbox: false
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
+          description: 'QE repository containing the smoke tests source code.'
+      - string:
+          name: BRANCH
+          default: 'master'
+          description: 'Branch of the repository'
+      - string:
+          name: CLUSTER_URL
+          description: 'URL of cluster on which the W1 test will be executed.'
+      - string: 
+          name: ADMIN_USERNAME
+          default: 'admin@example.com'
+          description: 'Admin user name to login to Integreatly cluster.'
+      - string: 
+          name: ADMIN_PASSWORD
+          default: 'Password1'
+          description: 'Admin password to login to Integreatly cluster.'
+      - string:
+          name: EVALS_USERNAME
+          default: 'evals11@example.com'
+          description: 'Evals user name'
+      - string:
+          name: EVALS_PASSWORD
+          default: 'Password1'
+          description: 'Evals user password'
+    dsl: |
+        def err = null
+        try {
+            timeout(20) { 
+                ansiColor('gnome-terminal') { 
+                    timestamps {
+                        node('cirhos_rhel7') {        
+                            stage('Verify input') {
+                                if (!CLUSTER_URL) {
+                                    throw new hudson.AbortException('CLUSTER_HOSTNAME parameter is required!')
+                                } // if
+                            } // stage
+
+                            stage('Run create AMQ Online address test') {
+                                buildStatus = build(job: 'amq-online-address-creation-test', parameters: [
+                                    string(name: 'REPOSITORY', value: "${REPOSITORY}"),
+                                    string(name: 'BRANCH', value: "${BRANCH}"),
+                                    string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                                    string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+                                    string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+                                    string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
+                                    string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
+                                    booleanParam(name: 'CLEAN_RESOURCES', value: false)
+                                ]).result;
+
+                                println "Build finished with ${buildStatus}"
+                                if (buildStatus != 'SUCCESS') {
+                                    currentBuild.result = 'UNSTABLE'
+                                }
+                            }
+
+                            stage('Run Fuse integration test') {
+                                buildStatus = build(job: 'fuse-tests', parameters: [
+                                    string(name: 'REPOSITORY', value: "${REPOSITORY}"),
+                                    string(name: 'BRANCH', value: "${BRANCH}"),
+                                    string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                                    string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+                                    string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+                                    string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
+                                    string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
+                                    booleanParam(name: 'CLEAN_RESOURCES', value: true),
+                                    booleanParam(name: 'W1_FINAL_VERIFICATION', value: true)
+                                ]).result;
+
+                                println "Build finished with ${buildStatus}"
+                                if (buildStatus != 'SUCCESS') {
+                                    currentBuild.result = 'UNSTABLE'
+                                }
+                            } // stage end
+                        } // node end
+                    }
+                }  
+            } // timeout end
+        } catch (caughtError){
+            currentBuild.result = 'FAILURE'
+            err = caughtError 
+        }

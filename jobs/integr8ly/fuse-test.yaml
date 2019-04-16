@@ -64,8 +64,8 @@
                 stage('Publish test results') {
                     if(publishTestResults) {
                         dir('test-suites/backend-testsuite/reports/') {
-                            archiveArtifacts 'w1A-integration-test.xml'                  
-                            junit allowEmptyResults:true, testResults: 'w1A-integration-test.xml'
+                            archiveArtifacts 'create-w1A-integration-test.xml'                  
+                            junit allowEmptyResults:true, testResults: 'create-w1A-integration-test.xml'
                         }
                     } else {
                         println 'Publishing the results skipped. Probably due to an error.'
