@@ -17,6 +17,11 @@
           name: 'productName'
           default: 'codeready'
           description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
+      - string:
+          name: 'productVersionVar'
+          default: 'che_version'
+          description: '[REQUIRED] The manifest variable to be used as the current component version'
+          read-only: true
     pipeline-scm:
       script-path: jobs/delorean/jenkinsfiles/branch/ga/Jenkinsfile
       scm:
