@@ -189,7 +189,7 @@ node {
         }
     }
 
-    stage('Create PR') {
+    stage('Create PR and Jira Issue') {
         when(sourceChanges) {
             println("Creating PR for ${productName}")
             withCredentials([usernamePassword(
