@@ -205,6 +205,13 @@ node {
                 prUrl = pr.getHtmlUrl()
                 runIntegrationTests = prHasLabel(pr, integrationTestsGHLabel)
                 println "Component Update PR = ${prUrl}, runIntegrationTests = ${runIntegrationTests}"
+                def productVersion = getProductVersion(productVersionVar)
+                def (found, key) = hasJiraUpdateIssue(jiraUserPass, productName, productVersion)
+                if (!found) {
+                    createJiraIssue(jiraUserPass, pr.getHtmlUrl(), productName, productVersion)
+                } else {
+                    println "[INFO] Issue already open for ${productName}: https://issues.jboss.org/browse/${key}"
+                }
             }
         }
     }
@@ -249,13 +256,6 @@ node {
                         .build()
                 ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.SUCCESS, env.BUILD_URL, 'Success', ghCommitStatusContext)
                 println "Component Update PR = ${pr.getHtmlUrl()}"
-                def productVersion = getProductVersion(productVersionVar)
-                def (found, key) = hasJiraUpdateIssue(jiraUserPass, productName, productVersion)
-                if (!found) {
-                    createJiraIssue(jiraUserPass, pr.getHtmlUrl(), productName, productVersion)
-                } else {
-                    println "[INFO] Issue already open for ${productName}: https://issues.jboss.org/browse/${key}"
-                }
             }
         }
     }
