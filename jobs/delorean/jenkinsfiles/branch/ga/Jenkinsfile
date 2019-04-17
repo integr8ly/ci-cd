@@ -120,7 +120,7 @@ def createJiraIssue(credentials, gitUrl, product, version) {
                 "key": "INTLY",
                 "name": "Integreatly"
             },
-            "summary": "New version available for ${product}",
+            "summary": "Update ${product} to ${version}",
             "description": "${gitUrl}",
             "labels": [
                 "product-update",
