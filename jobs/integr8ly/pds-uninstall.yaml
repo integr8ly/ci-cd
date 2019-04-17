@@ -29,6 +29,10 @@
         - string:
             name: BASTION_PRIVATE_KEY_ID
             description: "ID of SSH Credentials (private key) used for SSH-ing to bastion"
+        - string:
+            name: NAMESPACE_PREFIX
+            default: rhpds-
+            description: "This value will be used to define the prefix of the names of the namespaces deleted during uninstallation"
     dsl: |
         import hudson.model.*
         import jenkins.model.*
@@ -129,7 +133,7 @@
                         dir('installation/evals') {
                             sh """
                                 sudo oc login -u system:admin
-                                sudo ansible-playbook -i ./inventories/hosts ./playbooks/uninstall.yml
+                                sudo ansible-playbook -i ./inventories/hosts ./playbooks/uninstall.yml -e ns_prefix=${NAMESPACE_PREFIX}
                             """
                         } // dir
                     } // stage
