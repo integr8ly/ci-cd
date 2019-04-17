@@ -137,10 +137,15 @@ def createJiraIssue(credentials, gitUrl, product, productVersion) {
             "customfield_12310220": "${gitUrl}"
         }
     }"""
-    def url = 'https://issues.jboss.org/rest/api/2/issue'
-    def res = httpRequest authentication: credentials, consoleLogResponseBody: true, contentType: 'APPLICATION_JSON', httpMode: 'POST', requestBody: body, responseHandle: 'NONE', timeout: 60, url: url, validResponseCodes: '201'
-    def data = readJSON text: "${res.content}"
-    println "[INFO] Issue created: https://issues.jboss.org/browse/${data.key}"
+
+    if (dryRun) {
+        println "Will create a JIRA issue with the following details:\n${body}"
+    } else {
+        def url = 'https://issues.jboss.org/rest/api/2/issue'
+        def res = httpRequest authentication: credentials, consoleLogResponseBody: true, contentType: 'APPLICATION_JSON', httpMode: 'POST', requestBody: body, responseHandle: 'NONE', timeout: 60, url: url, validResponseCodes: '201'
+        def data = readJSON text: "${res.content}"
+        println "[INFO] Issue created: https://issues.jboss.org/browse/${data.key}"
+    }
 }
 
 def getProductVersion(yamlVar) {
@@ -203,10 +208,15 @@ node {
                         .build()
                 String title = "[WIP] ${productName} update"
                 String body = "Created automatically by jenkins"
-                GHPullRequest pr = ghFindOrCreatePullRequest(gitHub.getRepository("${ghOwner}/${ghRepo}"), "${ghOwner}:${sourceBranch}", targetBranch, title, body, defaultPRLabels)
-                prUrl = pr.getHtmlUrl()
-                runIntegrationTests = prHasLabel(pr, integrationTestsGHLabel)
-                println "Component Update PR = ${prUrl}, runIntegrationTests = ${runIntegrationTests}"
+
+                if (dryRun) {
+                    println """Finds an open pull request with the base branch '${sourceBranch}'. If this does not exist, it creates a new pull request with the title '${title}' and body '${body}'."""
+                } else {
+                  GHPullRequest pr = ghFindOrCreatePullRequest(gitHub.getRepository("${ghOwner}/${ghRepo}"), "${ghOwner}:${sourceBranch}", targetBranch, title, body, defaultPRLabels)
+                  prUrl = pr.getHtmlUrl()
+                  runIntegrationTests = prHasLabel(pr, integrationTestsGHLabel)
+                  println "Component Update PR = ${prUrl}, runIntegrationTests = ${runIntegrationTests}"
+                }
             }
         }
     }
@@ -224,25 +234,10 @@ node {
     }
 
     stage('Integration Tests') {
-        when(sourceChanges && runIntegrationTests) {
-            withCredentials([usernamePassword(
-                    credentialsId: githubUserPassCredentialsID,
-                    passwordVariable: 'GITHUB_PASSWORD',
-                    usernameVariable: 'GITHUB_USERNAME')]) {
-                final GitHub gitHub = new GitHubBuilder()
-                        .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
-                        .build()
-                ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.PENDING, env.BUILD_URL, 'Pending', ghCommitStatusContext)
-            }
-            try {
-                def jobName = 'openshift-cluster-integreatly-test'
-                def jobParams = [
-                        [$class: 'StringParameterValue', name: 'installationGitUrl', value: installationGitUrl],
-                        [$class: 'StringParameterValue', name: 'installationGitBranch', value: sourceBranch],
-                        [$class: 'BooleanParameterValue', name: 'dryRun', value: dryRun]
-                ]
-                build job: jobName, parameters: jobParams
-            } catch (Exception e) {
+        if (dryRun) {
+          println "Will run integration tests via 'openshift-cluster-integreatly-test' job with the following parameters and update the pull request status according to the job's status:\ninstallationGitUrl:${installationGitUrl},\nsourceBranch: ${sourceBranch},\ndryRun: ${dryRun}."
+        } else {
+            when(sourceChanges && runIntegrationTests) {
                 withCredentials([usernamePassword(
                         credentialsId: githubUserPassCredentialsID,
                         passwordVariable: 'GITHUB_PASSWORD',
@@ -250,18 +245,37 @@ node {
                     final GitHub gitHub = new GitHubBuilder()
                             .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
                             .build()
-                    ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.FAILURE, env.BUILD_URL, 'Failure', ghCommitStatusContext)
-                    error "Integration test failures, ${installationGitUrl}, ${sourceBranch}, ${e}"
+                    ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.PENDING, env.BUILD_URL, 'Pending', ghCommitStatusContext)
                 }
-            }
-            withCredentials([usernamePassword(
-                    credentialsId: githubUserPassCredentialsID,
-                    passwordVariable: 'GITHUB_PASSWORD',
-                    usernameVariable: 'GITHUB_USERNAME')]) {
-                final GitHub gitHub = new GitHubBuilder()
-                        .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
-                        .build()
-                ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.SUCCESS, env.BUILD_URL, 'Success', ghCommitStatusContext)
+                try {
+                    def jobName = 'openshift-cluster-integreatly-test'
+                    def jobParams = [
+                            [$class: 'StringParameterValue', name: 'installationGitUrl', value: installationGitUrl],
+                            [$class: 'StringParameterValue', name: 'installationGitBranch', value: sourceBranch],
+                            [$class: 'BooleanParameterValue', name: 'dryRun', value: dryRun]
+                    ]
+                    build job: jobName, parameters: jobParams
+                } catch (Exception e) {
+                    withCredentials([usernamePassword(
+                            credentialsId: githubUserPassCredentialsID,
+                            passwordVariable: 'GITHUB_PASSWORD',
+                            usernameVariable: 'GITHUB_USERNAME')]) {
+                        final GitHub gitHub = new GitHubBuilder()
+                                .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
+                                .build()
+                        ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.FAILURE, env.BUILD_URL, 'Failure', ghCommitStatusContext)
+                        error "Integration test failures, ${installationGitUrl}, ${sourceBranch}, ${e}"
+                    }
+                }
+                withCredentials([usernamePassword(
+                        credentialsId: githubUserPassCredentialsID,
+                        passwordVariable: 'GITHUB_PASSWORD',
+                        usernameVariable: 'GITHUB_USERNAME')]) {
+                  final GitHub gitHub = new GitHubBuilder()
+                          .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
+                          .build()
+                  ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.SUCCESS, env.BUILD_URL, 'Success', ghCommitStatusContext)
+                }
             }
         }
     }
