@@ -46,6 +46,10 @@
         - string:
             name: ADDITIONAL_ANSIBLE_PARAMS
             description: "Additional parameters passed to install playbook, e.g.'-e eval_seed_users_count=0'. Can be left empty"
+        - string:
+            name: NAMESPACE_PREFIX
+            default: openshift-
+            description: "This value will be prefixed to the names of namespaces created during Integr8ly installation"
     dsl: |
         String[] intlyCompTags = ["rhsso_operator_release_tag", 
                                   "msbroker_release_tag", 
@@ -129,7 +133,7 @@
                                 ansibleParams = ansibleParams + "${ADDITIONAL_ANSIBLE_PARAMS} -e threescale_file_upload_storage=s3 -e threescale_storage_s3_aws_access_key=${AWS_S3_KEY_ID} -e threescale_storage_s3_aws_bucket=integreatly-qe-3scale -e threescale_storage_s3_aws_region=eu-west-1 -e threescale_storage_s3_aws_secret_key=${AWS_S3_SECRET}"
 
                                 sh """
-                                    sudo ansible-playbook -i ./inventories/hosts ./playbooks/install.yml ${ansibleParams} -e create_cluster_admin=false -e eval_self_signed_certs=${SELF_SIGNED_CERTS} -e openshift_login=true -e openshift_username=${OC_USER} -e openshift_password=${OC_PASSWORD} -e openshift_master_public_url=${CLUSTER_URL}
+                                    sudo ansible-playbook -i ./inventories/hosts ./playbooks/install.yml ${ansibleParams} -e create_cluster_admin=false -e eval_self_signed_certs=${SELF_SIGNED_CERTS} -e openshift_login=true -e openshift_username=${OC_USER} -e openshift_password=${OC_PASSWORD} -e openshift_master_public_url=${CLUSTER_URL} -e ns_prefix=${NAMESPACE_PREFIX}
                                 """
                             } // dir
                         } // withCredentials AWS S3 SECRET
@@ -143,26 +147,26 @@
                             oc login ${CLUSTER_URL} -u ${OC_USER} -p ${OC_PASSWORD}
 
                             # patch webapp tutorial to use master branch
-                            sudo oc patch webapp tutorial-web-app-operator -n webapp --type=merge -p '{ "spec": { "template": { "parameters": { "WALKTHROUGH_LOCATIONS": "https://github.com/integr8ly/tutorial-web-app-walkthroughs.git#master" }}}}' || true
+                            sudo oc patch webapp tutorial-web-app-operator -n ${NAMESPACE_PREFIX}webapp --type=merge -p '{ "spec": { "template": { "parameters": { "WALKTHROUGH_LOCATIONS": "https://github.com/integr8ly/tutorial-web-app-walkthroughs.git#master" }}}}' || true
 
                             # patch of tutorial-web-app, workaround for https://issues.jboss.org/browse/INTLY-1201
-                            sudo oc patch deploymentconfig/tutorial-web-app -n webapp -p '{ "spec": { "template": { "spec": { "containers": [{ "name": "tutorial-web-app", "image": "quay.io/integreatly/tutorial-web-app:master" }]}}}}' || true
+                            sudo oc patch deploymentconfig/tutorial-web-app -n ${NAMESPACE_PREFIX}webapp -p '{ "spec": { "template": { "spec": { "containers": [{ "name": "tutorial-web-app", "image": "quay.io/integreatly/tutorial-web-app:master" }]}}}}' || true
                             
                             # patch grafana-operator to use master tag
-                            sudo oc scale --replicas=0 deployment grafana-operator -n middleware-monitoring
-                            sudo oc patch deployment grafana-operator -n middleware-monitoring -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "grafana-operator", "image": "quay.io/integreatly/grafana-operator:master" }]}}}}'
-                            sudo oc scale --replicas=1 deployment grafana-operator -n middleware-monitoring
+                            sudo oc scale --replicas=0 deployment grafana-operator -n ${NAMESPACE_PREFIX}middleware-monitoring
+                            sudo oc patch deployment grafana-operator -n ${NAMESPACE_PREFIX}middleware-monitoring -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "grafana-operator", "image": "quay.io/integreatly/grafana-operator:master" }]}}}}'
+                            sudo oc scale --replicas=1 deployment grafana-operator -n ${NAMESPACE_PREFIX}middleware-monitoring
                             
                             # patch application-monitoring-operator to use master tag
-                            sudo oc scale --replicas=0 deployment application-monitoring-operator -n middleware-monitoring
-                            sudo oc patch deployment application-monitoring-operator -n middleware-monitoring -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "application-monitoring-operator", "image": "quay.io/integreatly/application-monitoring-operator:master" }]}}}}'
-                            sudo oc scale --replicas=1 deployment application-monitoring-operator -n middleware-monitoring
+                            sudo oc scale --replicas=0 deployment application-monitoring-operator -n ${NAMESPACE_PREFIX}middleware-monitoring
+                            sudo oc patch deployment application-monitoring-operator -n ${NAMESPACE_PREFIX}middleware-monitoring -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "application-monitoring-operator", "image": "quay.io/integreatly/application-monitoring-operator:master" }]}}}}'
+                            sudo oc scale --replicas=1 deployment application-monitoring-operator -n ${NAMESPACE_PREFIX}middleware-monitoring
                             
                             # patch keycloak-operator to use master tag
-                            sudo oc patch deployment keycloak-operator -n sso -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "keycloak-operator", "image": "quay.io/integreatly/keycloak-operator:master" }]}}}}'
+                            sudo oc patch deployment keycloak-operator -n ${NAMESPACE_PREFIX}sso -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "keycloak-operator", "image": "quay.io/integreatly/keycloak-operator:master" }]}}}}'
 
                             # patch user-sso keycloak-operator to use master tag
-                            sudo oc patch deployment keycloak-operator -n user-sso -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "keycloak-operator", "image": "quay.io/integreatly/keycloak-operator:master" }]}}}}'
+                            sudo oc patch deployment keycloak-operator -n ${NAMESPACE_PREFIX}user-sso -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "keycloak-operator", "image": "quay.io/integreatly/keycloak-operator:master" }]}}}}'
                         """
                     }
                 } // stage

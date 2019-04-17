@@ -31,6 +31,10 @@
         - string:
             name: OC_PASSWORD
             description: "OpenShift password for QE cluster."
+        - string:
+            name: NAMESPACE_PREFIX
+            default: openshift-
+            description: "This value will be used to define the prefix of the names of the namespaces deleted during uninstallation"
     dsl: |
         timeout(60) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {        
@@ -88,7 +92,7 @@
                 stage('Execute playbook') {
                     dir('installation/evals') {
                         sh """
-                            sudo ansible-playbook -i ./inventories/hosts ./playbooks/uninstall.yml -e create_cluster_admin=false -e openshift_login=true -e openshift_username=${OC_USER} -e openshift_password=${OC_PASSWORD} -e openshift_master_public_url=${CLUSTER_URL}
+                            sudo ansible-playbook -i ./inventories/hosts ./playbooks/uninstall.yml -e create_cluster_admin=false -e openshift_login=true -e openshift_username=${OC_USER} -e openshift_password=${OC_PASSWORD} -e openshift_master_public_url=${CLUSTER_URL} -e ns_prefix=${NAMESPACE_PREFIX}
                         """
                      } // dir
                 } // stage
