@@ -160,6 +160,9 @@
                             
                             # patch keycloak-operator to use master tag
                             sudo oc patch deployment keycloak-operator -n sso -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "keycloak-operator", "image": "quay.io/integreatly/keycloak-operator:master" }]}}}}'
+
+                            # patch user-sso keycloak-operator to use master tag
+                            sudo oc patch deployment keycloak-operator -n user-sso -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "keycloak-operator", "image": "quay.io/integreatly/keycloak-operator:master" }]}}}}'
                         """
                     }
                 } // stage
