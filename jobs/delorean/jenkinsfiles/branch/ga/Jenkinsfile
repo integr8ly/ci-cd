@@ -87,11 +87,65 @@ GHCommitStatus ghUpdatePrCommitStatus(GitHub gitHub, String prUrl, GHCommitState
 boolean prHasLabel(GHPullRequest pr, String labelName) {
     boolean hasLabel = false
     for (GHLabel label : pr.getLabels()) {
-        if(label.getName() == labelName) {
+        if (label.getName() == labelName) {
             hasLabel = true
         }
     }
     return hasLabel
+}
+
+def hasJiraUpdateIssue(credentials, product, productVersion) {
+    def query = "project = INTLY AND status = Open AND labels=product-update AND labels=${product} AND labels='${product}:${productVersion}'"
+    def body = """{
+        "jql": "${query}"
+    }"""
+    def url = 'https://issues.jboss.org/rest/api/2/search'
+    def res = httpRequest quiet: true, authentication: credentials, consoleLogResponseBody: true, contentType: 'APPLICATION_JSON', httpMode: 'POST', requestBody: body, responseHandle: 'NONE', timeout: 60, url: url, validResponseCodes: '200'
+    def data = readJSON text: "${res.content}"
+
+    def found = res.status == 200 && data.total > 0
+    def key = ''
+    if (found) {
+        key = data.issues[0].key
+    }
+
+    return [found, key]
+}
+
+def createJiraIssue(credentials, gitUrl, product, productVersion) {
+    def body = """{
+        "fields": {
+            "project": {
+                "id": "12321620",
+                "key": "INTLY",
+                "name": "Integreatly"
+            },
+            "summary": "Update ${product} to ${productVersion}",
+            "description": "${gitUrl}",
+            "labels": [
+                "product-update",
+                "${product}",
+                "${product}:${productVersion}"
+            ],
+            "issuetype": {
+                "name": "Task"
+            },
+            "priority": {
+                "id": "3",
+                "name": "Major"
+            },
+            "customfield_12310220": "${gitUrl}"
+        }
+    }"""
+    def url = 'https://issues.jboss.org/rest/api/2/issue'
+    def res = httpRequest authentication: credentials, consoleLogResponseBody: true, contentType: 'APPLICATION_JSON', httpMode: 'POST', requestBody: body, responseHandle: 'NONE', timeout: 60, url: url, validResponseCodes: '201'
+    def data = readJSON text: "${res.content}"
+    println "[INFO] Issue created: https://issues.jboss.org/browse/${data.key}"
+}
+
+def getProductVersion(yamlVar) {
+    def yaml = readYaml file: './inventories/group_vars/all/manifest.yaml'
+    return yaml[yamlVar]
 }
 
 //Helper methods
@@ -111,6 +165,9 @@ String prUrl
 final String ghCommitStatusContext = 'delorean/ga/integration-tests'
 String integrationTestsGHLabel = "integration tests"
 String productUpdateGHLabel = "product update"
+def jiraUserPass = params.jiraUserPass ?: 'integreatly-jira-bot'
+def productVersionVar = params.productVersionVar
+def productVersion
 
 node {
     cleanWs()
@@ -130,12 +187,13 @@ node {
                 sourceChanges = false
                 println("No changes detected on ${sourceBranch}")
             }
+            productVersion = getProductVersion(productVersionVar)
         }
     }
 
     stage('Create PR') {
         when(sourceChanges) {
-            println("Creating PR for ${productName}")
+            println("Creating PR for ${productName}:${productVersion}")
             withCredentials([usernamePassword(
                     credentialsId: githubUserPassCredentialsID,
                     passwordVariable: 'GITHUB_PASSWORD',
@@ -149,6 +207,18 @@ node {
                 prUrl = pr.getHtmlUrl()
                 runIntegrationTests = prHasLabel(pr, integrationTestsGHLabel)
                 println "Component Update PR = ${prUrl}, runIntegrationTests = ${runIntegrationTests}"
+            }
+        }
+    }
+
+    stage('Create Jira Issue') {
+        when(sourceChanges) {
+            println("Creating Jira Issue for ${productName}:${productVersion}")
+            def (found, key) = hasJiraUpdateIssue(jiraUserPass, productName, productVersion)
+            if (!found) {
+                createJiraIssue(jiraUserPass, prUrl, productName, productVersion)
+            } else {
+                println "[INFO] Issue already open for ${productName}: https://issues.jboss.org/browse/${key}"
             }
         }
     }
@@ -192,6 +262,7 @@ node {
                         .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
                         .build()
                 ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.SUCCESS, env.BUILD_URL, 'Success', ghCommitStatusContext)
+                println "Component Update PR = ${pr.getHtmlUrl()}"
             }
         }
     }
