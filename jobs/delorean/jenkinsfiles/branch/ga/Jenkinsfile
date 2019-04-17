@@ -262,7 +262,6 @@ node {
                         .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
                         .build()
                 ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.SUCCESS, env.BUILD_URL, 'Success', ghCommitStatusContext)
-                println "Component Update PR = ${pr.getHtmlUrl()}"
             }
         }
     }

@@ -47,7 +47,7 @@
           description: '[REQUIRED] The amount of AWS compute nodes to be created'
       - string:
           name: 'infra_group_size'
-          default: '2'
+          default: '3'
           description: '[REQUIRED] The amount of AWS infra nodes to be created'
     pipeline-scm:
       script-path: jobs/openshift/cluster/create/Jenkinsfile
