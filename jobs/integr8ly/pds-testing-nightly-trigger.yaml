@@ -22,6 +22,7 @@
             INSTALLATION_BRANCH=master
             TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
             TEST_SUITES_BRANCH=master
+            NAMESPACE_PREFIX=rhpds-
             TO_DO=full
     dsl: |
         timeout(180) { ansiColor('gnome-terminal') { timestamps {
@@ -37,6 +38,7 @@
                         string(name: 'INSTALLATION_BRANCH', value: "${INSTALLATION_BRANCH}"),
                         string(name: 'TEST_SUITES_REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
                         string(name: 'TEST_SUITES_BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                        string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
                         string(name: 'TO_DO', value: "${TO_DO}")
                     ]).result
 

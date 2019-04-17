@@ -36,6 +36,9 @@
           name: WALKTHROUGHS_VERSION
           default: ''
           description: 'Provide walkthroughs release version. Empty value means the master version is expected.'
+      - string:
+          name: NAMESPACE_PREFIX
+          description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
     dsl: |
         timeout(60) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){
