@@ -87,7 +87,7 @@ GHCommitStatus ghUpdatePrCommitStatus(GitHub gitHub, String prUrl, GHCommitState
 boolean prHasLabel(GHPullRequest pr, String labelName) {
     boolean hasLabel = false
     for (GHLabel label : pr.getLabels()) {
-        if(label.getName() == labelName) {
+        if (label.getName() == labelName) {
             hasLabel = true
         }
     }
@@ -112,7 +112,7 @@ def hasJiraUpdateIssue(credentials, product, productVersion) {
     return [found, key]
 }
 
-def createJiraIssue(credentials, gitUrl, product, version) {
+def createJiraIssue(credentials, gitUrl, product, productVersion) {
     def body = """{
         "fields": {
             "project": {
@@ -120,12 +120,12 @@ def createJiraIssue(credentials, gitUrl, product, version) {
                 "key": "INTLY",
                 "name": "Integreatly"
             },
-            "summary": "Update ${product} to ${version}",
+            "summary": "Update ${product} to ${productVersion}",
             "description": "${gitUrl}",
             "labels": [
                 "product-update",
                 "${product}",
-                "{product}:${productVersion}"
+                "${product}:${productVersion}"
             ],
             "issuetype": {
                 "name": "Task"
@@ -167,6 +167,7 @@ String integrationTestsGHLabel = "integration tests"
 String productUpdateGHLabel = "product update"
 def jiraUserPass = params.jiraUserPass ?: 'integreatly-jira-bot'
 def productVersionVar = params.productVersionVar
+def productVersion
 
 node {
     cleanWs()
@@ -186,12 +187,13 @@ node {
                 sourceChanges = false
                 println("No changes detected on ${sourceBranch}")
             }
+            productVersion = getProductVersion(productVersionVar)
         }
     }
 
-    stage('Create PR and Jira Issue') {
+    stage('Create PR') {
         when(sourceChanges) {
-            println("Creating PR for ${productName}")
+            println("Creating PR for ${productName}:${productVersion}")
             withCredentials([usernamePassword(
                     credentialsId: githubUserPassCredentialsID,
                     passwordVariable: 'GITHUB_PASSWORD',
@@ -205,13 +207,18 @@ node {
                 prUrl = pr.getHtmlUrl()
                 runIntegrationTests = prHasLabel(pr, integrationTestsGHLabel)
                 println "Component Update PR = ${prUrl}, runIntegrationTests = ${runIntegrationTests}"
-                def productVersion = getProductVersion(productVersionVar)
-                def (found, key) = hasJiraUpdateIssue(jiraUserPass, productName, productVersion)
-                if (!found) {
-                    createJiraIssue(jiraUserPass, pr.getHtmlUrl(), productName, productVersion)
-                } else {
-                    println "[INFO] Issue already open for ${productName}: https://issues.jboss.org/browse/${key}"
-                }
+            }
+        }
+    }
+
+    stage('Create Jira Issue') {
+        when(sourceChanges) {
+            println("Creating Jira Issue for ${productName}:${productVersion}")
+            def (found, key) = hasJiraUpdateIssue(jiraUserPass, productName, productVersion)
+            if (!found) {
+                createJiraIssue(jiraUserPass, prUrl, productName, productVersion)
+            } else {
+                println "[INFO] Issue already open for ${productName}: https://issues.jboss.org/browse/${key}"
             }
         }
     }
