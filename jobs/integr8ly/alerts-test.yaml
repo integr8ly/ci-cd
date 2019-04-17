@@ -25,6 +25,9 @@
           name: ADMIN_PASSWORD
           default: 'Password1'
           description: 'Password to login to Integreatly cluster.'
+      - string:
+          name: NAMESPACE_PREFIX
+          description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
     dsl: |
         timeout(60) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){

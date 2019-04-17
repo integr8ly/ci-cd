@@ -60,6 +60,10 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             name: OC_PASSWORD
             default: Password1
             description: "Default OpenShift admin password when Integr8ly is not installed."
+        - string:
+            name: NAMESPACE_PREFIX
+            default: openshift-
+            description: "This value will be prefixed to the names of the namespaces created during Integr8ly installation"
         - choice:
             name: TO_DO
             description: "It specifies what stages of the pipeline will be executed. 'full' means uninstall + uninstall + install + install + tests + uninstall + install"
@@ -165,6 +169,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 string(name: 'CLUSTER_URL', value: "https://${CLUSTER_HOSTNAME}"),
                 string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
                 string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
+                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
                 string(name: 'OC_USER', value: "${OC_USER}"),
                 string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}")]
 
@@ -181,6 +186,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
                 string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
                 string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
+                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
                 string(name: 'OC_USER', value: "${OC_USER}"),
                 string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}")]
             
@@ -196,6 +202,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 string(name: 'CLUSTER_URL', value: "https://${CLUSTER_HOSTNAME}"),
                 string(name: 'ADMIN_USERNAME', value: "${OC_USER}"),
                 string(name: 'ADMIN_PASSWORD', value: "${OC_PASSWORD}"),
+                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}")
             ]
 
             if (testPipeline == 'after-first-login-tests') {

@@ -44,6 +44,10 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             name: TEST_SUITES_BRANCH
             default: master
             description: "Branch of a repository of Integreatly test suites"
+        - string:
+            name: NAMESPACE_PREFIX
+            default: rhpds-
+            description: "This value will be prefixed to the names of the namespaces created during Integr8ly installation"
         - choice:
             name: TO_DO
             description: "It specifies what stages of the pipeline will be executed. 'full' means uninstall + uninstall + install + install + tests + uninstall + install"
@@ -135,6 +139,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 string(name: 'ANSIBLE_USER', value: 'ec2-user'),
                 string(name: 'YOURCITY', value: "${YOURCITY}"),
                 string(name: 'BASTION_USER', value: 'ec2-user'),
+                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
                 string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
 
             sleep time: sleepTime, unit: 'MINUTES'
@@ -150,6 +155,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 string(name: 'ANSIBLE_USER', value: 'ec2-user'),
                 string(name: 'YOURCITY', value: "${YOURCITY}"),
                 string(name: 'BASTION_USER', value: 'ec2-user'),
+                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
                 string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
             
             if (sleepAfterInstall) {
@@ -163,7 +169,8 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
                 string(name: 'CLUSTER_URL', value: "https://master.${YOURCITY}.openshiftworkshop.com"),
                 string(name: 'ADMIN_USERNAME', value: 'admin@example.com'),
-                string(name: 'ADMIN_PASSWORD', value: 'Password1')
+                string(name: 'ADMIN_PASSWORD', value: 'Password1'),
+                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}")
             ]
 
             if (testPipeline == 'after-first-login-tests') {
