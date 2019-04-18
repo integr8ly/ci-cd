@@ -94,8 +94,8 @@ boolean prHasLabel(GHPullRequest pr, String labelName) {
     return hasLabel
 }
 
-def hasJiraUpdateIssue(credentials, product, productVersion) {
-    def query = "project = INTLY AND status = Open AND labels=product-update AND labels=${product} AND labels='${product}:${productVersion}'"
+def hasJiraIssue(credentials, product, productVersion, action) {
+    def query = "project = INTLY AND status = Open AND labels=product-${action} AND labels=${product} AND labels='${product}:${productVersion}'"
     def body = """{
         "jql": "${query}"
     }"""
@@ -112,7 +112,7 @@ def hasJiraUpdateIssue(credentials, product, productVersion) {
     return [found, key]
 }
 
-def createJiraIssue(credentials, gitUrl, product, productVersion) {
+def createJiraIssue(credentials, gitUrl, product, productVersion, action, summary) {
     def body = """{
         "fields": {
             "project": {
@@ -120,10 +120,10 @@ def createJiraIssue(credentials, gitUrl, product, productVersion) {
                 "key": "INTLY",
                 "name": "Integreatly"
             },
-            "summary": "Update ${product} to ${productVersion}",
+            "summary": "${summary}",
             "description": "${gitUrl}",
             "labels": [
-                "product-update",
+                "product-${action}",
                 "${product}",
                 "${product}:${productVersion}"
             ],
@@ -138,7 +138,7 @@ def createJiraIssue(credentials, gitUrl, product, productVersion) {
         }
     }"""
 
-    if (dryRun) {
+    if (params.dryRun) {
         println "Will create a JIRA issue with the following details:\n${body}"
     } else {
         def url = 'https://issues.jboss.org/rest/api/2/issue'
@@ -210,7 +210,7 @@ node {
                 String body = "Created automatically by jenkins"
 
                 if (dryRun) {
-                    println """Finds an open pull request with the base branch '${sourceBranch}'. If this does not exist, it creates a new pull request with the title '${title}' and body '${body}'."""
+                    println "Finds an open pull request with the base branch '${sourceBranch}'. If this does not exist, it creates a new pull request with the following details:\ntitle:'${title}',\nbody '${body}',\nlabels:${defaultPRLabels}"
                 } else {
                   GHPullRequest pr = ghFindOrCreatePullRequest(gitHub.getRepository("${ghOwner}/${ghRepo}"), "${ghOwner}:${sourceBranch}", targetBranch, title, body, defaultPRLabels)
                   prUrl = pr.getHtmlUrl()
@@ -221,23 +221,46 @@ node {
         }
     }
 
-    stage('Create Jira Issue') {
+    stage('Create Product Update Jira Issue') {
         when(sourceChanges) {
-            println("Creating Jira Issue for ${productName}:${productVersion}")
-            def (found, key) = hasJiraUpdateIssue(jiraUserPass, productName, productVersion)
+            println("Creating Product Update Jira Issue for ${productName}:${productVersion}")
+            def action = 'update'
+            def (found, key) = hasJiraIssue(jiraUserPass, productName, productVersion, action)
             if (!found) {
-                createJiraIssue(jiraUserPass, prUrl, productName, productVersion)
+                def summary = "Update ${productName} to ${productVersion}"
+                createJiraIssue(jiraUserPass, prUrl, productName, productVersion, action, summary)
             } else {
                 println "[INFO] Issue already open for ${productName}: https://issues.jboss.org/browse/${key}"
             }
         }
     }
 
+    stage('Create Product Upgrade Jira Issue') {
+      when(sourceChanges) {
+          dir('installation') {
+              checkoutGitRepo(installationGitUrl, targetBranch, githubSSHCredentialsID)
+              currentProductVersion = getProductVersion(productVersionVar)
+          }
+
+          if(currentProductVersion != productVersion) {
+              println("Creating Product Upgrade Jira Issue for ${productName} from ${currentProductVersion} to ${productVersion}")
+              def action = 'upgrade'
+              def (found, key) = hasJiraIssue(jiraUserPass, productName, productVersion, action)
+              if (!found) {
+                  def summary = "Add upgrade sop or playbook for ${productName} ${currentProductVersion} to ${productVersion}"
+                  createJiraIssue(jiraUserPass, prUrl, productName, productVersion, action, summary)
+              } else {
+                  println "[INFO] Issue already open for ${productName}: https://issues.jboss.org/browse/${key}"
+              }
+          }
+      }
+    }
+
     stage('Integration Tests') {
-        if (dryRun) {
-          println "Will run integration tests via 'openshift-cluster-integreatly-test' job with the following parameters and update the pull request status according to the job's status:\ninstallationGitUrl:${installationGitUrl},\nsourceBranch: ${sourceBranch},\ndryRun: ${dryRun}."
-        } else {
-            when(sourceChanges && runIntegrationTests) {
+        when(sourceChanges && runIntegrationTests) {
+            if (dryRun) {
+              println "Will run integration tests via 'openshift-cluster-integreatly-test' job with the following parameters and update the pull request status according to the job's status:\ninstallationGitUrl:${installationGitUrl},\nsourceBranch: ${sourceBranch},\ndryRun: ${dryRun}."
+            } else {
                 withCredentials([usernamePassword(
                         credentialsId: githubUserPassCredentialsID,
                         passwordVariable: 'GITHUB_PASSWORD',
