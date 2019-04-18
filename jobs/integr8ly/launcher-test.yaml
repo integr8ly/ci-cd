@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: fuse-tests
+    name: launcher-tests
     project-type: pipeline
     sandbox: true
     parameters:
@@ -24,16 +24,15 @@
           name: ADMIN_PASSWORD
           default: 'Password1'
           description: 'Password to login to Integreatly cluster.'
-      - string:
-          name: EVALS_USERNAME
-          default: 'evals11@example.com'
-          description: 'Evals account email address used to access the available consoles. This test expects that this user started the Walkthrough 1A!!'
       - bool:
           name: CLEAN_RESOURCES
           default: true
           description: 'depending on whether the resources should be cleaned after the successful execution'
+      - string:
+          name: NAMESPACE_PREFIX
+          description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
     dsl: |
-        timeout(60) { ansiColor('gnome-terminal') { timestamps {
+        timeout(20) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){
 
                 Boolean publishTestResults = true
@@ -43,15 +42,15 @@
                         git branch: "${BRANCH}", url: "${REPOSITORY}"
                     }
                 }
-                stage('Run the Fuse tests'){
+                stage('Run the Launcher tests'){
                     dir('test-suites/backend-testsuite') {
                         sh '''
                             npm install
-                            ./node_modules/gulp/bin/gulp.js fuse-w1A | tee output.txt
+                            ./node_modules/gulp/bin/gulp.js create-booster | tee output.txt
                         '''  
                         String output = readFile("output.txt");
                         
-                        if(!output.contains('Integreatly W1A creation test')) {
+                        if(!output.contains('Launcher booster creation tests')) {
                             currentBuild.result = 'FAILURE'
                             publishTestResults = false
                         } else if(output.contains('There were test failures')) {
@@ -62,8 +61,8 @@
                 stage('Publish test results') {
                     if(publishTestResults) {
                         dir('test-suites/backend-testsuite/reports/') {
-                            archiveArtifacts 'create-w1A-integration-test.xml'                  
-                            junit allowEmptyResults:true, testResults: 'create-w1A-integration-test.xml'
+                            archiveArtifacts 'booster-creation.xml'                  
+                            junit allowEmptyResults:true, testResults: 'booster-creation.xml'
                         }
                     } else {
                         println 'Publishing the results skipped. Probably due to an error.'
