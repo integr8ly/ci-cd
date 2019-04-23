@@ -115,16 +115,8 @@
                         runTests('after-first-login-tests')
                     } // stage
 
-                    stage ('AMQ Online address creation test') {
-                        runTests('amq-online-address-creation-test')
-                    } // stage
-
                     stage ('Customer Admin permissions test') {
                         runTests('customer-admin-permissions-test')
-                    } // stage
-
-                    stage ('Fuse test') {
-                        runTests('fuse-tests')
                     } // stage
 
                     stage ('Launcher test') {
