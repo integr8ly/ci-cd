@@ -1,0 +1,35 @@
+---
+- job:
+    name: openshift-cluster-brew-image-sync
+    display-name: 'OpenShift Cluster Brew Image Sync'
+    project-type: pipeline
+    parameters:
+      - string:
+          name: 'openshiftMasterUrl'
+          default: ''
+          description: '[REQUIRED] The public URL of the target OpenShift cluster'
+      - choice:
+          name: 'productName'
+          choices:
+            - 'amq-online'
+            - 'fuse-online'
+            - '3scale'
+          description: '[REQUIRED] The product images needing to be synced.'
+          default: 'amq-online'
+      - string:
+          name: 'clusterAdminUsername'
+          default: ''
+          description: '[OPTIONAL] Username of the cluster admin account. Defaults to the username stored in tower-openshift-cluster-credentials'
+      - string:
+          name: 'clusterAdminPassword'
+          default: ''
+          description: '[OPTIONAL] Password of the cluster admin account. Defaults to the password stored in tower-openshift-cluster-credentials'
+    pipeline-scm:
+      script-path: jobs/openshift/cluster/brew/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false
