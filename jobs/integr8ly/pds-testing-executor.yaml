@@ -45,6 +45,54 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             default: master
             description: "Branch of a repository of Integreatly test suites"
         - string:
+            name: EVALS_USERNAME
+            default: 'evals11@example.com'
+            description: 'Evals account email address used in test suites.'    
+        - string:
+            name: EVALS_PASSWORD
+            default: 'Password1'
+            description: 'Evals user password used in test suites'
+        - string:
+            name: ADMIN_USERNAME
+            default: 'admin@example.com'
+            description: 'Admin sername to login to Integreatly cluster.'
+        - string:
+            name: ADMIN_PASSWORD
+            default: 'Password1'
+            description: 'Admin password to login to Integreatly cluster.'
+        - string:
+            name: CUSTOMER_ADMIN_USERNAME
+            default: 'customer-admin@example.com'
+            description: 'customer-admin username to login to Integreatly cluster.'
+        - string:
+            name: CUSTOMER_ADMIN_PASSWORD
+            default: 'Password1'
+            description: 'Password to login to Integreatly cluster.'
+        - string:
+            name: RELEASE_VERSION
+            default: 'master'
+            description: 'This optional parameter allows to test particular release version. If not provided, master will be used'
+        - bool:
+            name: CLEAN_RESOURCES
+            default: true
+            description: 'depending on whether the resources should be cleaned after the successful execution of certain tests'
+        - string:
+            name: MANIFEST_VERSION
+            default: 'master'
+            description: 'Provide release version when testing particular release (smoke tests)'
+        - bool:
+            name: TESTING_MASTER
+            default: true
+            description: 'Indicates whether to check master tags or compare versions from manifest file (smoke tests)'   
+        - string:
+            name: WALKTHROUGHS_VERSION
+            default: ''
+            description: 'Provide walkthroughs release version. Empty value means the master version is expected (smoke tests)'
+        - string:
+            name: NUMBER_OF_USERS
+            default: "5"
+            description: 'Number of created users (sso-user-create test)'
+        - string:
             name: NAMESPACE_PREFIX
             default: rhpds-
             description: "This value will be prefixed to the names of the namespaces created during Integr8ly installation"
@@ -94,18 +142,9 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                         }
                     } // stage
                     
-                    stage ('Smoke Tests') {
-                        runTests('installation-smoke-tests')
+                    stage ('Run Tests') {
+                        runTests()
                     } // stage
-
-                    stage ('Browser Based Tests') {
-                        runTests('browser-based-testsuite-pipeline')
-                        sleep time: 3, unit: 'MINUTES'
-                    } // stage
-                    
-                    stage ('After First Login Tests') {
-                        runTests('after-first-login-tests')
-                    } // stage 
 
                     stage ('Uninstall #3') {
                         if (TO_DO.contains('full')) {
@@ -163,28 +202,30 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             }
         }
 
-        def runTests(testPipeline) {
+        def runTests() {
+
             parameters = [
                 string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
                 string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
                 string(name: 'CLUSTER_URL', value: "https://master.${YOURCITY}.openshiftworkshop.com"),
-                string(name: 'ADMIN_USERNAME', value: 'admin@example.com'),
-                string(name: 'ADMIN_PASSWORD', value: 'Password1'),
-                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}")
+                string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
+                string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
+                string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+                string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+                string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),
+                string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
+                string(name: 'RELEASE_VERSION', value: "${RELEASE_VERSION}"),
+                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
+                string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-${NAMESPACE_PREFIX}webapp.apps.${YOURCITY}.openshiftworkshop.com"),
+                booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
+                string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
+                booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
+                string(name: 'WALKTHROUGHS_VERSION', value: "${WALKTHROUGHS_VERSION}"),
+                string(name: 'SSO_URL', value: "https://sso-${NAMESPACE_PREFIX}sso.apps.${YOURCITY}.openshiftworkshop.com"),
+                string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}")
             ]
 
-            if (testPipeline == 'after-first-login-tests') {
-                parameters.add(string(name: 'EVALS_USERNAME', value: 'evals23@example.com'))
-                parameters.add(string(name: 'EVALS_PASSWORD', value: 'Password1'))
-            }
-
-            if (testPipeline == 'browser-based-testsuite-pipeline') {
-                parameters.add(string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-${NAMESPACE_PREFIX}webapp.apps.${YOURCITY}.openshiftworkshop.com"))
-                parameters.add(string(name: 'EVALS_USERNAME', value: 'evals23@example.com'))
-                parameters.add(string(name: 'EVALS_PASSWORD', value: 'Password1'))
-            }
-
-            buildStatus = build(job: testPipeline, propagate: false, parameters: parameters).result
+            buildStatus = build(job: 'all-tests-executor', propagate: false, parameters: parameters).result
             println "Build finished with ${buildStatus}"
                             
             if (buildStatus != 'SUCCESS') {
