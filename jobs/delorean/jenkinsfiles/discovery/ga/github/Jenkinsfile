@@ -1,183 +1,5 @@
 #!groovy
-
-//Helper methods, should eventually be moved tio a shared library
-
-//remote repository checkout
-def checkoutGitRepo(gitUrl, gitRef, credentialsID) {
-    checkout([$class: 'GitSCM', branches: [[name: gitRef]],
-            doGenerateSubmoduleConfigurations: false,
-            extensions: [],
-            submoduleCfg: [],
-            userRemoteConfigs: [[credentialsId: credentialsID, url: gitUrl]]])
-}
-
-//https://github.com/feedhenry/fh-pipeline-library/blob/master/vars/gitCreateAndCheckoutBranch.groovy
-def gitCreateAndCheckoutBranch(branchName, pushOnCreate = false) {
-    String remoteBranchCommit = sh(returnStdout: true, script: "git ls-remote origin refs/heads/${branchName} | cut -f 1").trim()
-
-    if (remoteBranchCommit) {
-        sh "git checkout ${branchName}"
-    } else {
-        sh "git checkout -b ${branchName}"
-        if (pushOnCreate) {
-            if (params.dryRun) {
-                String gitRepoUrl = sh(returnStdout: true, script: 'git config --get remote.origin.url').trim()
-                print "Would push ${branchName} to ${gitRepoUrl}"
-            } else {
-                sh "git push origin ${branchName}"
-            }
-        }
-    }
-}
-
-String gitRepoIsDirty(untrackedFiles = 'no') {
-    return sh(
-            returnStdout: true,
-            script: "git status --porcelain --untracked-files=${untrackedFiles}"
-    )?.trim()
-}
-
-//https://github.com/feedhenry/fh-pipeline-library/blob/master/vars/gitCreateAndCheckoutBranch.groovy
-boolean gitCommitWhenChanges(commitMsgTitle, body) {
-    def changes = []
-    def msgs = []
-    body(msgs)
-    msgs = msgs - null - ""
-    if (gitRepoIsDirty()) {
-        changes = [commitMsgTitle]
-        changes << msgs.join('\n')
-        changes = changes.join('\n\n')
-        sh "git commit -a -m \"${changes}\""
-        return true
-    }
-    return false
-}
-
-//Fetch data from git with credentials
-def gitFetch(url, gitTokenId) {
-    def response = null
-    def data = null
-
-    withCredentials([string(credentialsId: gitTokenId, variable: 'gitToken')]) {
-        def headers = [
-                ["name": "Authorization", "value": "token ${env.gitToken}"]
-        ]
-
-        response = httpRequest customHeaders: headers, url: url
-        data = readJSON text: response.content
-    }
-
-    return [response.status, data]
-}
-
-//Gets the latest release by git tags
-def getLatestReleaseByTag(gitOrg, gitRepo, gitTokenId, productName, gaReleaseTagRef) {
-    def latestRelease = ""
-    def url = "https://api.github.com/repos/${gitOrg}/${gitRepo}/git/refs/tags"
-
-    def (code, releases) = gitFetch(url, gitTokenId)
-    if (code != 200) {
-      error "[ERROR] Failed to retrieve tags for:${productName}. The :${gitRepo} repository does not have any tags available"
-    }
-
-    // Retrieve GA releases only
-    releases = releases.findAll { release -> release.ref.contains(gaReleaseTagRef) }
-    latestRelease = releases.last().ref
-    latestRelease = latestRelease.minus("refs/tags/")
-
-    return latestRelease
-}
-
-//Gets the latest release by git releases
-def getLatestReleaseByRelease(gitOrg, gitRepo, gitTokenId, productName) {
-    def url = "https://api.github.com/repos/${gitOrg}/${gitRepo}/releases/latest"
-
-    def (code, release) = gitFetch(url, gitTokenId)
-    if (code != 200) {
-        error "[ERROR] Failed to retrieve latest release for:${productName}. The :${gitRepo} repository does not have any releases available"
-    }
-
-    return release.tag_name
-}
-
-//Gets the latest release of a product from the project repository
-def getLatestRelease(gitOrg, gitRepo, gitTokenId, releaseFetchMethod, gaReleaseTagRef) {
-    println "[INFO] Getting latest release for:${productName}"
-
-    if (releaseFetchMethod == "tag") {
-        return getLatestReleaseByTag(gitOrg, gitRepo, gitTokenId, productName, gaReleaseTagRef)
-    } else {
-        return getLatestReleaseByRelease(gitOrg, gitRepo, gitTokenId, productName)
-    }
-}
-
-//checks if current semver is lower than the supposed latest one
-def hasNewGARelease(currentVersion, newVersion, productName) {
-    def current = ""
-    def latest = ""
-
-    if (productName == "fuse") {
-        current = currentVersion.replaceAll("[^0-9/-]", "").tokenize("-")
-        latest = newVersion.replaceAll("[^0-9/-]", "").tokenize("-")
-    } else {
-        current = currentVersion.replaceAll("[^0-9/.]", "").tokenize(".")
-        latest = newVersion.replaceAll("[^0-9/.]", "").tokenize('.')
-    }
-
-    def currentMajor = current[0] as Integer
-    def latestMajor = latest[0] as Integer
-    def currentMinor = current[1] as Integer
-    def latestMinor = latest[1] as Integer
-    def currentPatch = current[2] as Integer
-    def latestPatch = latest[2] as Integer
-
-    def previousVer = 0
-    def currentVer = 0
-    for (i = 0; i <= 2; i++) {
-        if (i > 0) {
-            previousVer = i - 1
-        }
-        currentVer = i
-
-        def previousDiff = current[previousVer] == latest[previousVer]
-        if (i == 0) {
-            previousDiff = true
-        }
-        def currentDiff = latest[currentVer] > current[currentVer]
-        if (previousDiff && currentDiff) {
-            return true
-        }
-    }
-
-    return false
-}
-
-//https://github.com/comquent/imperative-when
-import org.jenkinsci.plugins.pipeline.modeldefinition.Utils
-
-def when(boolean condition, body) {
-    def config = [:]
-    body.resolveStrategy = Closure.OWNER_FIRST
-    body.delegate = config
-
-    if (condition) {
-        body()
-    } else {
-        Utils.markStageSkippedForConditional(STAGE_NAME)
-    }
-}
-
-def updateManifestVariable(manifestFileTxt, name, value) {
-    if (name && value) {
-        println("Updating manifest variable: name = ${name}, value = ${value}")
-        manifestFileTxt = manifestFileTxt.replaceFirst(/${name}: .*/, "${name}: '${value}'")
-    } else {
-        println("Unable to update manifest variable: name = ${name}, value = ${value}")
-    }
-    return manifestFileTxt
-}
-
-//Helper methods
+@Library('delorean-pipeline-library')
 
 def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
 def installationGitRef = params.installationGitRef ?: 'master'
@@ -203,8 +25,8 @@ node {
     stage('Fetch Installation Repo') {
         println '[INFO] Fetch Installation Repo'
         cleanWs()
+        gitCheckoutRepo(installationGitUrl, installationGitRef, githubCredentialsID, 'installation')
         dir('installation') {
-            checkoutGitRepo(installationGitUrl, installationGitRef, githubCredentialsID)
             if (!isProduct) {
                 releaseConfig = readYaml file: installationManifestFile
             }
@@ -226,7 +48,7 @@ node {
     }
 
     stage('Fetch Latest GitHub Release') {
-        latestRelease = getLatestRelease(projectOrg, projectRepo, githubToken, releaseFetchMethod, gaReleaseTagRef)
+        latestRelease = getLatestGaRelease(projectOrg, projectRepo, githubToken, releaseFetchMethod, gaReleaseTagRef)
         if (!latestRelease) {
             error "[ERROR] Unable to retrieve latest release version!"
         }
@@ -267,10 +89,10 @@ node {
         }
 
         if (isProduct) {
-            isGARelease = hasNewGARelease(productVersion, latestRelease, productName)
+            isGARelease = hasNewGaRelease(productVersion, latestRelease, productName)
             componentRelease = productVersion
         } else {
-            isGARelease = hasNewGARelease(componentRelease, productVersion, productName)
+            isGARelease = hasNewGaRelease(componentRelease, productVersion, productName)
         }
 
         println "[INFO] product version: ${productVersion}"
@@ -285,12 +107,7 @@ node {
 
             stage('Ensure Product GA Branch') {
                 gitCreateAndCheckoutBranch(gaBranch, true)
-                try {
-                    sh "git rebase origin/${installationGitRef}"
-                } catch (Exception e) {
-                    sh "git rebase --abort"
-                    println "We were unable to automatically rebase the target branch '${installationGitRef}' into the source branch '${gaBranch}'. Please fix these conflicts locally and push the changes to ${gaBranch} before running this job again!"
-                }
+                gitRebaseBranch(installationGitRef, gaBranch)
             }
 
             stage('Product Version Update') {
@@ -324,9 +141,7 @@ node {
             stage('Push Product GA Branch') {
                 boolean doPush = gaBranch != 'master'
                 if (doPush) {
-                    //sh "git push --force-with-lease origin ${gaBranch}"
-                    //We should be using force-with-lease, but the agents appear to have a really old git version in them.
-                    sh "git push --force origin ${gaBranch}"
+                  gitPushBranch(gaBranch, true)
                 }
             }
         }
