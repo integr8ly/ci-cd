@@ -92,7 +92,7 @@
                 stage('Execute playbook') {
                     dir('installation/evals') {
                         sh """
-                            sudo ansible-playbook -i ./inventories/hosts ./playbooks/uninstall.yml -e create_cluster_admin=false -e openshift_login=true -e openshift_username=${OC_USER} -e openshift_password=${OC_PASSWORD} -e openshift_master_public_url=${CLUSTER_URL} -e ns_prefix=${NAMESPACE_PREFIX}
+                            sudo ansible-playbook -i ./inventories/hosts ./playbooks/uninstall.yml -e openshift_login=true -e openshift_username=${OC_USER} -e openshift_password=${OC_PASSWORD} -e openshift_master_public_url=${CLUSTER_URL} -e ns_prefix=${NAMESPACE_PREFIX}
                         """
                      } // dir
                 } // stage
