@@ -50,14 +50,6 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             default: 'Password1'
             description: 'Evals user password used in test suites'
         - string:
-            name: ADMIN_USERNAME
-            default: 'admin@example.com'
-            description: 'Admin sername to login to Integreatly cluster.'
-        - string:
-            name: ADMIN_PASSWORD
-            default: 'Password1'
-            description: 'Admin password to login to Integreatly cluster.'
-        - string:
             name: CUSTOMER_ADMIN_USERNAME
             default: 'customer-admin@example.com'
             description: 'customer-admin username to login to Integreatly cluster.'
@@ -242,8 +234,8 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 string(name: 'CLUSTER_URL', value: "https://${CLUSTER_HOSTNAME}"),
                 string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                 string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
-                string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
-                string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+                string(name: 'ADMIN_USERNAME', value: "${OC_USER}"),
+                string(name: 'ADMIN_PASSWORD', value: "${OC_PASSWORD}"),
                 string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),
                 string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
                 string(name: 'RELEASE_VERSION', value: "${RELEASE_VERSION}"),
