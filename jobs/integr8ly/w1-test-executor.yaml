@@ -72,6 +72,7 @@
                                     string(name: 'REPOSITORY', value: "${REPOSITORY}"),
                                     string(name: 'BRANCH', value: "${BRANCH}"),
                                     string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                                    string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
                                     string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
                                     string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
