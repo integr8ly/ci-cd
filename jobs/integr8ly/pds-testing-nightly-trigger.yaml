@@ -33,7 +33,6 @@
             MANIFEST_VERSION=master
             TESTING_MASTER=true
             WALKTHROUGHS_VERSION=master
-            SSO_URL=your-sso-url
             NUMBER_OF_USERS=5
             NAMESPACE_PREFIX=rhpds-
             TO_DO=full
@@ -62,7 +61,6 @@
                         string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
                         booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
                         string(name: 'WALKTHROUGHS_VERSION', value: "${WALKTHROUGHS_VERSION}"),
-                        string(name: 'SSO_URL', value: "${SSO_URL}"),
                         string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}")
                         string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
                         string(name: 'TO_DO', value: "${TO_DO}")
