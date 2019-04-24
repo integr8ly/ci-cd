@@ -26,6 +26,16 @@
             ANSIBLE_USER=root
             OC_USER=integreatly
             OC_PASSWORD=Password1
+            EVALS_USERNAME=evals11@example.com
+            EVALS_PASSWORD=Password1
+            CUSTOMER_ADMIN_PASSWORD=customer-admin@example.com
+            CUSTOMER_ADMIN_PASSWORD=Password1
+            RELEASE_VERSION=master
+            CLEAN_RESOURCES=true
+            MANIFEST_VERSION=master
+            TESTING_MASTER=true
+            WALKTHROUGHS_VERSION=master
+            NUMBER_OF_USERS=5
             NAMESPACE_PREFIX=openshift-
             TO_DO=full
     dsl: |
@@ -46,6 +56,16 @@
                         string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
                         string(name: 'OC_USER', value: "${OC_USER}"),
                         string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}"),
+                        string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
+                        string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
+                        string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),
+                        string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
+                        string(name: 'RELEASE_VERSION', value: "${RELEASE_VERSION}"),
+                        booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
+                        string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
+                        booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
+                        string(name: 'WALKTHROUGHS_VERSION', value: "${WALKTHROUGHS_VERSION}"),
+                        string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}"),
                         string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
                         string(name: 'TO_DO', value: "${TO_DO}")
                     ]).result
