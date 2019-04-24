@@ -240,7 +240,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
                 string(name: 'RELEASE_VERSION', value: "${RELEASE_VERSION}"),
                 string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
-                string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-${NAMESPACE_PREFIX}webapp.apps.${YOURCITY}"),
+                string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-${NAMESPACE_PREFIX}webapp.apps.${CLUSTER_HOSTNAME}"),
                 booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
                 string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
                 booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
