@@ -16,6 +16,9 @@
       - string:
           name: CLUSTER_URL
           description: 'URL of cluster on which the tests will be executed.'
+      - string:
+          name: NAMESPACE_PREFIX
+          description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
       - string: 
           name: ADMIN_USERNAME
           default: 'admin@example.com'
