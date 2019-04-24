@@ -89,9 +89,6 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             default: ''
             description: 'Provide walkthroughs release version. Empty value means the master version is expected (smoke tests)'
         - string:
-            name: SSO_URL
-            description: 'SSO URL for the cluster on which the tests will be executed (sso-user-create test)'
-        - string:
             name: NUMBER_OF_USERS
             default: "5"
             description: 'Number of created users (sso-user-create test)'
@@ -224,7 +221,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
                 booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
                 string(name: 'WALKTHROUGHS_VERSION', value: "${WALKTHROUGHS_VERSION}"),
-                string(name: 'SSO_URL', value: "${SSO_URL}"),
+                string(name: 'SSO_URL', value: "https://sso-${NAMESPACE_PREFIX}sso.apps.${YOURCITY}.openshiftworkshop.com"),
                 string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}")
             ]
 
