@@ -157,6 +157,10 @@
     name: delorean-suites/integration/ga
     display-name: 'GA'
     project-type: folder
+- job:
+    name: delorean-suites/integration/rc
+    display-name: 'RC'
+    project-type: folder
 
 # Misc
 - job:
