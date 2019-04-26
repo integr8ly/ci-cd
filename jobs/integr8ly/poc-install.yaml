@@ -56,7 +56,7 @@
                                   "gitea_operator_release_tag",
                                   "webapp_version",
                                   "webapp_operator_release_tag",
-                                  //"middleware_monitoring_operator_release_tag",
+                                  "middleware_monitoring_operator_release_tag",
                                   "backup_version"]
 
         timeout(60) { ansiColor('gnome-terminal') { timestamps {
