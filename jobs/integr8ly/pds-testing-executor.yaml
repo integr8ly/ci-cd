@@ -94,8 +94,8 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             description: 'Number of created users (sso-user-create test)'
         - string:
             name: NAMESPACE_PREFIX
-            default: rhpds-
-            description: "This value will be prefixed to the names of the namespaces created during Integr8ly installation"
+            default: ''
+            description: "This value will be prefixed to the names of the namespaces created during Integr8ly installation. Defaulting to empty string for RHPDS"
         - choice:
             name: TO_DO
             description: "It specifies what stages of the pipeline will be executed. 'full' means uninstall + uninstall + install + install + tests + uninstall + install"

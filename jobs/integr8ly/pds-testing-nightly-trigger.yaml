@@ -34,7 +34,7 @@
             TESTING_MASTER=true
             WALKTHROUGHS_VERSION=master
             NUMBER_OF_USERS=5
-            NAMESPACE_PREFIX=rhpds-
+            NAMESPACE_PREFIX=''
             TO_DO=full
     dsl: |
         timeout(180) { ansiColor('gnome-terminal') { timestamps {
