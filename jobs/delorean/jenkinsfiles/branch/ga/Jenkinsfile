@@ -102,7 +102,7 @@ node {
         }
     }
 
-    stage('Create Jira Issue') {
+    stage('Create Jira Update Issue') {
         when(sourceChanges) {
             String[] labels = [
               /"product-update"/,
@@ -114,6 +114,28 @@ node {
             String query = createJiraQuery(labels)
             def body = createJiraBody(summary, prUrl, labels)
 
+            def jiraID = jiraCreateIssue(jiraUserPass, jiraRestApiUrl, query, body)
+            println "[INFO] Issue created: https://issues.jboss.org/browse/${jiraID}"
+        }
+    }
+
+    stage('Create Jira Upgrade Issue') {
+        when(sourceChanges) {
+            dir('installation') {
+                sh "git checkout ${targetBranch}"
+                currentProductVersion = getProductVersionFromManifest(productVersionVar, installationManifestFile)
+            }
+
+            String[] labels = [
+              /"product-upgrade"/,
+              /"${productName}"/,
+              /"${productName}:${productVersion}"/
+            ]
+            String summary = "Add upgrade sop or playbook for ${productName} ${currentProductVersion} to ${productVersion}"
+
+            String query = createJiraQuery(labels)
+            def body = createJiraBody(summary, prUrl, labels)
+            
             def jiraID = jiraCreateIssue(jiraUserPass, jiraRestApiUrl, query, body)
             println "[INFO] Issue created: https://issues.jboss.org/browse/${jiraID}"
         }
