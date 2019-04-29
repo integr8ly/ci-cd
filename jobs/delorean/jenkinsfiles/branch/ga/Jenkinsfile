@@ -87,9 +87,16 @@ node {
                         .build()
                 String title = "[WIP] ${productName} update"
                 String body = "Created automatically by jenkins"
-                GHPullRequest pr = ghUtils.ghFindOrCreatePullRequest(gitHub.getRepository("${ghOwner}/${ghRepo}"), "${ghOwner}:${sourceBranch}", targetBranch, title, body, defaultPRLabels)
-                prUrl = pr.getHtmlUrl()
-                runIntegrationTests = ghUtils.ghPrHasLabel(pr, integrationTestsGHLabel)
+
+                if (dryRun) {
+                    println "Finds an open pull request with the base branch '${sourceBranch}'. If this does not exist, it creates a new pull request with the following details:\ntitle:'${title}',\nbody '${body}',\nlabels:${defaultPRLabels}"
+                    prUrl = "https://github.com/example-pr-url"
+                } else {
+                    GHPullRequest pr = ghUtils.ghFindOrCreatePullRequest(gitHub.getRepository("${ghOwner}/${ghRepo}"), "${ghOwner}:${sourceBranch}", targetBranch, title, body, defaultPRLabels)
+                    prUrl = pr.getHtmlUrl()
+                    runIntegrationTests = ghUtils.ghPrHasLabel(pr, integrationTestsGHLabel)
+                }
+                
                 println "Component Update PR = ${prUrl}, runIntegrationTests = ${runIntegrationTests}"
             }
         }
