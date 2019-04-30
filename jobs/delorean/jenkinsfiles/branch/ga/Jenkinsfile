@@ -7,6 +7,40 @@ import org.kohsuke.github.GHPullRequest
 import org.kohsuke.github.GitHub
 import org.kohsuke.github.GitHubBuilder
 
+def createJiraQuery(labels) {
+  String query = "project = INTLY AND status = Open"
+
+  for (i = 0; i < labels.size(); i++) {
+    def label = labels[i].replaceAll('"', "'")
+    query = "${query} AND labels=${label}"
+  }
+
+  return query
+}
+
+def createJiraBody(summary, gitPrUrl, labels) {
+  return """{
+      "fields": {
+          "project": {
+              "id": "12321620",
+              "key": "INTLY",
+              "name": "Integreatly"
+          },
+          "summary": "${summary}",
+          "description": "${gitPrUrl}",
+          "labels": ${labels},
+          "issuetype": {
+              "name": "Task"
+          },
+          "priority": {
+              "id": "3",
+              "name": "Major"
+          },
+          "customfield_12310220": "${gitPrUrl}"
+      }
+  }"""
+}
+
 def ghOwner = "integr8ly"
 def ghRepo = "installation"
 def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
@@ -26,6 +60,7 @@ def productVersionVar = params.productVersionVar
 def productVersion
 String[] defaultPRLabels = ["product update", productName]
 def installationManifestFile = './inventories/group_vars/all/manifest.yaml'
+String jiraRestApiUrl = "https://issues.jboss.org/rest/api/2"
 
 node {
     cleanWs()
@@ -69,7 +104,11 @@ node {
             ]
             String summary = "Update ${productName} to ${productVersion}"
 
-            jiraCreateIssue(jiraUserPass, productName, summary , labels, prUrl)
+            String query = createJiraQuery(labels)
+            def body = createJiraBody(summary, prUrl, labels)
+
+            def jiraID = jiraCreateIssue(jiraUserPass, jiraRestApiUrl, query, body)
+            println "[INFO] Issue created: https://issues.jboss.org/browse/${jiraID}"
         }
     }
 

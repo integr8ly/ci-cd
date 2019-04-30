@@ -107,7 +107,7 @@ node {
 
             stage('Ensure Product GA Branch') {
                 gitCreateAndCheckoutBranch(gaBranch, true)
-                gitRebaseBranch(installationGitRef, gaBranch)
+                gitRebaseBranch(installationGitRef, gaBranch, false)
             }
 
             stage('Product Version Update') {
