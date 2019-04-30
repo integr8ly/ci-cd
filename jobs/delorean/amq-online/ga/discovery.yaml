@@ -27,6 +27,15 @@
           default: 'amq-online'
           description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
           read-only: true
+      - string:
+          name: 'releaseFetchMethod'
+          default: 'tag'
+          description: '[REQUIRED] Method to fetch latest release which can either be by tag or by release'
+          read-only: true
+      - string:
+          name: 'gaReleaseTagRef'
+          default: 'GA'
+          description: '[REQUIRED] Reference used to filter GA releases from the repository tags'
     pipeline-scm:
       script-path: jobs/delorean/jenkinsfiles/discovery/ga/github/Jenkinsfile
       scm:
