@@ -3,6 +3,7 @@
     name: openshift-cluster-deprovision
     display-name: 'OpenShift Cluster Deprovision'
     project-type: pipeline
+    concurrent: true
     parameters:
       - string:
           name: 'clusterName'

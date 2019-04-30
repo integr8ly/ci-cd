@@ -3,6 +3,7 @@
     name: openshift-cluster-integreatly-uninstall
     display-name: 'Openshift Cluster Integreatly Uninstall'
     project-type: pipeline
+    concurrent: true
     parameters:
       - string:
           name: 'clusterName'

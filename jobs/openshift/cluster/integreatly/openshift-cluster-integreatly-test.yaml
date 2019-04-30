@@ -3,6 +3,7 @@
     name: openshift-cluster-integreatly-test
     display-name: 'Openshift Cluster Integreatly Test'
     project-type: pipeline
+    concurrent: true
     parameters:
       - string:
           name: 'installationGitUrl'
