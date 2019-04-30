@@ -1,4 +1,5 @@
 #!groovy
+@Library('delorean-pipeline-library')
 
 // Ensure required parameters are provided
 def verifyParameters(suiteParams) {
@@ -13,27 +14,6 @@ def verifyParameters(suiteParams) {
       suiteParams.suiteBranch = userInput.suiteBranch
       suiteParams.productBranches = userInput.productBranches
       verifyParameters(suiteParams)
-  }
-}
-
-// Checkout remote repository
-def checkoutGitRepo(gitUrl, gitRef, credentialsID) {
-  checkout([$class: 'GitSCM', branches: [[name: gitRef]],
-            doGenerateSubmoduleConfigurations: false,
-            extensions: [],
-            submoduleCfg: [],
-            userRemoteConfigs: [[credentialsId: credentialsID, url: gitUrl]]])
-}
-
-def gitCreateAndCheckoutBranch(branchName, pushOnCreate = false) {
-  sh "git checkout -b ${branchName}"
-
-  if (pushOnCreate) {
-    if (params.dryRun) {
-      println "Would push '${branchName}' to remote branch"
-    } else {
-      sh "git push origin ${branchName}"
-    }
   }
 }
 
@@ -54,11 +34,11 @@ node {
     println "Suite Options: ${suiteParams}"
   }
 
-  dir('installation') {
-    stage('Fetch Installation Repo') {
-      checkoutGitRepo(suiteParams.gitUrl, masterBranch, githubSSHCredentialsID)
-    }
+  stage('Fetch Installation Repo') {
+    gitCheckoutRepo(suiteParams.gitUrl, masterBranch, githubSSHCredentialsID, 'installation')
+  }
 
+  dir('installation') {
     sshagent([githubSSHCredentialsID]) {
       sh 'git config --global user.name "Automatron"'
       sh 'git config --global user.email "github.eng@feedhenry.com"'
@@ -80,24 +60,8 @@ node {
       stage('Merge Product GA Branches') {
         def productBranches = suiteParams.productBranches.replaceAll(" ", "").split(',')
 
-        if (productBranches.size() == 0) {
-          error "No product branches to merge to ${suiteParams.suiteBranch}"
-        }
-
-        // If a merge fails, the whole job will fail
-        for (i = 0; i < productBranches.size(); i++) {        
-          try {
-            sh "git pull --no-edit origin ${productBranches[i]}"
-          } catch (Exception e) {
-            error "We were unable to merge the branch '${productBranches[i]}' into the source branch '${suiteParams.suiteBranch}'"
-          }
-        }
-
-        if (params.dryRun) {
-          println "Would force push '${suiteParams.suiteBranch}' to remote branch"
-        } else {
-          sh "git push origin ${suiteParams.suiteBranch} -f"
-        }
+        gitMergeBranches(productBranches, suiteParams.suiteBranch)
+        gitPushBranch(suiteParams.suiteBranch, true)
       }
 
       stage('Test Suite Branch') {

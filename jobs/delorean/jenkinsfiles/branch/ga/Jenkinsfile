@@ -1,154 +1,11 @@
 #!groovy
+@Library('delorean-pipeline-library')
+def ghUtils = new org.integr8ly.GitHubUtils()
 
-//Helper methods, should eventually be moved to a shared library
-
-//remote repository checkout
-def checkoutGitRepo(gitUrl, gitRef, credentialsID) {
-    checkout([$class: 'GitSCM', branches: [[name: gitRef]],
-            doGenerateSubmoduleConfigurations: false,
-            extensions: [],
-            submoduleCfg: [],
-            userRemoteConfigs: [[credentialsId: credentialsID, url: gitUrl]]])
-}
-
-//https://github.com/comquent/imperative-when
-import org.jenkinsci.plugins.pipeline.modeldefinition.Utils
-
-def when(boolean condition, body) {
-    def config = [:]
-    body.resolveStrategy = Closure.OWNER_FIRST
-    body.delegate = config
-
-    if (condition) {
-        body()
-    } else {
-        Utils.markStageSkippedForConditional(STAGE_NAME)
-    }
-}
-
-import com.cloudbees.groovy.cps.NonCPS
 import org.kohsuke.github.GHCommitState
-import org.kohsuke.github.GHCommitStatus
-import org.kohsuke.github.GHIssueState
-import org.kohsuke.github.GHLabel
-import org.kohsuke.github.GHRepository
-import org.kohsuke.github.GitHub
-import org.kohsuke.github.PagedIterable
-import org.kohsuke.github.GitHubBuilder
 import org.kohsuke.github.GHPullRequest
-
-@NonCPS
-GHPullRequest ghGetPullRequest(GHRepository repo, String head, String base, GHIssueState state) {
-    PagedIterable<GHPullRequest> pullRequests = repo.queryPullRequests()
-            .head(head)
-            .base(base)
-            .state(state)
-            .list()
-    return pullRequests[0]
-}
-
-@NonCPS
-GHPullRequest ghFindOrCreatePullRequest(GHRepository repo, String head, String base, String title, String body, String[] labels) {
-    GHPullRequest pr = ghGetPullRequest(repo, head, base, GHIssueState.OPEN)
-    if (pr) {
-        println "Found already open PR on ${repo.getName()} head:${head} base:${base} - ${pr.getHtmlUrl()}"
-    } else {
-        //head for the query above requires the user e.g. fheng:branch_name, but here we only want branch_name see https://developer.github.com/v3/pulls/#list-pull-requests
-        head = head.split(':').last()
-        pr = repo.createPullRequest(title, head, base, body)
-        pr.setLabels(labels)
-        println "Opened new PR on ${repo.getName()} head:${head} base:${base} - ${pr.getHtmlUrl()}"
-    }
-    return pr
-}
-
-@NonCPS
-GHPullRequest ghGetPullRequestFromUrl(GitHub gitHub, String prUrl) {
-    URL url = new URL(prUrl)
-    String[] pathSegments = url.path.trim().split('/') - '' - 'pull'
-    String ghOwner = pathSegments[0]
-    String ghRepo = pathSegments[1]
-    String ghPrNumber = pathSegments[2]
-    GHRepository repo = gitHub.getRepository("${ghOwner}/${ghRepo}")
-    return repo.getPullRequest(ghPrNumber as int)
-}
-
-@NonCPS
-GHCommitStatus ghUpdatePrCommitStatus(GHPullRequest pr, GHCommitState state, String targetUrl, String description, String context) {
-    return pr.getRepository().createCommitStatus(pr.getHead().getSha(), state, targetUrl, description, context)
-}
-
-@NonCPS
-GHCommitStatus ghUpdatePrCommitStatus(GitHub gitHub, String prUrl, GHCommitState state, String targetUrl, String description, String context) {
-    return ghUpdatePrCommitStatus(ghGetPullRequestFromUrl(gitHub, prUrl), state, targetUrl, description, context)
-}
-
-@NonCPS
-boolean prHasLabel(GHPullRequest pr, String labelName) {
-    boolean hasLabel = false
-    for (GHLabel label : pr.getLabels()) {
-        if (label.getName() == labelName) {
-            hasLabel = true
-        }
-    }
-    return hasLabel
-}
-
-def hasJiraUpdateIssue(credentials, product, productVersion) {
-    def query = "project = INTLY AND status = Open AND labels=product-update AND labels=${product} AND labels='${product}:${productVersion}'"
-    def body = """{
-        "jql": "${query}"
-    }"""
-    def url = 'https://issues.jboss.org/rest/api/2/search'
-    def res = httpRequest quiet: true, authentication: credentials, consoleLogResponseBody: true, contentType: 'APPLICATION_JSON', httpMode: 'POST', requestBody: body, responseHandle: 'NONE', timeout: 60, url: url, validResponseCodes: '200'
-    def data = readJSON text: "${res.content}"
-
-    def found = res.status == 200 && data.total > 0
-    def key = ''
-    if (found) {
-        key = data.issues[0].key
-    }
-
-    return [found, key]
-}
-
-def createJiraIssue(credentials, gitUrl, product, productVersion) {
-    def body = """{
-        "fields": {
-            "project": {
-                "id": "12321620",
-                "key": "INTLY",
-                "name": "Integreatly"
-            },
-            "summary": "Update ${product} to ${productVersion}",
-            "description": "${gitUrl}",
-            "labels": [
-                "product-update",
-                "${product}",
-                "${product}:${productVersion}"
-            ],
-            "issuetype": {
-                "name": "Task"
-            },
-            "priority": {
-                "id": "3",
-                "name": "Major"
-            },
-            "customfield_12310220": "${gitUrl}"
-        }
-    }"""
-    def url = 'https://issues.jboss.org/rest/api/2/issue'
-    def res = httpRequest authentication: credentials, consoleLogResponseBody: true, contentType: 'APPLICATION_JSON', httpMode: 'POST', requestBody: body, responseHandle: 'NONE', timeout: 60, url: url, validResponseCodes: '201'
-    def data = readJSON text: "${res.content}"
-    println "[INFO] Issue created: https://issues.jboss.org/browse/${data.key}"
-}
-
-def getProductVersion(yamlVar) {
-    def yaml = readYaml file: './inventories/group_vars/all/manifest.yaml'
-    return yaml[yamlVar]
-}
-
-//Helper methods
+import org.kohsuke.github.GitHub
+import org.kohsuke.github.GitHubBuilder
 
 def ghOwner = "integr8ly"
 def ghRepo = "installation"
@@ -168,26 +25,18 @@ def jiraUserPass = params.jiraUserPass ?: 'integreatly-jira-bot'
 def productVersionVar = params.productVersionVar
 def productVersion
 String[] defaultPRLabels = ["product update", productName]
+def installationManifestFile = './inventories/group_vars/all/manifest.yaml'
 
 node {
     cleanWs()
     stage('Checkout') {
-        dir('installation') {
-            checkoutGitRepo(installationGitUrl, sourceBranch, githubSSHCredentialsID)
-        }
+        gitCheckoutRepo(installationGitUrl, sourceBranch, githubSSHCredentialsID, 'installation')
     }
 
     stage('Check Source vs Target') {
         dir('installation') {
-            def totalCommits = sh(returnStdout: true, script: "git log origin/${targetBranch}..HEAD --pretty=o | wc -l").trim()
-            if ((totalCommits as int) > 0) {
-                sourceChanges = true
-                println("Changes detected on ${sourceBranch}, totalCommits:${totalCommits}")
-            } else {
-                sourceChanges = false
-                println("No changes detected on ${sourceBranch}")
-            }
-            productVersion = getProductVersion(productVersionVar)
+            sourceChanges = gitHasSourceChanges(sourceBranch, targetBranch)
+            productVersion = getProductVersionFromManifest(productVersionVar, installationManifestFile)
         }
     }
 
@@ -203,9 +52,9 @@ node {
                         .build()
                 String title = "[WIP] ${productName} update"
                 String body = "Created automatically by jenkins"
-                GHPullRequest pr = ghFindOrCreatePullRequest(gitHub.getRepository("${ghOwner}/${ghRepo}"), "${ghOwner}:${sourceBranch}", targetBranch, title, body, defaultPRLabels)
+                GHPullRequest pr = ghUtils.ghFindOrCreatePullRequest(gitHub.getRepository("${ghOwner}/${ghRepo}"), "${ghOwner}:${sourceBranch}", targetBranch, title, body, defaultPRLabels)
                 prUrl = pr.getHtmlUrl()
-                runIntegrationTests = prHasLabel(pr, integrationTestsGHLabel)
+                runIntegrationTests = ghUtils.ghPrHasLabel(pr, integrationTestsGHLabel)
                 println "Component Update PR = ${prUrl}, runIntegrationTests = ${runIntegrationTests}"
             }
         }
@@ -213,13 +62,14 @@ node {
 
     stage('Create Jira Issue') {
         when(sourceChanges) {
-            println("Creating Jira Issue for ${productName}:${productVersion}")
-            def (found, key) = hasJiraUpdateIssue(jiraUserPass, productName, productVersion)
-            if (!found) {
-                createJiraIssue(jiraUserPass, prUrl, productName, productVersion)
-            } else {
-                println "[INFO] Issue already open for ${productName}: https://issues.jboss.org/browse/${key}"
-            }
+            String[] labels = [
+              /"product-update"/,
+              /"${productName}"/,
+              /"${productName}:${productVersion}"/
+            ]
+            String summary = "Update ${productName} to ${productVersion}"
+
+            jiraCreateIssue(jiraUserPass, productName, summary , labels, prUrl)
         }
     }
 
@@ -232,7 +82,7 @@ node {
                 final GitHub gitHub = new GitHubBuilder()
                         .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
                         .build()
-                ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.PENDING, env.BUILD_URL, 'Pending', ghCommitStatusContext)
+                ghUtils.ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.PENDING, env.BUILD_URL, 'Pending', ghCommitStatusContext)
             }
             try {
                 def jobName = 'openshift-cluster-integreatly-test'
@@ -250,7 +100,7 @@ node {
                     final GitHub gitHub = new GitHubBuilder()
                             .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
                             .build()
-                    ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.FAILURE, env.BUILD_URL, 'Failure', ghCommitStatusContext)
+                    ghUtils.ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.FAILURE, env.BUILD_URL, 'Failure', ghCommitStatusContext)
                     error "Integration test failures, ${installationGitUrl}, ${sourceBranch}, ${e}"
                 }
             }
@@ -261,7 +111,7 @@ node {
                 final GitHub gitHub = new GitHubBuilder()
                         .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
                         .build()
-                ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.SUCCESS, env.BUILD_URL, 'Success', ghCommitStatusContext)
+                ghUtils.ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.SUCCESS, env.BUILD_URL, 'Success', ghCommitStatusContext)
             }
         }
     }
