@@ -53,7 +53,7 @@ node {
       }
 
       stage('Create and Checkout Suite Branch') {
-        gitCreateAndCheckoutBranch(suiteParams.suiteBranch)
+        gitCreateAndCheckoutBranch(suiteParams.suiteBranch, false, false)
       }
 
       // Merge product-ga branches into suite-ga branch

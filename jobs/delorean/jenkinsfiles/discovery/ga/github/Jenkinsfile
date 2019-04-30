@@ -106,7 +106,7 @@ node {
             sh 'git config --global user.email "github.eng@feedhenry.com"'
 
             stage('Ensure Product GA Branch') {
-                gitCreateAndCheckoutBranch(gaBranch, true)
+                gitCreateAndCheckoutBranch(gaBranch, true, true)
                 gitRebaseBranch(installationGitRef, gaBranch, false)
             }
 
