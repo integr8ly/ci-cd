@@ -53,14 +53,14 @@ node {
       }
 
       stage('Create and Checkout Suite Branch') {
-        gitCreateAndCheckoutBranch(suiteParams.suiteBranch)
+        gitCreateAndCheckoutBranch(suiteParams.suiteBranch, false, false)
       }
 
       // Merge product-ga branches into suite-ga branch
       stage('Merge Product GA Branches') {
         def productBranches = suiteParams.productBranches.replaceAll(" ", "").split(',')
 
-        gitMergeBranches(productBranches, suiteParams.suiteBranch)
+        gitMergeBranches(productBranches, suiteParams.suiteBranch, true)
         gitPushBranch(suiteParams.suiteBranch, true)
       }
 
