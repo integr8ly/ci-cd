@@ -21,6 +21,10 @@
           name: 'dryRun'
           default: false
           description: '[OPTIONAL][Test] Dry run only, only prints what it would do!'
+      - bool:
+          name: 'runTests'
+          default: false
+          description: '[OPTIONAL][Test] Run tests against the updated branch!'
     pipeline-scm:
       script-path: jobs/delorean/jenkinsfiles/branch/suite-ga/Jenkinsfile
       scm:
