@@ -15,7 +15,7 @@
           description: '[REQUIRED] The installation git branch to push new version changes'
       - string:
           name: 'productBranches'
-          default: '3scale-rc, amq-online-rc, codeready-rc, fuse-rc, fuse-online-rc, gitea-rc'
+          default: '3scale-rc, amq-online-rc, backup-container-rc, codeready-rc, fuse-rc, fuse-online-rc, gitea-rc, middleware-monitoring-rc, msbroker-rc, rhsso-rc, webapp-rc'
           description: '[REQUIRED] List of the branches to be installed in the suite branch'
       - bool:
           name: 'dryRun'
