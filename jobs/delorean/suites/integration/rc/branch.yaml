@@ -1,7 +1,7 @@
 ---
 - job:
-    name: delorean-suites/integration/ga/branch
-    display-name: 'integration-ga-branch'
+    name: delorean-suites/integration/rc/branch
+    display-name: 'integration-rc-branch'
     project-type: pipeline
     concurrent: false
     parameters:
@@ -11,11 +11,11 @@
           description: '[REQUIRED] The installation repo'
       - string:
           name: 'suiteBranch'
-          default: 'integration-ga'
+          default: 'integration-rc'
           description: '[REQUIRED] The installation git branch to push new version changes'
       - string:
           name: 'productBranches'
-          default: '3scale-ga, amq-online-ga, fuse-online-ga, fuse-ga'
+          default: '3scale-rc, amq-online-rc, fuse-online-rc, fuse-rc'
           description: '[REQUIRED] List of the branches to be installed in the suite branch'
       - bool:
           name: 'dryRun'

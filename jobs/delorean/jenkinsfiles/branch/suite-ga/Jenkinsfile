@@ -1,79 +1,79 @@
 #!groovy
-@Library('delorean-pipeline-library')
+@Library('delorean-pipeline-library') _
 
 // Ensure required parameters are provided
 def verifyParameters(suiteParams) {
-  if (!suiteParams.gitUrl || !suiteParams.suiteBranch || !suiteParams.productBranches) {
-      def productGABranches = '3scale-ga, amq-online-ga, backup-container-ga, codeready-ga, fuse-ga, fuse-online-ga, gitea-ga, middleware-monitoring-ga, msbroker-ga, rhsso-ga, webapp-ga'
-      def userInput = input message: 'Suites GA Options', parameters: [
-        string(defaultValue: (suiteParams.gitUrl ?: 'git@github.com:integr8ly/installation.git'), description: 'The installation repo git url', name: 'installationGitUrl'),
-        string(defaultValue: (suiteParams.suiteBranch ?: ''), description: 'Desired name for the suite branch', name: 'suiteBranch'),
-        string(defaultValue: (suiteParams.productBranches ?: productGABranches), description: 'List of the branches to be installed in the suite branch', name: 'productBranches'),
-      ]
-      suiteParams.gitUrl = userInput.installationGitUrl
-      suiteParams.suiteBranch = userInput.suiteBranch
-      suiteParams.productBranches = userInput.productBranches
-      verifyParameters(suiteParams)
-  }
+    if (!suiteParams.gitUrl || !suiteParams.suiteBranch || !suiteParams.productBranches) {
+        def userInput = input message: 'Suites GA Options', parameters: [
+                string(defaultValue: (suiteParams.gitUrl ?: 'git@github.com:integr8ly/installation.git'), description: 'The installation repo git url', name: 'installationGitUrl'),
+                string(defaultValue: (suiteParams.suiteBranch ?: ''), description: 'Desired name for the suite branch', name: 'suiteBranch'),
+                string(defaultValue: (suiteParams.productBranches ?: ''), description: 'List of the branches to be installed in the suite branch', name: 'productBranches'),
+        ]
+        suiteParams.gitUrl = userInput.installationGitUrl
+        suiteParams.suiteBranch = userInput.suiteBranch
+        suiteParams.productBranches = userInput.productBranches
+        verifyParameters(suiteParams)
+    }
 }
 
 def suiteParams = [:]
-def ghOwner = "integr8ly"
-def ghRepo = 'installation'
 def githubSSHCredentialsID = 'jenkinsgithub'
 def masterBranch = 'master'
-def suiteBranchList = ['integreatly-ga', 'integration-ga']
+def suiteBranchList = ['integreatly-ga', 'integration-ga', 'integration-rc']
+def runTests = params.runTests ?: false
 
 node {
-  cleanWs()
-  stage('Ensure Suite Parameters Provided') {
-    suiteParams.gitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
-    suiteParams.suiteBranch = params.suiteBranch
-    suiteParams.productBranches = params.productBranches
-    verifyParameters(suiteParams)
-    println "Suite Options: ${suiteParams}"
-  }
-
-  stage('Fetch Installation Repo') {
-    gitCheckoutRepo(suiteParams.gitUrl, masterBranch, githubSSHCredentialsID, 'installation')
-  }
-
-  dir('installation') {
-    sshagent([githubSSHCredentialsID]) {
-      sh 'git config --global user.name "Automatron"'
-      sh 'git config --global user.email "github.eng@feedhenry.com"'
-
-      // Ensures that the branch to be worked on is a suite branch
-      stage('Ensure Suite Branch') {
-        def isSuiteBranch = suiteBranchList.contains(suiteParams.suiteBranch)
-
-        if (!isSuiteBranch) {
-          error "The branch ${suiteParams.suiteBranch} is not a suite branch. Please specify a branch from the following list: ${suiteBranchList}"
-        }
-      }
-
-      stage('Create and Checkout Suite Branch') {
-        gitCreateAndCheckoutBranch(suiteParams.suiteBranch, false, false)
-      }
-
-      // Merge product-ga branches into suite-ga branch
-      stage('Merge Product GA Branches') {
-        def productBranches = suiteParams.productBranches.replaceAll(" ", "").split(',')
-
-        gitMergeBranches(productBranches, suiteParams.suiteBranch, true)
-        gitPushBranch(suiteParams.suiteBranch, true)
-      }
-
-      stage('Test Suite Branch') {
-        // Will trigger a build of the integreatly test job to run E2E tests using the suite branch provided
-        def jobName = 'openshift-cluster-integreatly-test'
-        def jobParams = [
-          [$class: 'StringParameterValue', name: 'installationGitUrl', value: suiteParams.gitUrl],
-          [$class: 'StringParameterValue', name: 'installationGitBranch', value: suiteParams.suiteBranch],
-          [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
-        ]
-        build job: jobName, parameters: jobParams
-      }
+    cleanWs()
+    stage('Ensure Suite Parameters Provided') {
+        suiteParams.gitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
+        suiteParams.suiteBranch = params.suiteBranch
+        suiteParams.productBranches = params.productBranches
+        verifyParameters(suiteParams)
+        println "Suite Options: ${suiteParams}"
     }
-  }
+
+    stage('Fetch Installation Repo') {
+        gitCheckoutRepo(suiteParams.gitUrl, masterBranch, githubSSHCredentialsID, 'installation')
+    }
+
+    dir('installation') {
+        sshagent([githubSSHCredentialsID]) {
+            sh 'git config --global user.name "Automatron"'
+            sh 'git config --global user.email "github.eng@feedhenry.com"'
+
+            // Ensures that the branch to be worked on is a suite branch
+            stage('Ensure Suite Branch') {
+                def isSuiteBranch = suiteBranchList.contains(suiteParams.suiteBranch)
+
+                if (!isSuiteBranch) {
+                    error "The branch ${suiteParams.suiteBranch} is not a suite branch. Please specify a branch from the following list: ${suiteBranchList}"
+                }
+            }
+
+            stage('Create and Checkout Suite Branch') {
+                gitCreateAndCheckoutBranch(suiteParams.suiteBranch, false, false)
+            }
+
+            // Merge product branches into suite branch
+            stage('Merge Product Branches') {
+                def productBranches = suiteParams.productBranches.replaceAll(" ", "").split(',')
+
+                gitMergeBranches(productBranches, suiteParams.suiteBranch, true)
+                gitPushBranch(suiteParams.suiteBranch, true)
+            }
+
+            stage('Test Suite Branch') {
+                when(runTests) {
+                    // Will trigger a build of the integreatly test job to run E2E tests using the suite branch provided
+                    def jobName = 'openshift-cluster-integreatly-test'
+                    def jobParams = [
+                            [$class: 'StringParameterValue', name: 'installationGitUrl', value: suiteParams.gitUrl],
+                            [$class: 'StringParameterValue', name: 'installationGitBranch', value: suiteParams.suiteBranch],
+                            [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
+                    ]
+                    build job: jobName, parameters: jobParams
+                }
+            }
+        }
+    }
 }
