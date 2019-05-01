@@ -28,8 +28,10 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/repos/repos-delete-docker-image-
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/misc/github-events/github-events.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/3scale/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/3scale/ga/discovery.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/3scale/rc/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/amq-online/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/amq-online/ga/discovery.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/amq-online/rc/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/backup-container/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/backup-container/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/codeready/ga/branch.yaml
@@ -38,6 +40,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/fuse/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/fuse/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/fuse-online/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/fuse-online/ga/discovery.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/fuse-online/rc/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/gitea/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/gitea/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/middleware-monitoring/ga/branch.yaml

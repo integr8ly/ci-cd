@@ -1,0 +1,110 @@
+#!groovy
+@Library('delorean-pipeline-library') _
+
+def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
+def installationGitRef = params.installationGitRef ?: 'master'
+def githubToken = params.githubToken ?: 'jenkins-github-api-token'
+def githubCredentialsID = params.credentialId ?: 'jenkinsgithub'
+def productVersionVar = params.productVersionVar
+def projectOrg = params.projectOrg
+def projectRepo = params.projectRepo
+def productName = params.productName
+def rcBranch = params.installationProductBranch ?: "${productName}-rc-tmp"
+def installationManifestFile = './inventories/group_vars/all/manifest.yaml'
+
+def templatesForkOrg = "integr8ly"
+def templatesGitUrl = "https://github.com/${projectOrg}/${projectRepo}.git"
+def templatesForkGitUrl = "https://github.com/${templatesForkOrg}/${projectRepo}.git"
+def templatesDir = params.templatesDir
+def latestPreRelease
+
+currentBuild.displayName = "${currentBuild.displayName} ${productName}"
+
+String getLatestPreRelease(projectOrg, projectRepo, githubToken, productName) {
+    //ToDo Implement this to return the latest pre release (RC) that is available, if any
+    String result = null
+    switch (productName) {
+        case '3scale':
+            result = '3scale-2.5.0-CR1'
+            break
+        case 'amq-online':
+            result = 'amq-online-11'
+            break
+        case 'fuse-online':
+            result = '1.6.13'
+            break
+    }
+    return result
+}
+
+node {
+    cleanWs()
+
+    println "[INFO] productName: ${productName}, templatesGitUrl: ${templatesGitUrl}, templatesForkGitUrl: ${templatesForkGitUrl}, templatesDir: ${templatesDir}"
+
+    stage('Fetch Installation Repo') {
+        println '[INFO] Fetch Installation Repo'
+        dir('installation') {
+            gitCheckoutRepo(installationGitUrl, installationGitRef, githubCredentialsID, '.')
+            releaseConfig = readYaml file: installationManifestFile
+        }
+    }
+
+    stage('Fetch Latest Pre Release (RC)') {
+        latestPreRelease = getLatestPreRelease(projectOrg, projectRepo, githubToken, productName)
+        if (!latestPreRelease) {
+            error "[ERROR] Unable to retrieve latest pre release version!"
+        }
+        println "[INFO] latestPreRelease = ${latestPreRelease}"
+    }
+
+    stage('Fetch Product Templates Repo') {
+        println '[INFO] Fetch Product Templates Repo'
+        dir('product-templates') {
+            gitCheckoutRepo(templatesGitUrl, latestPreRelease, githubCredentialsID, '.')
+        }
+    }
+
+    currentBuild.description = "current: ?\n latest: ${latestPreRelease}\n"
+
+    dir('product-templates') {
+        sshagent([githubCredentialsID]) {
+            sh 'git config --global user.name "Automatron"'
+            sh 'git config --global user.email "github.eng@feedhenry.com"'
+            sh "git remote add intly ${templatesForkGitUrl}"
+            sh "git fetch --all"
+
+            stage('Ensure Templates Intly Branch') {
+                //ToDo
+            }
+
+            stage('Image Registry Update') {
+                //ToDo
+            }
+
+            stage('Push Templates Intly Branch') {
+                //ToDo
+            }
+
+        }
+    }
+
+    dir('installation') {
+        sshagent([githubCredentialsID]) {
+            sh 'git config --global user.name "Automatron"'
+            sh 'git config --global user.email "github.eng@feedhenry.com"'
+
+            stage('Ensure Product RC Branch') {
+                //ToDo
+            }
+
+            stage('Product Version Update') {
+                //ToDo
+            }
+
+            stage('Push Product RC Branch') {
+                //ToDo
+            }
+        }
+    }
+}

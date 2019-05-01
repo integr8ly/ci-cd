@@ -10,6 +10,10 @@
     display-name: 'GA'
     project-type: folder
 - job:
+    name: delorean-3scale/rc
+    display-name: 'RC'
+    project-type: folder
+- job:
     name: delorean-3scale/latest
     display-name: 'latest'
     project-type: folder
@@ -22,6 +26,10 @@
 - job:
     name: delorean-amq-online/ga
     display-name: 'GA'
+    project-type: folder
+- job:
+    name: delorean-amq-online/rc
+    display-name: 'RC'
     project-type: folder
 
 # Backup Container
@@ -62,6 +70,10 @@
 - job:
     name: delorean-fuse-online/ga
     display-name: 'GA'
+    project-type: folder
+- job:
+    name: delorean-fuse-online/rc
+    display-name: 'RC'
     project-type: folder
 
 # Gitea
