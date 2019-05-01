@@ -40,7 +40,7 @@
             NAMESPACE_PREFIX=openshift-
             TO_DO=full
     dsl: |
-        timeout(180) { ansiColor('gnome-terminal') { timestamps {
+        timeout(210) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {
                 stage ('Trigger POC Pipeline') {
                     buildStatus = build(job: 'poc-testing-executor', propagate: false, parameters: [

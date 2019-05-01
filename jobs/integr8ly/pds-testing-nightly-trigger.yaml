@@ -38,7 +38,7 @@
             NAMESPACE_PREFIX=''
             TO_DO=full
     dsl: |
-        timeout(180) { ansiColor('gnome-terminal') { timestamps {
+        timeout(210) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {
                 stage ('Trigger PDS Pipeline') {
                     buildStatus = build(job: 'pds-testing-executor', propagate: false, parameters: [
