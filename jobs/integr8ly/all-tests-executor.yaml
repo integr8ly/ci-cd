@@ -135,6 +135,10 @@
                         runTests('alerts-test')
                     } // stage
 
+                    stage ('Nexus builds test') {
+                        runTests('nexus-builds-test')
+                    } // stage
+
                 } // node
             }}} // timeout, ansiColor, timestamps
         } catch (caughtError){
