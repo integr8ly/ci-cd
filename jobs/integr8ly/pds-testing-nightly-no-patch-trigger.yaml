@@ -1,13 +1,13 @@
 ---
 
 - job:
-    name: pds-testing-nightly-trigger
+    name: pds-testing-nightly-no-patch-trigger
     project-type: pipeline
-    description: "Nightly pipeline for heavy PDS testing."
+    description: "Nightly pipeline for heavy PDS testing (no patching components to master)"
     sandbox: false
     concurrent: false
     triggers:
-      - timed: "H(40-50) H(3-4) * * *"
+      - timed: "H(0-10) H(0-1) * * *"
     properties:
       - build-discarder:
           num-to-keep: 56
@@ -31,10 +31,10 @@
             RELEASE_VERSION=master
             CLEAN_RESOURCES=true
             MANIFEST_VERSION=master
-            TESTING_MASTER=true
+            TESTING_MASTER=false
             WALKTHROUGHS_VERSION=master
             NUMBER_OF_USERS=5
-            PATCH_TO_MASTER=true
+            PATCH_TO_MASTER=false
             NAMESPACE_PREFIX=''
             TO_DO=full
     dsl: |

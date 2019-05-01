@@ -92,6 +92,10 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             name: NUMBER_OF_USERS
             default: "5"
             description: 'Number of created users (sso-user-create test)'
+        - bool:
+            name: PATCH_TO_MASTER
+            default: false
+            description: "Indicates whether the components should be patched to master during installation"
         - string:
             name: NAMESPACE_PREFIX
             default: ''
@@ -107,7 +111,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
         def err = null
         
         try {
-            timeout(180) { ansiColor('gnome-terminal') { timestamps {
+            timeout(210) { ansiColor('gnome-terminal') { timestamps {
                 node('cirhos_rhel7') {
                     
                     stage ('Uninstall #1') {
@@ -190,6 +194,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
                 string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
                 string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
+                booleanParam(name: 'PATCH_TO_MASTER', value: Boolean.valueOf("${PATCH_TO_MASTER}")),
                 booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
                 string(name: 'ANSIBLE_USER', value: 'ec2-user'),
                 string(name: 'YOURCITY', value: "${YOURCITY}"),
