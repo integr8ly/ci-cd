@@ -3,6 +3,7 @@
     name: openshift-cluster-integreatly-install
     display-name: 'Openshift Cluster Integreatly Install'
     project-type: pipeline
+    concurrent: true
     parameters:
       - string:
           name: 'clusterName'

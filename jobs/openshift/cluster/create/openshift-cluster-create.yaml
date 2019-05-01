@@ -3,6 +3,7 @@
     name: openshift-cluster-create
     display-name: 'OpenShift Cluster Create'
     project-type: pipeline
+    concurrent: true
     parameters:
       - string:
           name: 'clusterName'
