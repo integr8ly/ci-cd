@@ -19,7 +19,7 @@ def verifyParameters(suiteParams) {
 def suiteParams = [:]
 def githubSSHCredentialsID = 'jenkinsgithub'
 def masterBranch = 'master'
-def suiteBranchList = ['integreatly-ga', 'integration-ga', 'integration-rc']
+def suiteBranchList = ['integreatly-ga', 'integreatly-rc', 'integration-ga', 'integration-rc']
 def runTests = params.runTests ?: false
 
 node {
