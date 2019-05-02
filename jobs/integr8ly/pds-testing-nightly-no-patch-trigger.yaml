@@ -32,10 +32,8 @@
             CLEAN_RESOURCES=true
             MANIFEST_VERSION=master
             TESTING_MASTER=false
-            WALKTHROUGHS_VERSION=master
             NUMBER_OF_USERS=5
             PATCH_TO_MASTER=false
-            NAMESPACE_PREFIX=''
             TO_DO=full
     dsl: |
         timeout(210) { ansiColor('gnome-terminal') { timestamps {
@@ -61,10 +59,8 @@
                         booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
                         string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
                         booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
-                        string(name: 'WALKTHROUGHS_VERSION', value: "${WALKTHROUGHS_VERSION}"),
                         string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}"),
                         booleanParam(name: 'PATCH_TO_MASTER', value: Boolean.valueOf("${PATCH_TO_MASTER}")),
-                        string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
                         string(name: 'TO_DO', value: "${TO_DO}")
                     ]).result
 

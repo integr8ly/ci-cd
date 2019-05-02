@@ -31,7 +31,6 @@
             description: "ID of SSH Credentials (private key) used for SSH-ing to bastion"
         - string:
             name: NAMESPACE_PREFIX
-            default: ''
             description: "This value will be used to define the prefix of the names of the namespaces deleted during uninstallation. Defaulting to empty string for RHPDS."
     dsl: |
         import hudson.model.*

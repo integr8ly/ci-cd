@@ -48,7 +48,6 @@
             description: "Indicates whether the components should be patched to master during installation"
         - string:
             name: NAMESPACE_PREFIX
-            default: ''
             description: "This value will be prefixed to the names of the namespaces created during Integr8ly installation. Defaulting to empty string for RHPDS"
     dsl: |
         import hudson.model.*
