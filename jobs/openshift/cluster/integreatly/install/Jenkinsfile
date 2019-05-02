@@ -59,6 +59,20 @@ stage("Verify Installation Options") {
 
 node('cirhos_rhel7') {
     cleanWs()
+    stage('Pre-install') {
+      // Syncs brew images if an image sync config file is found
+      def jobName = 'openshift-cluster-brew-image-sync-1835'
+      def jobParams = [
+              [$class: 'StringParameterValue', name: 'openshiftMasterUrl', value: installerOptions.openshiftMasterUrl],
+              [$class: 'StringParameterValue', name: 'clusterAdminUsername', value: installerOptions.clusterAdminUsername],
+              [$class: 'StringParameterValue', name: 'clusterAdminPassword', value: installerOptions.clusterAdminPassword],
+              [$class: 'StringParameterValue', name: 'installationGitUrl', value: installerOptions.installationGitUrl],
+              [$class: 'StringParameterValue', name: 'installationGitBranch', value: installerOptions.installationGitBranch],
+              [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
+      ]
+      build job: jobName, parameters: jobParams
+    }
+
     stage('Install Integreatly') {
         if (params.dryRun) {
             println("Would call ansibleTower Integreatly Install Workflow template with the following installer options: ${installerOptions}")
