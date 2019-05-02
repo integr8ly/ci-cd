@@ -46,6 +46,10 @@
         - string:
             name: ADDITIONAL_ANSIBLE_PARAMS
             description: "Additional parameters passed to install playbook, e.g.'-e eval_seed_users_count=0'. Can be left empty"
+        - bool:
+            name: PATCH_TO_MASTER
+            default: false
+            description: "Indicates whether the components should be patched to master during installation"
         - string:
             name: NAMESPACE_PREFIX
             default: openshift-
@@ -110,9 +114,9 @@
                         String output = readFile('./evals/inventories/hosts')
                         println output
 
-                        if (BRANCH == 'master') {   
+                        if (BRANCH == 'master' && PATCH_TO_MASTER.toString() == 'true') {   
                             // patch all the integreatly components to use master tag version
-                            for(String tag in intlyCompTags){
+                            for (String tag in intlyCompTags) {
                                 sh """
                                     sed -i "/${tag}: /c\\${tag}: 'master'" inventories/group_vars/all/manifest.yaml
                                 """
@@ -141,7 +145,7 @@
                 } // stage
 
                  stage('Execute "After Installation" Workarounds') {
-                    if (BRANCH == 'master') {
+                    if (BRANCH == 'master' && PATCH_TO_MASTER.toString() == 'true') {
                         sleep time: 2, unit: 'MINUTES' // to make sure that everything is ready to be patched
                         sh """
                             oc login ${CLUSTER_URL} -u ${OC_USER} -p ${OC_PASSWORD}

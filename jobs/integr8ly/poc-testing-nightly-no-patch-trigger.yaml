@@ -1,48 +1,49 @@
 ---
 
 - job:
-    name: pds-testing-nightly-trigger
+    name: poc-testing-nightly-no-patch-trigger
     project-type: pipeline
-    description: "Nightly pipeline for heavy PDS testing."
+    description: "Nightly pipeline trigger for QE POC cluster testing (no patching components to master)"
     sandbox: false
     concurrent: false
     triggers:
-      - timed: "H(40-50) H(3-4) * * *"
+      - timed: "H(0-10) H(22-23) * * *"
     properties:
       - build-discarder:
           num-to-keep: 56
       - inject:
           properties-content: |
-            YOURCITY=yourcity-hash
             GH_CLIENT_ID=yourclientid
             GH_CLIENT_SECRET=yourclientsecret
-            SELF_SIGNED_CERTS=true
+            SELF_SIGNED_CERTS=false
             RECIPIENTS=integreatly-qe@redhat.com
             INSTALLATION_REPOSITORY=https://github.com/integr8ly/installation.git
             INSTALLATION_BRANCH=master
             TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
             TEST_SUITES_BRANCH=master
+            CLUSTER_HOSTNAME=integreatly-qe.rhmi.io
+            MASTER_URLS=ec2-34-254-96-122.eu-west-1.compute.amazonaws.com,ec2-52-212-118-30.eu-west-1.compute.amazonaws.com,ec2-63-35-216-72.eu-west-1.compute.amazonaws.com
+            ANSIBLE_USER=root
+            OC_USER=integreatly
+            OC_PASSWORD=Password1
             EVALS_USERNAME=evals11@example.com
             EVALS_PASSWORD=Password1
-            ADMIN_USERNAME=admin@example.com
-            ADMIN_PASSWORD=Password1
             CUSTOMER_ADMIN_PASSWORD=customer-admin@example.com
             CUSTOMER_ADMIN_PASSWORD=Password1
             RELEASE_VERSION=master
             CLEAN_RESOURCES=true
             MANIFEST_VERSION=master
-            TESTING_MASTER=true
+            TESTING_MASTER=false
             WALKTHROUGHS_VERSION=master
             NUMBER_OF_USERS=5
-            PATCH_TO_MASTER=true
-            NAMESPACE_PREFIX=''
+            PATCH_TO_MASTER=false
+            NAMESPACE_PREFIX=openshift-
             TO_DO=full
     dsl: |
         timeout(210) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {
-                stage ('Trigger PDS Pipeline') {
-                    buildStatus = build(job: 'pds-testing-executor', propagate: false, parameters: [
-                        string(name: 'YOURCITY', value: "${YOURCITY}"),
+                stage ('Trigger POC Pipeline') {
+                    buildStatus = build(job: 'poc-testing-executor', propagate: false, parameters: [
                         string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
                         string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
                         string(name: 'SELF_SIGNED_CERTS', value: "${SELF_SIGNED_CERTS}"),
@@ -51,10 +52,13 @@
                         string(name: 'INSTALLATION_BRANCH', value: "${INSTALLATION_BRANCH}"),
                         string(name: 'TEST_SUITES_REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
                         string(name: 'TEST_SUITES_BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                        string(name: 'CLUSTER_HOSTNAME', value: "${CLUSTER_HOSTNAME}"),
+                        string(name: 'MASTER_URLS', value: "${MASTER_URLS}"),
+                        string(name: 'ANSIBLE_USER', value: "${ANSIBLE_USER}"),
+                        string(name: 'OC_USER', value: "${OC_USER}"),
+                        string(name: 'OC_PASSWORD', value: "${OC_PASSWORD}"),
                         string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                         string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
-                        string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
-                        string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                         string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),
                         string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
                         string(name: 'RELEASE_VERSION', value: "${RELEASE_VERSION}"),

@@ -7,7 +7,7 @@
     sandbox: false
     concurrent: false
     triggers:
-      - timed: "H H(0-3) * * *"
+      - timed: "H(40-50) H(2-3) * * *"
     properties:
       - build-discarder:
           num-to-keep: 56
@@ -36,10 +36,11 @@
             TESTING_MASTER=true
             WALKTHROUGHS_VERSION=master
             NUMBER_OF_USERS=5
+            PATCH_TO_MASTER=true
             NAMESPACE_PREFIX=openshift-
             TO_DO=full
     dsl: |
-        timeout(180) { ansiColor('gnome-terminal') { timestamps {
+        timeout(210) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {
                 stage ('Trigger POC Pipeline') {
                     buildStatus = build(job: 'poc-testing-executor', propagate: false, parameters: [
@@ -66,6 +67,7 @@
                         booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
                         string(name: 'WALKTHROUGHS_VERSION', value: "${WALKTHROUGHS_VERSION}"),
                         string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}"),
+                        booleanParam(name: 'PATCH_TO_MASTER', value: Boolean.valueOf("${PATCH_TO_MASTER}")),
                         string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
                         string(name: 'TO_DO', value: "${TO_DO}")
                     ]).result
