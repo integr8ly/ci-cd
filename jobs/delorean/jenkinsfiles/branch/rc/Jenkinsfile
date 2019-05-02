@@ -1,0 +1,35 @@
+#!groovy
+@Library('delorean-pipeline-library')
+
+def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
+def sourceBranch = params.installationProductBranch
+def targetBranch = 'master'
+def githubSSHCredentialsID = 'jenkinsgithub'
+def sourceChanges = false
+boolean dryRun = params.dryRun
+boolean runTests = params.runTests
+
+node {
+    cleanWs()
+    stage('Checkout') {
+        gitCheckoutRepo(installationGitUrl, sourceBranch, githubSSHCredentialsID, 'installation')
+    }
+
+    stage('Check Source vs Target') {
+        dir('installation') {
+            sourceChanges = gitHasSourceChanges(sourceBranch, targetBranch)
+        }
+    }
+
+    stage('Integration Tests') {
+        when(sourceChanges && runTests) {
+            def jobName = 'openshift-cluster-integreatly-test'
+            def jobParams = [
+                [$class: 'StringParameterValue', name: 'installationGitUrl', value: installationGitUrl],
+                [$class: 'StringParameterValue', name: 'installationGitBranch', value: sourceBranch],
+                [$class: 'BooleanParameterValue', name: 'dryRun', value: dryRun]
+            ]
+            build job: jobName, parameters: jobParams
+        }
+    }
+}

@@ -19,7 +19,7 @@ def verifyParameters(suiteParams) {
 def suiteParams = [:]
 def githubSSHCredentialsID = 'jenkinsgithub'
 def masterBranch = 'master'
-def suiteBranchList = ['integreatly-ga', 'integration-ga', 'integration-rc']
+def suiteBranchList = ['integreatly-ga', 'integreatly-rc', 'integration-ga', 'integration-rc']
 def runTests = params.runTests ?: false
 
 node {
@@ -57,8 +57,18 @@ node {
             // Merge product branches into suite branch
             stage('Merge Product Branches') {
                 def productBranches = suiteParams.productBranches.replaceAll(" ", "").split(',')
+                def productBranchesToMerge = []
 
-                gitMergeBranches(productBranches, suiteParams.suiteBranch, true)
+                for (i = 0; i < productBranches.size(); i++) {
+                  def remoteBranchExists = sh(returnStdout: true, script: "git ls-remote origin refs/heads/${productBranches[i]} | cut -f 1").trim()
+                  if (remoteBranchExists) {
+                      productBranchesToMerge << productBranches[i]
+                  }
+                }
+
+                println "Product branches to merge: ${productBranchesToMerge}"
+
+                gitMergeBranches(productBranchesToMerge as String[], suiteParams.suiteBranch, true)
                 gitPushBranch(suiteParams.suiteBranch, true)
             }
 

@@ -10,12 +10,12 @@
     display-name: 'GA'
     project-type: folder
 - job:
-    name: delorean-3scale/rc
-    display-name: 'RC'
-    project-type: folder
-- job:
     name: delorean-3scale/latest
     display-name: 'latest'
+    project-type: folder
+- job:
+    name: delorean-3scale/rc
+    display-name: 'RC'
     project-type: folder
 
 # AMQ Online
@@ -148,6 +148,10 @@
 - job:
     name: delorean-suites/integreatly/ga
     display-name: 'GA'
+    project-type: folder
+- job:
+    name: delorean-suites/integreatly/rc
+    display-name: 'RC'
     project-type: folder
 - job:
     name: delorean-suites/integration
