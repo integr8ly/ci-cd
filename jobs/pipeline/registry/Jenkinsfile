@@ -5,8 +5,16 @@ def registrySecret = params.registrySecret
 def registryHost = params.registryHost
 def registryImageName = params.registryImageName
 def registryImageTag = params.registryImageTag
+def expectError = params.expectError
 
-stage('Check Valid Image Exists') {
+stage('Registry Image Tag Validation') {
     def exists = registryHasImage(registrySecret, registryHost, registryImageName, registryImageTag)
-    println "[INFO] Image ${registryImageName}:${registryImageTag} Exists? ${exists}"
+    
+    if (!exists && !expectError) {
+        error "[ERROR] Image should exist: ${registryImageName}:${registryImageTag}"
+    }
+
+    if (exists && expectError) {
+        error "[ERROR] Image should not exist: ${registryImageName}:${registryImageTag}"
+    }
 }

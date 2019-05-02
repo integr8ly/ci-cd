@@ -11,7 +11,7 @@
           description: '[REQUIRED] The jenkins secret to authenticate in a remote container registry'
       - string:
           name: 'registryHost'
-          default: 'registry.redhat.io'
+          default: 'https://registry.redhat.io'
           description: '[REQUIRED] Registy host to use in requests'
       - string:
           name: 'registryImageName'
@@ -21,12 +21,16 @@
           name: 'registryImageTag'
           default: '1.1'
           description: '[REQUIRED] Image tag to checkout'
+      - bool:
+          name: 'expectError'
+          default: false
+          description: '[REQUIRED] flag to specify if pipeline should expect an error while running the test'
     pipeline-scm:
       script-path: jobs/pipeline/registry/Jenkinsfile
       scm:
         - git:
             branches:
-              - 'master'
-            url: 'https://github.com/integr8ly/ci-cd.git'
+              - 'registry-job'
+            url: 'https://github.com/odra/ci-cd.git'
             skip-tag: true
             wipe-workspace: false
