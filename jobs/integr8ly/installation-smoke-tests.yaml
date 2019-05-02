@@ -31,11 +31,7 @@
       - bool:
           name: TESTING_MASTER
           default: true
-          description: 'Indicates whether to check master tags or compare versions from manifest file.'   
-      - string:
-          name: WALKTHROUGHS_VERSION
-          default: ''
-          description: 'Provide walkthroughs release version. Empty value means the master version is expected.'
+          description: 'Indicates whether to check master tags or compare versions from manifest file.'
       - string:
           name: NAMESPACE_PREFIX
           description: "Value used to prefix the names of the namespaces created during Integr8ly installation"

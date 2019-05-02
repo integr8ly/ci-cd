@@ -83,11 +83,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
         - bool:
             name: TESTING_MASTER
             default: true
-            description: 'Indicates whether to check master tags or compare versions from manifest file (smoke tests)'   
-        - string:
-            name: WALKTHROUGHS_VERSION
-            default: ''
-            description: 'Provide walkthroughs release version. Empty value means the master version is expected (smoke tests)'
+            description: 'Indicates whether to check master tags or compare versions from manifest file (smoke tests)'
         - string:
             name: NUMBER_OF_USERS
             default: "5"
@@ -224,7 +220,6 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
                 string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
                 booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
-                string(name: 'WALKTHROUGHS_VERSION', value: "${WALKTHROUGHS_VERSION}"),
                 string(name: 'SSO_URL', value: "https://sso-${NAMESPACE_PREFIX}sso.apps.${YOURCITY}.openshiftworkshop.com"),
                 string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}")
             ]

@@ -104,10 +104,6 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             name: PATCH_TO_MASTER
             default: false
             description: "Indicates whether the components should be patched to master during installation"
-        - string:
-            name: NAMESPACE_PREFIX
-            default: openshift-
-            description: "This value will be prefixed to the names of the namespaces created during Integr8ly installation"
         - choice:
             name: TO_DO
             description: "It specifies what stages of the pipeline will be executed. 'full' means uninstall + uninstall + install + install + tests + uninstall + install"
@@ -249,7 +245,6 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
                 string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
                 booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
-                string(name: 'WALKTHROUGHS_VERSION', value: "${WALKTHROUGHS_VERSION}"),
                 string(name: 'SSO_URL', value: "https://sso-${NAMESPACE_PREFIX}sso.apps.${CLUSTER_HOSTNAME}"),
                 string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}")
             ]
