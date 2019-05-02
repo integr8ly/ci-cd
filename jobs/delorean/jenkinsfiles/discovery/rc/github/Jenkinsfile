@@ -18,7 +18,57 @@ def templatesForkGitUrl = "https://github.com/${templatesForkOrg}/${projectRepo}
 def templatesDir = params.templatesDir
 def latestPreRelease
 
+String brewContainerRegistry = "brew-pulp-docker01.web.prod.ext.phx2.redhat.com:8888"
+String rhContainerRegistry = "registry.redhat.io"
+String rhContainerRegistry2 = "registry.access.redhat.com"
+String clusterContainerRegistryPrivate = "docker-registry.default.svc:5000"
+
+def rhRegistries = [brewContainerRegistry, rhContainerRegistry, rhContainerRegistry2]
+def productImages = []
+def productPreReleaseImages = []
+
 currentBuild.displayName = "${currentBuild.displayName} ${productName}"
+
+def getProductRegistryIDs(productName) {
+    //ToDo Implement this to be dynamic
+    String[] result = null
+    switch (productName) {
+        case '3scale':
+            result = [
+                    "3scale-amp25"
+            ]
+            break
+        case 'amq-online':
+            result = [
+                    "amq7",
+                    "amq7-tech-preview"
+            ]
+            break
+        case 'fuse-online':
+            result = [
+                    "fuse7"
+            ]
+            break
+    }
+    return result
+}
+
+String getProductVersionID(productName) {
+    //ToDo Implement this to be dynamic
+    String result = ''
+    switch (productName) {
+        case '3scale':
+            result = ''
+            break
+        case 'amq-online':
+            result = '1.1'
+            break
+        case 'fuse-online':
+            result = ''
+            break
+    }
+    return result
+}
 
 String getLatestPreRelease(projectOrg, projectRepo, githubToken, productName) {
     //ToDo Implement this to return the latest pre release (RC) that is available, if any
@@ -74,18 +124,49 @@ node {
             sh "git remote add intly ${templatesForkGitUrl}"
             sh "git fetch --all"
 
+            def productRegistryIds = getProductRegistryIDs(productName)
+            String productVersionId = getProductVersionID(productName)
+
+            stage('Collect Product Images') {
+                dir(templatesDir) {
+                    productImages = rhRegistries.collect { registry ->
+                        productRegistryIds.collect { registryID ->
+                            println "Checking for registry: ${registry}, registryID: ${registryID}"
+                            sh(returnStdout: true, script: "find . -name \'*.y*ml\' -exec grep -oP \'${registry}/${registryID}/[^[:blank:]]*${productVersionId}\' {} \\; | sort | uniq").split('\n')
+                        }
+                    }.flatten() - null - ''
+                    productImages = productImages.unique()
+                }
+                println "[INFO] Found ${productImages.size()} product images"
+                currentBuild.description = currentBuild.description + "\nImages: ${productImages.size()}\n"
+            }
+
+            stage('Verify Pre Release') {
+                //ToDo Check the images are not GA here, if they all are, the pipeline should end at this point
+                //iterate over productImages and produce an array of images that are not GA
+                productPreReleaseImages = productImages
+            }
+
             stage('Ensure Templates Intly Branch') {
                 //ToDo
             }
 
-            stage('Image Registry Update') {
-                //ToDo
+            stage('Update Product Image Registry') {
+                dir(templatesDir) {
+                    productPreReleaseImages.each { rhImage ->
+                        String clusterImage = "${clusterContainerRegistryPrivate}${new URI("docker://${rhImage}").getPath()}"
+                        println("rhImage: ${rhImage}, clusterImage: ${clusterImage}")
+                        String rhImageUrlEscaped = rhImage.replace("/", "\\/")
+                        String clusterImageUrlEscaped = clusterImage.replace("/", "\\/")
+                        sh "find . -name '*.y*ml' -exec sed -i -e 's/${rhImageUrlEscaped}/${clusterImageUrlEscaped}/g' {} \\;"
+                    }
+                }
+                sh "git diff"
             }
 
             stage('Push Templates Intly Branch') {
                 //ToDo
             }
-
         }
     }
 
@@ -99,6 +180,10 @@ node {
             }
 
             stage('Product Version Update') {
+                //ToDo
+            }
+
+            stage('Image Sync Meta Update') {
                 //ToDo
             }
 
