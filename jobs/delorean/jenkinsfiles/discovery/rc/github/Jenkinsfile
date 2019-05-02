@@ -1,21 +1,27 @@
 #!groovy
 @Library('delorean-pipeline-library') _
 
+import org.integr8ly.GitHubUtils
+
 def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
 def installationGitRef = params.installationGitRef ?: 'master'
 def githubToken = params.githubToken ?: 'jenkins-github-api-token'
 def githubCredentialsID = params.credentialId ?: 'jenkinsgithub'
-def productVersionVar = params.productVersionVar
 def projectOrg = params.projectOrg
 def projectRepo = params.projectRepo
 def productName = params.productName
-def rcBranch = params.installationProductBranch ?: "${productName}-rc-tmp"
+def rcBranch = params.installationProductBranch ?: "${productName}-rc"
 def installationManifestFile = './inventories/group_vars/all/manifest.yaml'
+def integreatlyMetaFile = "integreatly.yml"
+def integreatlyMetaFileForceUpdate = true
 
+def templatesGitTagVar = params.releaseTagVar ?: params.productVersionVar
 def templatesForkOrg = "integr8ly"
 def templatesGitUrl = "https://github.com/${projectOrg}/${projectRepo}.git"
 def templatesForkGitUrl = "https://github.com/${templatesForkOrg}/${projectRepo}.git"
 def templatesDir = params.templatesDir
+def templatesResourcesBaseRawVar = params.templatesResourcesBaseRawVar
+def templatesResourcesGitUrlVar = params.templatesResourcesGitUrlVar
 def latestPreRelease
 
 String brewContainerRegistry = "brew-pulp-docker01.web.prod.ext.phx2.redhat.com:8888"
@@ -142,11 +148,14 @@ node {
 
     currentBuild.description = "current: ?\n latest: ${latestPreRelease}\n"
 
+    String templatesIntlyBranch = "${latestPreRelease}-intly"
+    String templatesResourcesBaseRaw = "https://raw.githubusercontent.com/${templatesForkOrg}/${projectRepo}/${templatesIntlyBranch}/${templatesDir}"
+
     dir('product-templates') {
         sshagent([githubCredentialsID]) {
             sh 'git config --global user.name "Automatron"'
             sh 'git config --global user.email "github.eng@feedhenry.com"'
-            sh "git remote add intly ${templatesForkGitUrl}"
+            sh "git remote add intly ${GitHubUtils.ghTransformUrl(templatesForkGitUrl, 'ssh')}"
             sh "git fetch --all"
 
             def productRegistryIds = getProductRegistryIDs(productName)
@@ -173,24 +182,40 @@ node {
             }
 
             stage('Ensure Templates Intly Branch') {
-                //ToDo
+                println("[INFO] Ensure Templates Intly Branch: ${templatesIntlyBranch}")
+                gitCreateAndCheckoutBranch(templatesIntlyBranch, true, true, 'intly')
+                //Currently on amq online use branches *only*, so rebase will fail, and should, when it's a tag
+                def isBranch = (sh(script: "git show-ref --verify refs/heads/${latestPreRelease}", returnStatus: true) == 0)
+                if (isBranch) {
+                    try {
+                        sh "git rebase origin/${latestPreRelease}"
+                    } catch (Exception e) {
+                        sh "git rebase --abort"
+                    }
+                }
+                currentBuild.description = currentBuild.description + "\nTemplates: ${GitHubUtils.ghTransformUrl(templatesForkGitUrl, 'https', true)}/tree/${templatesIntlyBranch}\n"
             }
 
             stage('Update Product Image Registry') {
-                dir(templatesDir) {
-                    productPreReleaseImages.each { rhImage ->
-                        String clusterImage = "${clusterContainerRegistryPrivate}${new URI("docker://${rhImage}").getPath()}"
-                        println("rhImage: ${rhImage}, clusterImage: ${clusterImage}")
-                        String rhImageUrlEscaped = rhImage.replace("/", "\\/")
-                        String clusterImageUrlEscaped = clusterImage.replace("/", "\\/")
-                        sh "find . -name '*.y*ml' -exec sed -i -e 's/${rhImageUrlEscaped}/${clusterImageUrlEscaped}/g' {} \\;"
+                gitCommitWhenChanges("Updated pre release image references to use internal cluster registry") { msgs ->
+                    dir(templatesDir) {
+                        productPreReleaseImages.each { rhImage ->
+                            String clusterImage = "${clusterContainerRegistryPrivate}${new URI("docker://${rhImage}").getPath()}"
+                            println("rhImage: ${rhImage}, clusterImage: ${clusterImage}")
+                            String rhImageUrlEscaped = rhImage.replace("/", "\\/")
+                            String clusterImageUrlEscaped = clusterImage.replace("/", "\\/")
+                            sh "find . -name '*.y*ml' -exec sed -i -e 's/${rhImageUrlEscaped}/${clusterImageUrlEscaped}/g' {} \\;"
+                        }
                     }
+                    sh "git diff"
                 }
-                sh "git diff"
             }
 
             stage('Push Templates Intly Branch') {
-                //ToDo
+                boolean doPush = templatesIntlyBranch != 'master'
+                if (doPush) {
+                    sh "git push intly ${templatesIntlyBranch} --force"
+                }
             }
         }
     }
@@ -201,19 +226,52 @@ node {
             sh 'git config --global user.email "github.eng@feedhenry.com"'
 
             stage('Ensure Product RC Branch') {
-                //ToDo
+                gitCreateAndCheckoutBranch(rcBranch, true, true)
+                gitRebaseBranch(installationGitRef, rcBranch, false)
+                currentBuild.description = currentBuild.description + "\nInstallation: ${GitHubUtils.ghTransformUrl(installationGitUrl, 'https', true)}/tree/${rcBranch}\n"
             }
 
             stage('Product Version Update') {
-                //ToDo
+                gitCommitWhenChanges("Updated ${productName} product version to ${latestPreRelease}") { msgs ->
+                    manifestFileTxt = readFile(installationManifestFile)
+                    manifestFileTxt = updateManifestVariable(manifestFileTxt, templatesGitTagVar, templatesIntlyBranch)
+                    manifestFileTxt = updateManifestVariable(manifestFileTxt, templatesResourcesBaseRawVar, templatesResourcesBaseRaw)
+                    manifestFileTxt = updateManifestVariable(manifestFileTxt, templatesResourcesGitUrlVar, templatesForkGitUrl)
+                    writeFile file: installationManifestFile, text: manifestFileTxt
+                }
             }
 
             stage('Image Sync Meta Update') {
-                //ToDo
+                gitCommitWhenChanges("Updated imageSync options for ${latestPreRelease}") { msgs ->
+                    def metaConfig = [imageSync: [sourceRepo: brewContainerRegistry, projects: [:]]]
+                    if (fileExists(integreatlyMetaFile)) {
+                        if(!integreatlyMetaFileForceUpdate) {
+                            metaConfig = readYaml file: integreatlyMetaFile
+                        }
+                        //Delete the file here since 'writeYaml' will fail if the file already exists
+                        sh "rm integreatly.yml"
+                    }
+                    productPreReleaseImages.each { rhImage ->
+                        URI uri = new URI("docker://${rhImage}");
+                        def pathParts = uri.getPath().split(/\//) - null - ''
+                        def project = pathParts[0]
+                        def image = pathParts[1]
+                        if (!metaConfig['imageSync']['projects'].containsKey(project)) {
+                            metaConfig['imageSync']['projects'][project] = [images: []]
+                        }
+                        metaConfig['imageSync']['projects'][project]['images'] << image
+                    }
+                    writeYaml file: integreatlyMetaFile, data: metaConfig
+                    sh "git add integreatly.yml"
+                    sh "git status"
+                }
             }
 
             stage('Push Product RC Branch') {
-                //ToDo
+                boolean doPush = rcBranch != 'master'
+                if (doPush) {
+                    gitPushBranch(rcBranch, true)
+                }
             }
         }
     }

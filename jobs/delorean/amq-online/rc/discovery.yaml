@@ -11,6 +11,11 @@
           description: '[REQUIRED] The manifest variable to be used as the current component version'
           read-only: true
       - string:
+          name: 'templatesResourcesGitUrlVar'
+          default: 'enmasse_git_url'
+          description: '[REQUIRED] The manifest variable for the template repo url.'
+          read-only: true
+      - string:
           name: 'projectOrg'
           default: 'jboss-container-images'
           description: '[REQUIRED] github project organization'

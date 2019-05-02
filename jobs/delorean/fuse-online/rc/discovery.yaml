@@ -11,6 +11,11 @@
           description: '[OPTIONAL] The manifest variable to be used as the current component release tag'
           read-only: true
       - string:
+          name: 'templatesResourcesBaseRawVar'
+          default: 'fuse_online_resources_base'
+          description: '[REQUIRED] The manifest variable for the template repo raw url.'
+          read-only: true
+      - string:
           name: 'projectOrg'
           default: 'syndesisio'
           description: '[REQUIRED] github project organization'

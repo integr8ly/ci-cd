@@ -11,6 +11,11 @@
           description: '[REQUIRED] The manifest variable to be used as the current component version'
           read-only: true
       - string:
+          name: 'templatesResourcesBaseRawVar'
+          default: 'threescale_resources_base'
+          description: '[REQUIRED] The manifest variable for the template repo raw url.'
+          read-only: true
+      - string:
           name: 'projectOrg'
           default: '3scale'
           description: '[REQUIRED] github project organization'
