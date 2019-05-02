@@ -1,0 +1,32 @@
+---
+- job:
+    name: pipeline-registry
+    display-name: 'Pipeline Registry Utils Tests'
+    project-type: pipeline
+    concurrent: true
+    parameters:
+      - string:
+          name: 'registrySecret'
+          default: 'intly-redhat-registry-sa'
+          description: '[REQUIRED] The jenkins secret to authenticate in a remote container registry'
+      - string:
+          name: 'registryHost'
+          default: 'registry.redhat.io'
+          description: '[REQUIRED] Registy host to use in requests'
+      - string:
+          name: 'registryImageName'
+          default: 'amq7/amq-online-1-controller-manager'
+          description: '[REQUIRED] Image name to retrieve tags from'
+      - string:
+          name: 'registryImageTag'
+          default: '1.1'
+          description: '[REQUIRED] Image tag to checkout'
+    pipeline-scm:
+      script-path: jobs/pipeline/registry/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

@@ -1,0 +1,11 @@
+#!groovy
+
+def registrySecret = params.registrySecret
+def registryHost = params.registryHost
+def registryImageName = params.registryImageName
+def registryImageTag = params.registryImageTag
+
+stage('Check Valid Image Exists') {
+    def exists = registryHasImage(registrySecret, registryHost, registryImageName, registryImageTag)
+    println "[INFO] Image ${registryImageName}:${registryImageTag} Exists? ${exists}"
+}
