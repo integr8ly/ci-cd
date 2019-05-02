@@ -20,7 +20,7 @@
             INSTALLATION_REPOSITORY=https://github.com/integr8ly/installation.git
             INSTALLATION_BRANCH=master
             TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
-            TEST_SUITES_BRANCH=master
+            TEST_SUITES_BRANCH=v1.3
             CLUSTER_HOSTNAME=integreatly-qe.rhmi.io
             MASTER_URLS=ec2-34-254-96-122.eu-west-1.compute.amazonaws.com,ec2-52-212-118-30.eu-west-1.compute.amazonaws.com,ec2-63-35-216-72.eu-west-1.compute.amazonaws.com
             ANSIBLE_USER=root

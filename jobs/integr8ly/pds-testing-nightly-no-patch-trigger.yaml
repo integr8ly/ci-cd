@@ -21,7 +21,7 @@
             INSTALLATION_REPOSITORY=https://github.com/integr8ly/installation.git
             INSTALLATION_BRANCH=master
             TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
-            TEST_SUITES_BRANCH=master
+            TEST_SUITES_BRANCH=v1.3
             EVALS_USERNAME=evals11@example.com
             EVALS_PASSWORD=Password1
             ADMIN_USERNAME=admin@example.com
