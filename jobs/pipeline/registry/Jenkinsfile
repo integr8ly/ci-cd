@@ -1,4 +1,5 @@
 #!groovy
+@Library('delorean-pipeline-library@registry-fns')
 
 def registrySecret = params.registrySecret
 def registryHost = params.registryHost
