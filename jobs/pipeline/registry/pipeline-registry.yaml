@@ -24,7 +24,7 @@
       - bool:
           name: 'expectError'
           default: false
-          description: '[REQUIRED] flag to specify if pipeline should expect an error while running the test'
+          description: '[REQUIRED] flag to specify if the pipeline should expect an error while running the test'
     pipeline-scm:
       script-path: jobs/pipeline/registry/Jenkinsfile
       scm:
