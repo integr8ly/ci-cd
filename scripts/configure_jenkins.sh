@@ -96,8 +96,12 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/recreate-pipel
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/sso-user-create.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/w1-test-executor.yaml
 
+#Pipeline jobs
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/pipeline/registry/pipeline-registry.yaml
+
 #Views
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/repos/
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/release/
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/delorean/
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/openshift/
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/pipeline/
