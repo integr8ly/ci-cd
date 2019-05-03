@@ -75,7 +75,7 @@ node {
             if (productName == 'redhat-sso-7-openshift-image') {
                 dir('installation') {
                     productVersion = sh(returnStdout: true, script: "cat '${productVersionLocation}' | grep '${productVersionIdentifier}' | awk -F '=' '{print \$2}'")
-                    productVersion = productVersion.replaceAll("\"", "").replaceAll('v', '')
+                    productVersion = productVersion.replaceAll("\"", "")
                 }
             }
 
@@ -126,11 +126,12 @@ node {
                             sh "sed -i 's/${productVersion}/${latestRelease}/' ${productVersionLocation}"
                             sh 'mkdir -p /tmp/sso'
                             sh "wget 'https://github.com/jboss-container-images/redhat-sso-7-openshift-image/archive/${productVersion}.zip' -O /tmp/sso/sso.zip"
-                            unzip glob: '', zipFile: '/tmp/sso/sso.zip'
+                            unzip glob: '', zipFile: '/tmp/sso/sso.zip', dir: '/tmp/sso'
+                            sh 'ls -la /tmp/sso'
                             def tmpl = sh(returnStdout: true, script: "find /tmp/sso -name 'sso*-x509-postgresql-persistent.json'")
                             tmpl = tmpl.trim()
                             fname = tmpl.split('/').last()
-                            sh "cp ${tmpl} installation/deploy/template/"
+                            sh "cp ${tmpl} deploy/template"
                             sh "sed -ri 's/(\\s+SSO_TEMPLATE_NAME\\s+=\\s?)\"[a-zA-Z0-9\\-]+\\.json\"/\\1\"${fname}\"/' ${productVersionLocation}"
                             sh 'rm -rf /tmp/sso'
                         }
