@@ -70,18 +70,43 @@ String getProductVersionID(productName) {
     return result
 }
 
-String getLatestPreRelease(projectOrg, projectRepo, githubToken, productName) {
-    //ToDo Implement this to return the latest pre release (RC) that is available, if any
+String getThreescalePrerelease(projectOrg, projectRepo, githubToken) {
+    def ghUtils = new org.integr8ly.GitHubUtils()
+    def rcTagRef = '-CR'
+    return ghUtils.ghGetLatestReleaseByTag(projectOrg, projectRepo, githubToken, rcTagRef)
+}
+
+String getAmqOnlinePrerelease(projectOrg, projectRepo, githubCredentialsID) {
+    def amqOnlineGitUrl = "git@github.com:${projectOrg}/${projectRepo}.git"
+    def amqOnlineMasterBranch = "amq-online-1-dev"
+    def amqOnlineLatestRC = ""
+    def rcFilter = "grep 'amq-online-' | grep -v 'dev'"
+    
+    dir('amq_online') {
+        gitCheckoutRepo(amqOnlineGitUrl, amqOnlineMasterBranch, githubCredentialsID, '.')
+        amqOnlineLatestRC = sh(returnStdout: true, script: "git for-each-ref refs/remotes/ --sort=-creatordate --format='%(refname:short)' | ${rcFilter} | head -n 1").trim()
+        amqOnlineLatestRC = amqOnlineLatestRC.minus("origin/")
+    }
+
+    return amqOnlineLatestRC
+}
+
+String getFuseOnlinePrerelease(projectOrg, projectRepo, githubToken) {
+    def ghUtils = new org.integr8ly.GitHubUtils()
+    return ghUtils.ghGetLatestReleaseByTag(projectOrg, projectRepo, githubToken)
+}
+
+String getLatestPreRelease(projectOrg, projectRepo, productName, githubToken, githubCredentialsID) {
     String result = null
     switch (productName) {
         case '3scale':
-            result = '3scale-2.5.0-CR1'
+            result = getThreescalePrerelease(projectOrg, projectRepo, githubToken)
             break
         case 'amq-online':
-            result = 'amq-online-11'
+            result = getAmqOnlinePrerelease(projectOrg, projectRepo, githubCredentialsID)
             break
         case 'fuse-online':
-            result = '1.6.13'
+            result = getFuseOnlinePrerelease(projectOrg, projectRepo, githubToken)
             break
     }
     return result
@@ -101,7 +126,7 @@ node {
     }
 
     stage('Fetch Latest Pre Release (RC)') {
-        latestPreRelease = getLatestPreRelease(projectOrg, projectRepo, githubToken, productName)
+        latestPreRelease = getLatestPreRelease(projectOrg, projectRepo, productName, githubToken, githubCredentialsID)
         if (!latestPreRelease) {
             error "[ERROR] Unable to retrieve latest pre release version!"
         }
