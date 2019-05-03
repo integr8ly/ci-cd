@@ -30,7 +30,7 @@
       scm:
         - git:
             branches:
-              - 'registry-job'
-            url: 'https://github.com/odra/ci-cd.git'
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
             skip-tag: true
             wipe-workspace: false
