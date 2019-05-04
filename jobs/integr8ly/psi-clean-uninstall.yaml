@@ -45,7 +45,7 @@
                             """
             
                             sh """
-                                sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\nclean-uninstall-merrn-1@;P;D' ./evals/inventories/hosts
+                                sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\npsi-clean-uninstall-merrn-1@;P;D' ./evals/inventories/hosts
                             """
                             
                             String output = readFile('./evals/inventories/hosts')
