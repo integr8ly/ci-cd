@@ -150,8 +150,9 @@
                         sh """
                             oc login ${CLUSTER_URL} -u ${OC_USER} -p ${OC_PASSWORD}
 
-                            # patch webapp tutorial to use master branch
+                            # patch webapp tutorial and operator
                             sudo oc patch webapp tutorial-web-app-operator -n ${NAMESPACE_PREFIX}webapp --type=merge -p '{ "spec": { "template": { "parameters": { "WALKTHROUGH_LOCATIONS": "https://github.com/integr8ly/tutorial-web-app-walkthroughs.git#master" }}}}' || true
+                            sudo oc patch deployment tutorial-web-app-operator -n ${NAMESPACE_PREFIX}webapp -p '{ "spec": { "template": { "spec": { "containers": [{ "name": "tutorial-web-app-operator", "image": "quay.io/integreatly/tutorial-web-app-operator:master" }]}}}}' || true
 
                             # patch of tutorial-web-app, workaround for https://issues.jboss.org/browse/INTLY-1201
                             sudo oc patch deploymentconfig/tutorial-web-app -n ${NAMESPACE_PREFIX}webapp -p '{ "spec": { "template": { "spec": { "containers": [{ "name": "tutorial-web-app", "image": "quay.io/integreatly/tutorial-web-app:master" }]}}}}' || true
