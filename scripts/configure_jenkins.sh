@@ -67,7 +67,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/deprovision/op
 generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/openshift-cluster-integreatly-install.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/openshift-cluster-integreatly-uninstall.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/openshift-cluster-integreatly-test.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/brew/openshift-cluster-brew-image-sync-1835.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/brew/openshift-cluster-brew-image-sync.yaml
 
 #Delorean Folders
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/delorean/folders.yaml
