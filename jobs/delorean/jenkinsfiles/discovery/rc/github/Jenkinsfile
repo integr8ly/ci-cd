@@ -84,7 +84,7 @@ String getAmqOnlinePrerelease(projectOrg, projectRepo, githubCredentialsID) {
     
     dir('amq_online') {
         gitCheckoutRepo(amqOnlineGitUrl, amqOnlineMasterBranch, githubCredentialsID, '.')
-        amqOnlineLatestRC = sh(returnStdout: true, script: "git for-each-ref refs/remotes/ --sort=-creatordate --format='%(refname:short)' | ${rcFilter} | head -n 1").trim()
+        amqOnlineLatestRC = sh(returnStdout: true, script: "git for-each-ref refs/remotes/ --format='%(refname:short)' | ${rcFilter} | head -n 1").trim()
         amqOnlineLatestRC = amqOnlineLatestRC.minus("origin/")
     }
 
