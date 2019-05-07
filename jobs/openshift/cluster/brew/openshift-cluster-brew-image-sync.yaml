@@ -1,0 +1,40 @@
+---
+- job:
+    name: openshift-cluster-brew-image-sync
+    display-name: 'Openshift Cluster Brew Image Sync'
+    project-type: pipeline
+    concurrent: true
+    parameters:
+      - string:
+          name: 'openshiftMasterUrl'
+          default: ''
+          description: '[REQUIRED] The public URL of the target OpenShift cluster'
+      - string:
+          name: 'clusterAdminUsername'
+          default: ''
+          description: '[OPTIONAL] Username of the cluster admin account. Defaults to the username stored in tower-openshift-cluster-credentials'
+      - string:
+          name: 'clusterAdminPassword'
+          default: ''
+          description: '[OPTIONAL] Password of the cluster admin account. Defaults to the password stored in tower-openshift-cluster-credentials'
+      - string:
+          name: 'installationGitUrl'
+          default: 'https://github.com/integr8ly/installation.git'
+          description: '[REQUIRED] Integreatly installer Git URL'
+      - string:
+          name: 'installationGitBranch'
+          default: 'master'
+          description: '[REQUIRED] The name of the git branch to be used for installing Integreatly'
+      - bool:
+          name: 'dryRun'
+          default: false
+          description: '[OPTIONAL][Test] Dry run only, only prints what it would do!'
+    pipeline-scm:
+      script-path: jobs/openshift/cluster/brew/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false
