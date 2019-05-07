@@ -55,6 +55,7 @@ stage('Image Sync Options') {
 
 def githubSSHCredentialsID = 'jenkinsgithub'
 def imageSyncConfigFile = './integreatly.yml'
+def imageSyncConfigContent
 String brewContainerRegistry
 def projectsToSync
 def syncImages = false
@@ -64,21 +65,21 @@ node('cirhos_rhel7') {
     stage('Ensure Sync File Exists') {
         dir('installation') {
             gitCheckoutRepo(imageSyncOptions.installationGitUrl, imageSyncOptions.installationGitBranch, githubSSHCredentialsID, '.')
-            syncImages = fileExists imageSyncConfigFile
+            def imageSyncFileExists = fileExists imageSyncConfigFile
+            imageSyncConfigContent = readYaml file: imageSyncConfigFile
 
-            if (!syncImages) {
-                println "Image sync file '${imageSyncConfigFile}' is not available. No images to sync, skipping!"
+            if (imageSyncFileExists && imageSyncConfigContent.imageSync && imageSyncConfigContent.imageSync.projects) {
+                syncImages = true
+            } else {
+                println "No images to sync, skipping!"
             }
         }
     }
 
     stage('Get Images To Sync') {
         when(syncImages) {
-            dir('installation') {
-                def imageSyncConfigContent = readYaml file: imageSyncConfigFile
-                projectsToSync = imageSyncConfigContent.imageSync
-                brewContainerRegistry = imageSyncConfigContent.sourceRepo
-            }
+            projectsToSync = imageSyncConfigContent.imageSync.projects
+            brewContainerRegistry = imageSyncConfigContent.imageSync.sourceRepo
         }
     }
 
@@ -114,7 +115,7 @@ node('cirhos_rhel7') {
                 brewContainerRegistry = projectConfig.sourceRepo ?: brewContainerRegistry
 
                 if (!brewContainerRegistry) {
-                  error "Brew container registry was not specified"
+                    error "Brew container registry was not specified"
                 } else {
                     projectConfig.images.each {
                         def brewImageUrl = "${brewContainerRegistry}/${project}/${it}"
@@ -125,12 +126,12 @@ node('cirhos_rhel7') {
                         } else {
                             retry(3) {
                                 sh """
-                                  skopeo copy \
-                                  --dest-creds ${imageSyncOptions.clusterAdminUsername}:${imageSyncOptions.clusterAdminAuthToken} \
-                                  --dest-tls-verify=false \
-                                  --src-tls-verify=false \
-                                  docker://${brewImageUrl} \
-                                  docker://${clusterImageUrlPub}
+                                    skopeo copy \
+                                    --dest-creds ${imageSyncOptions.clusterAdminUsername}:${imageSyncOptions.clusterAdminAuthToken} \
+                                    --dest-tls-verify=false \
+                                    --src-tls-verify=false \
+                                    docker://${brewImageUrl} \
+                                    docker://${clusterImageUrlPub}
                                 """
                             }
                         }

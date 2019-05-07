@@ -1,7 +1,7 @@
 ---
 - job:
-    name: openshift-cluster-brew-image-sync-1835
-    display-name: 'Openshift Cluster Brew Image Sync 1835'
+    name: openshift-cluster-brew-image-sync
+    display-name: 'Openshift Cluster Brew Image Sync'
     project-type: pipeline
     concurrent: true
     parameters:
