@@ -29,12 +29,13 @@ node {
         def ghEvent = readJSON text: githubEventStr
         gitBranch = ghEvent['ref'].tokenize('/').last()
         isGABranch = gitBranch.endsWith("-ga")
+        isRCBranch = gitBranch.endsWith("-rc")
         isLatestBranch = gitBranch.endsWith("-latest")
         currentBuild.description = "${currentBuild.description}\nbranch: ${gitBranch}"
     }
 
     stage('Trigger ga branch job') {
-        when(isGABranch || isLatestBranch) {
+        when(isGABranch || isRCBranch || isLatestBranch) {
             def branchType = gitBranch.split("-").last()
             def productName = gitBranch.minus("-${branchType}")
             jobName = "delorean-${productName}/${branchType}/branch"
