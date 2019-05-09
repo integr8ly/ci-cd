@@ -2,6 +2,7 @@
 @Library('delorean-pipeline-library') _
 
 import org.integr8ly.GitHubUtils
+import org.integr8ly.RegistryImage
 
 def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
 def installationGitRef = params.installationGitRef ?: 'master'
@@ -87,7 +88,7 @@ String getAmqOnlinePrerelease(projectOrg, projectRepo, githubCredentialsID) {
     def amqOnlineMasterBranch = "amq-online-1-dev"
     def amqOnlineLatestRC = ""
     def rcFilter = "grep 'amq-online-' | grep -v 'dev'"
-    
+
     dir('amq_online') {
         gitCheckoutRepo(amqOnlineGitUrl, amqOnlineMasterBranch, githubCredentialsID, '.')
         amqOnlineLatestRC = sh(returnStdout: true, script: "git for-each-ref refs/remotes/ --format='%(refname:short)' | ${rcFilter} | head -n 1").trim()
@@ -175,10 +176,29 @@ node {
                 currentBuild.description = currentBuild.description + "\nImages: ${productImages.size()}\n"
             }
 
-            stage('Verify Pre Release') {
-                //ToDo Check the images are not GA here, if they all are, the pipeline should end at this point
+            stage('Collect Product Pre Release Images') {
                 //iterate over productImages and produce an array of images that are not GA
-                productPreReleaseImages = productImages
+                def targetRegistrySecret = 'intly-redhat-registry-sa'
+                def targetRegistryHost = 'https://registry.redhat.io'
+                productPreReleaseImages = productImages.collect { imageUrl ->
+                    println "Verify Pre Release image: ${imageUrl}"
+                    def image = new RegistryImage(imageUrl)
+                    try {
+                        def params = [
+                                credentials: targetRegistrySecret,
+                                host: targetRegistryHost,
+                                image: image.getPath(),
+                                tag: image.getTag()
+                        ]
+                        registryHasImage(params) ? null : imageUrl
+                    } catch (Exception e) {
+                        //ToDo Unsure what to do here, some images don't appear to be made available on registry.redhat.io (fuse7/fuse-postgres-exporter and fuse7/fuse-ignite-uprade)
+                        println "Failed checking ${image.getPath()} with ${image.getTag()}, adding image to productPreReleaseImages"
+                        imageUrl
+                    }
+                }.flatten() - null - ''
+                println "[INFO] Found ${productPreReleaseImages.size()} pre releaase product images"
+                currentBuild.description = currentBuild.description + "\nPre Release Images: ${productPreReleaseImages.size()}\n"
             }
 
             stage('Ensure Templates Intly Branch') {
@@ -199,10 +219,10 @@ node {
             stage('Update Product Image Registry') {
                 gitCommitWhenChanges("Updated pre release image references to use internal cluster registry") { msgs ->
                     dir(templatesDir) {
-                        productPreReleaseImages.each { rhImage ->
-                            String clusterImage = "${clusterContainerRegistryPrivate}${new URI("docker://${rhImage}").getPath()}"
-                            println("rhImage: ${rhImage}, clusterImage: ${clusterImage}")
-                            String rhImageUrlEscaped = rhImage.replace("/", "\\/")
+                        productPreReleaseImages.each { imageUrl ->
+                            String clusterImage = "${clusterContainerRegistryPrivate}${new URI("docker://${imageUrl}").getPath()}"
+                            println("rhImage: ${imageUrl}, clusterImage: ${clusterImage}")
+                            String rhImageUrlEscaped = imageUrl.replace("/", "\\/")
                             String clusterImageUrlEscaped = clusterImage.replace("/", "\\/")
                             sh "find . -name '*.y*ml' -exec sed -i -e 's/${rhImageUrlEscaped}/${clusterImageUrlEscaped}/g' {} \\;"
                         }
@@ -245,14 +265,14 @@ node {
                 gitCommitWhenChanges("Updated imageSync options for ${latestPreRelease}") { msgs ->
                     def metaConfig = [imageSync: [sourceRepo: brewContainerRegistry, projects: [:]]]
                     if (fileExists(integreatlyMetaFile)) {
-                        if(!integreatlyMetaFileForceUpdate) {
+                        if (!integreatlyMetaFileForceUpdate) {
                             metaConfig = readYaml file: integreatlyMetaFile
                         }
                         //Delete the file here since 'writeYaml' will fail if the file already exists
                         sh "rm integreatly.yml"
                     }
-                    productPreReleaseImages.each { rhImage ->
-                        URI uri = new URI("docker://${rhImage}");
+                    productPreReleaseImages.each { imageUrl ->
+                        URI uri = new URI("docker://${imageUrl}");
                         def pathParts = uri.getPath().split(/\//) - null - ''
                         def project = pathParts[0]
                         def image = pathParts[1]

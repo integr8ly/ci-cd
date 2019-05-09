@@ -66,10 +66,11 @@ node('cirhos_rhel7') {
         dir('installation') {
             gitCheckoutRepo(imageSyncOptions.installationGitUrl, imageSyncOptions.installationGitBranch, githubSSHCredentialsID, '.')
             def imageSyncFileExists = fileExists imageSyncConfigFile
-            imageSyncConfigContent = readYaml file: imageSyncConfigFile
-
-            if (imageSyncFileExists && imageSyncConfigContent.imageSync && imageSyncConfigContent.imageSync.projects) {
-                syncImages = true
+            if (imageSyncFileExists) {
+                imageSyncConfigContent = readYaml file: imageSyncConfigFile
+                if(imageSyncConfigContent.imageSync && imageSyncConfigContent.imageSync.projects) {
+                    syncImages = true
+                }
             } else {
                 println "No images to sync, skipping!"
             }
