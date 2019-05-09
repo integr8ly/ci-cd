@@ -35,6 +35,11 @@
           default: 'pkg/3scale/amp/auto-generated-templates/productized_templates/amp'
           description: '[REQUIRED] directory where openshift templates are located'
           read-only: true
+      - string:
+          name: 'registryProjectIDs'
+          default: '3scale-amp'
+          description: '[REQUIRED] registry image projects'
+          read-only: true
       - bool:
           name: 'dryRun'
           default: false

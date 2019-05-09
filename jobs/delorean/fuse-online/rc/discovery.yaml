@@ -35,6 +35,11 @@
           default: 'resources'
           description: '[REQUIRED] directory where openshift templates are located'
           read-only: true
+      - string:
+          name: 'registryProjectIDs'
+          default: 'fuse7'
+          description: '[REQUIRED] registry image projects'
+          read-only: true
       - bool:
           name: 'dryRun'
           default: false
