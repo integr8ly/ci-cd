@@ -4,6 +4,8 @@
     display-name: 'amq-online-rc-discovery'
     project-type: pipeline
     concurrent: false
+    triggers:
+      - timed: '@daily'
     parameters:
       - string:
           name: 'productVersionVar'
