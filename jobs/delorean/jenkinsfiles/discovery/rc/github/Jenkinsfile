@@ -33,49 +33,9 @@ String clusterContainerRegistryPrivate = "docker-registry.default.svc:5000"
 def rhRegistries = [brewContainerRegistry, rhContainerRegistry, rhContainerRegistry2]
 def productImages = []
 def productPreReleaseImages = []
+def registryProjectIDs = params.registryProjectIDs.split(',')
 
 currentBuild.displayName = "${currentBuild.displayName} ${productName}"
-
-def getProductRegistryIDs(productName) {
-    //ToDo Implement this to be dynamic
-    String[] result = null
-    switch (productName) {
-        case '3scale':
-            result = [
-                    "3scale-amp25"
-            ]
-            break
-        case 'amq-online':
-            result = [
-                    "amq7",
-                    "amq7-tech-preview"
-            ]
-            break
-        case 'fuse-online':
-            result = [
-                    "fuse7"
-            ]
-            break
-    }
-    return result
-}
-
-String getProductVersionID(productName) {
-    //ToDo Implement this to be dynamic
-    String result = ''
-    switch (productName) {
-        case '3scale':
-            result = ''
-            break
-        case 'amq-online':
-            result = '1.1'
-            break
-        case 'fuse-online':
-            result = ''
-            break
-    }
-    return result
-}
 
 String getThreescalePrerelease(projectOrg, projectRepo, githubToken) {
     def ghUtils = new org.integr8ly.GitHubUtils()
@@ -91,7 +51,7 @@ String getAmqOnlinePrerelease(projectOrg, projectRepo, githubCredentialsID) {
 
     dir('amq_online') {
         gitCheckoutRepo(amqOnlineGitUrl, amqOnlineMasterBranch, githubCredentialsID, '.')
-        amqOnlineLatestRC = sh(returnStdout: true, script: "git for-each-ref refs/remotes/ --format='%(refname:short)' | ${rcFilter} | head -n 1").trim()
+        amqOnlineLatestRC = sh(returnStdout: true, script: "git for-each-ref refs/remotes/origin --format='%(refname:short)' | ${rcFilter} | sort -r | head -n 1").trim()
         amqOnlineLatestRC = amqOnlineLatestRC.minus("origin/")
     }
 
@@ -159,15 +119,12 @@ node {
             sh "git remote add intly ${GitHubUtils.ghTransformUrl(templatesForkGitUrl, 'ssh')}"
             sh "git fetch --all"
 
-            def productRegistryIds = getProductRegistryIDs(productName)
-            String productVersionId = getProductVersionID(productName)
-
             stage('Collect Product Images') {
                 dir(templatesDir) {
                     productImages = rhRegistries.collect { registry ->
-                        productRegistryIds.collect { registryID ->
+                        registryProjectIDs.collect { registryID ->
                             println "Checking for registry: ${registry}, registryID: ${registryID}"
-                            sh(returnStdout: true, script: "find . -name \'*.y*ml\' -exec grep -oP \'${registry}/${registryID}/[^[:blank:]]*${productVersionId}\' {} \\; | sort | uniq").split('\n')
+                            sh(returnStdout: true, script: "find . -name \'*.y*ml\' -exec grep -oP \'${registry}/${registryID}.*/[^[:blank:]].*\' {} \\; | sort | uniq").replace('"', '').split('\n')
                         }
                     }.flatten() - null - ''
                     productImages = productImages.unique()
@@ -197,7 +154,7 @@ node {
                         imageUrl
                     }
                 }.flatten() - null - ''
-                println "[INFO] Found ${productPreReleaseImages.size()} pre releaase product images"
+                println "[INFO] Found ${productPreReleaseImages.size()} pre release product images"
                 currentBuild.description = currentBuild.description + "\nPre Release Images: ${productPreReleaseImages.size()}\n"
             }
 

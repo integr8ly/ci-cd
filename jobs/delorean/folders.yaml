@@ -3,7 +3,8 @@
 # 3Scale
 - job:
     name: delorean-3scale
-    display-name: '3Scale'
+    description: https://github.com/3scale/3scale-amp-openshift-templates
+    display-name: '3scale'
     project-type: folder
 - job:
     name: delorean-3scale/ga
