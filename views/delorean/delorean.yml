@@ -3,9 +3,5 @@
    regex: delorean-.*(?<!generated)
    columns:
     - status
-    - weather
     - job
-    - last-success
-    - last-failure
-    - last-duration
-    - build-button
+    - description
