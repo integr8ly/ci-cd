@@ -31,6 +31,10 @@
       - string:
           name: NAMESPACE_PREFIX
           description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
+      - string:
+          name: TIMEOUT_THRESHOLD
+          default: '1'
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
     dsl: |
         timeout(20) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){
