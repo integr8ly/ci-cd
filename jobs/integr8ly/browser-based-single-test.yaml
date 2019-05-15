@@ -40,6 +40,10 @@
           name: TEST_TO_RUN
           default: 
           description: 'Specific test to run (by default all of the tests are executed), e.g. "tests/20_apicurito/apicurito-console-login.js"'
+      - string:
+          name: TIMEOUT_THRESHOLD
+          default: '1'
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
     dsl: |
         timeout(60) { ansiColor('gnome-terminal') { timestamps {
 

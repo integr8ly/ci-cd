@@ -77,6 +77,10 @@
           name: NUMBER_OF_USERS
           default: "5"
           description: 'Number of created users (sso-user-create test)'
+      - string:
+          name: TIMEOUT_THRESHOLD
+          default: '1'
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
     dsl: |
         parameters = [
             string(name: 'REPOSITORY', value: "${REPOSITORY}"),

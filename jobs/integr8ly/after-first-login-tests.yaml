@@ -29,6 +29,10 @@
           name: RELEASE_VERSION
           default: 'master'
           description: 'This optional parameter allows to test particular release version. If not provided, master will be used'
+      - string:
+          name: TIMEOUT_THRESHOLD
+          default: '1'
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
     dsl: |
         timeout(60) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {
