@@ -5,7 +5,7 @@
     project-type: pipeline
     concurrent: false
     triggers:
-      - timed: '@hourly'
+      - timed: '@daily'
     parameters:
       - string:
           name: 'releaseTagVar'
