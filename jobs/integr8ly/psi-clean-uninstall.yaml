@@ -19,7 +19,7 @@
           default: integreatly-qe@redhat.com
           description: 'Whitespace- or comma-separated list of recipient addresses'
     triggers:
-      - timed: 'H H(0-5) * * *'
+      - timed: 'H H(0-3) * * *'
     dsl: |
         timeout(60) { ansiColor('gnome-terminal') { timestamps {
             node('clean-uninstall-slave') {
