@@ -22,7 +22,7 @@ tagNames.removeAll([null, ""]);
 stage('Fetch Installation Repo') {
     println("Fetch Installation Repo")
 
-    node {
+    node('cirhos_rhel7') {
         cleanWs()
         dir('installation') {
             checkoutGitRepo(installationGitUrl, installationGitRef, githubCredentialsID)

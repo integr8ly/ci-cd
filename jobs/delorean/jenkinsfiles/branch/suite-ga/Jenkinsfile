@@ -22,7 +22,7 @@ def masterBranch = 'master'
 def suiteBranchList = ['integreatly-ga', 'integreatly-rc', 'integration-ga', 'integration-rc']
 def runTests = params.runTests ?: false
 
-node {
+node('cirhos_rhel7') {
     cleanWs()
     stage('Ensure Suite Parameters Provided') {
         suiteParams.gitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'

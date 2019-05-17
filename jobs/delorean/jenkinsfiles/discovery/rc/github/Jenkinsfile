@@ -79,7 +79,7 @@ String getLatestPreRelease(projectOrg, projectRepo, productName, githubToken, gi
     return result
 }
 
-node {
+node('cirhos_rhel7') {
     cleanWs()
 
     println "[INFO] productName: ${productName}, templatesGitUrl: ${templatesGitUrl}, templatesForkGitUrl: ${templatesForkGitUrl}, templatesDir: ${templatesDir}"

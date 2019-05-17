@@ -20,7 +20,8 @@ def isProduct = params.isProduct ?: false
 
 currentBuild.displayName = "${currentBuild.displayName} ${productName}"
 
-node {
+node('cirhos_rhel7') {
+    
     cleanWs()
     stage('Fetch Installation Repo') {
         println '[INFO] Fetch Installation Repo'

@@ -9,7 +9,7 @@ def sourceChanges = false
 boolean dryRun = params.dryRun
 boolean runTests = params.runTests
 
-node {
+node('cirhos_rhel7') {
     cleanWs()
     stage('Checkout') {
         gitCheckoutRepo(installationGitUrl, sourceBranch, githubSSHCredentialsID, 'installation')

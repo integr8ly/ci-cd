@@ -23,7 +23,7 @@ boolean isGABranch = false
 
 currentBuild.description = "sqsMessageId: ${params.sqs_messageId}"
 
-node {
+node('cirhos_rhel7') {
     cleanWs()
     stage('Parse GitHub Event') {
         def ghEvent = readJSON text: githubEventStr

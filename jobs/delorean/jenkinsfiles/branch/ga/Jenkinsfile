@@ -62,7 +62,7 @@ String[] defaultPRLabels = ["product update", productName]
 def installationManifestFile = './inventories/group_vars/all/manifest.yaml'
 String jiraRestApiUrl = "https://issues.jboss.org/rest/api/2"
 
-node {
+node('cirhos_rhel7') {
     cleanWs()
     stage('Checkout') {
         gitCheckoutRepo(installationGitUrl, sourceBranch, githubSSHCredentialsID, 'installation')
