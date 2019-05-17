@@ -114,7 +114,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
     dsl: |
         def err = null
         try {
-            timeout(210) { ansiColor('gnome-terminal') { timestamps {
+            timeout(270) { ansiColor('gnome-terminal') { timestamps {
                 node('cirhos_rhel7') {        
                     stage('Verify input') {
                         if (!MASTER_URLS) {
