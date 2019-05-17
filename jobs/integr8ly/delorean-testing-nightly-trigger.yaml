@@ -1,0 +1,38 @@
+---
+
+- job:
+    name: delorean-testing-nightly-trigger
+    project-type: pipeline
+    description: "Nightly pipeline trigger for Delorean testing."
+    sandbox: false
+    concurrent: false
+    triggers:
+      - timed: "30 22 * * *"
+    properties:
+      - build-discarder:
+          num-to-keep: 56
+      - inject:
+          properties-content: |
+            installationGitUrl=https://github.com/integr8ly/installation.git
+            installationGitBranch=master
+            dryRun=false
+    dsl: |
+        timeout(260) { ansiColor('gnome-terminal') { timestamps {
+            node('cirhos_rhel7') {
+                stage ('Trigger Delorean Testing Pipeline') {
+                    buildStatus = build(job: 'openshift-cluster-integreatly-test', propagate: false, parameters: [
+                        string(name: 'installationGitUrl', value: "${installationGitUrl}"),
+                        string(name: 'installationGitBranch', value: "${installationGitBranch}"),
+                         booleanParam(name: 'dryRun', value: Boolean.valueOf("${dryRun}"))
+                    ]).result
+
+                    if(buildStatus == 'UNSTABLE') {
+                        currentBuild.result = 'UNSTABLE'
+                    } else if(buildStatus == 'SUCCESS') {
+                        currentBuild.result = 'SUCCESS'
+                    } else {
+                        currentBuild.result = 'FAILURE'
+                    }
+                } // stage
+            }// node
+        }}} // timeout, ansiColor, timestamps
