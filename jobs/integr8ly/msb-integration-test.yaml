@@ -1,0 +1,184 @@
+---
+- job:
+    name: msb-integration-test
+    display-name: 'Managed Service Broker Integration Test'
+    project-type: pipeline
+    concurrent: false
+    triggers:
+      - timed: "15 01 * * *"
+    properties:
+      - build-discarder:
+          num-to-keep: 15
+    parameters:
+      - string:
+          name: 'installationGitUrl'
+          default: 'https://github.com/integr8ly/installation.git'
+          description: '[REQUIRED] Integreatly installer Git URL'
+      - string:
+          name: 'installationGitBranch'
+          default: 'master'
+          description: '[REQUIRED] The name of the git branch to be used for installing Integreatly'
+      - string:
+          name: RECIPIENTS
+          default: integreatly-qe@redhat.com
+          description: "Whitespace- or comma-separated list of recipient addresses"
+    dsl: |
+        def testOptions = [:]
+        def error = null
+
+        def verifyParameters(testOptions) {
+          if (!testOptions.gitUrl || !testOptions.gitBranch) {
+            def userInput = input message: 'Integreatly Test Options', parameters: [
+              string(defaultValue: (testOptions.gitUrl ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly installer Git URL', name: 'installationGitUrl'),
+              string(defaultValue: (testOptions.gitBranch ?: 'master'), description: 'Integreatly Git Branch', name: 'installationGitBranch'),
+            ]
+
+            testOptions.gitUrl = userInput.installationGitUrl
+            testOptions.gitBranch = userInput.installationGitBranch
+            testOptions.clusterName = userInput.installationGitBranch
+            testOptions.openshiftMasterUrl = "https://${userInput.installationGitBranch}.${testOptions.domainName}"
+            verifyParameters(testOptions)
+          }
+        }
+
+        def setClusterAdminCredentials() {
+          def integreatlyCredentialsID = 'tower-openshift-cluster-credentials'
+          def clusterAdminCredentials = [:]
+          withCredentials([usernamePassword(credentialsId: integreatlyCredentialsID, usernameVariable: 'CLUSTER_ADMIN_USERNAME', passwordVariable: 'CLUSTER_ADMIN_PASSWORD')]) {
+            clusterAdminCredentials.clusterAdminUsername = "${CLUSTER_ADMIN_USERNAME}"
+            clusterAdminCredentials.clusterAdminPassword = "${CLUSTER_ADMIN_PASSWORD}"
+          }
+          return clusterAdminCredentials
+        }
+
+        def clusterAdminCredentials = setClusterAdminCredentials()
+
+        try {
+          timeout(180) { ansiColor('gnome-terminal') { timestamps {
+            node('cirhos_rhel7') {
+              
+              stage('Verify Parameters') {
+                testOptions.awsAccountName = 'fheng.AWS'
+                testOptions.awsRegion = 'eu-west-2'
+                testOptions.clusterName = params.installationGitBranch
+                testOptions.domainName = 'skunkhenry.com'
+                testOptions.gitUrl = params.installationGitUrl
+                testOptions.gitBranch = params.installationGitBranch
+                testOptions.openshiftMasterUrl = "https://${params.installationGitBranch}.${testOptions.domainName}"
+                verifyParameters(testOptions)
+              }   
+
+              stage('Cluster Create') {
+                println "[INFO] Creating ${testOptions.clusterName} cluster"
+                def jobName = 'openshift-cluster-create'
+                def jobParams = [
+                  [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
+                  [$class: 'StringParameterValue', name: 'awsRegion', value: testOptions.awsRegion],
+                  [$class: 'StringParameterValue', name: 'awsAccountName', value: testOptions.awsAccountName],
+                  [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
+                ]
+                build job: jobName, parameters: jobParams
+              }
+
+              stage('Install Integreatly') {
+                println "[INFO] Installing Integreatly in ${testOptions.clusterName} cluster"
+                jobName = 'openshift-cluster-integreatly-install'
+                jobParams = [
+                  [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
+                  [$class: 'StringParameterValue', name: 'openshiftMasterUrl', value: testOptions.openshiftMasterUrl],
+                  [$class: 'StringParameterValue', name: 'installationGitUrl', value: testOptions.gitUrl],
+                  [$class: 'StringParameterValue', name: 'installationGitBranch', value: testOptions.gitBranch],
+                  [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
+                ]
+                build job: jobName, parameters: jobParams
+              }
+              
+              stage('Clone the managed-service-broker repo') {
+                sh '''
+                  mkdir -p src/github.com/integr8ly/managed-service-broker
+                '''
+                dir("src/github.com/integr8ly/managed-service-broker") {
+                  git branch: 'master', url: 'https://github.com/integr8ly/managed-service-broker.git'
+                }
+              }
+
+              stage('Test MSB') {
+                println "[INFO] Running Managed Service Broker Integration Tests"
+                String CLUSTER_URL = testOptions.openshiftMasterUrl
+                String ADMIN_USERNAME = clusterAdminCredentials.clusterAdminUsername
+                String ADMIN_PASSWORD = clusterAdminCredentials.clusterAdminPassword
+                dir("src/github.com/integr8ly/managed-service-broker") {
+                  sh """
+                    oc login $CLUSTER_URL -u $ADMIN_USERNAME -p $ADMIN_PASSWORD
+                    oc patch deployment msb -n openshift-managed-service-broker -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "managed-service-broker", "image": "quay.io/integreatly/managed-service-broker:master" }]}}}}'
+                    sleep 10
+                    oc project openshift-managed-service-broker
+                    oc expose svc/msb
+                  """
+                  
+                  // I wasn't able to do this in one single sh command. There are two issues, which I don't know how to solve
+                  // 1. In the above script it's accessing groovy vars in shell defined with '
+                  // 2. In the below script it's executing the subshell in shell defined with " and thus two separate shell scripts
+
+                  sh ''' 
+                    export GOPATH=$WORKSPACE
+                    export HOST=$(oc get route msb -o=jsonpath='{.status.ingress[0].host}')
+                    export BROKER_URL=http://$HOST
+                    export KUBERNETES_API_TOKEN=$(oc whoami -t)
+                    
+                    dep ensure
+                    make test/e2e | tee output.txt
+                  '''
+
+                  println "Test finished"
+                  String output = readFile('output.txt');
+                  
+                  if(output.contains('FAIL')) {
+                    currentBuild.result = 'UNSTABLE'
+                  }
+                }
+              }
+
+              stage('Uninstall Integreatly') {
+                println "[INFO] Uninstalling Integreatly from ${testOptions.clusterName}"
+                jobName = 'openshift-cluster-integreatly-uninstall'
+                jobParams = [
+                  [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
+                  [$class: 'StringParameterValue', name: 'openshiftMasterUrl', value: testOptions.openshiftMasterUrl],
+                  [$class: 'StringParameterValue', name: 'installationGitBranch', value: testOptions.gitUrl],
+                  [$class: 'StringParameterValue', name: 'installationGitBranch', value: testOptions.gitBranch],
+                  [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
+                ]
+                build job: jobName, parameters: jobParams
+              }
+            } // node
+          }}} // timestamps, ansiColor, timeout
+        } catch (caughtError) {
+          currentBuild.result = 'FAILURE'
+          error = caughtError
+        } finally {
+          jobName = 'openshift-cluster-deprovision'
+          jobParams = [
+            [$class: 'StringParameterValue', name: 'clusterName', value: testOptions.clusterName],
+            [$class: 'StringParameterValue', name: 'awsRegion', value: testOptions.awsRegion],
+            [$class: 'StringParameterValue', name: 'awsAccountName', value: testOptions.awsAccountName],
+            [$class: 'StringParameterValue', name: 'clusterDomainName', value: testOptions.domainName],
+            [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
+          ]
+          build job: jobName, parameters: jobParams
+          notifyBuild(currentBuild.result, error)
+        }
+            
+        def notifyBuild(String buildStatus, err) {
+          buildStatus =  buildStatus ?: 'SUCCESS'
+          
+          String mailRecipients = "${RECIPIENTS}"
+          String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+          String body = "${subject}\n\n(${env.BUILD_URL})"
+
+          if(err != null){
+              body = "${body}\n\n FAILURE was ${err}"
+          }
+
+          mail body: body, subject: subject, to: mailRecipients
+        }
