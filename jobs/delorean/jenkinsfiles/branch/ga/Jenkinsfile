@@ -106,10 +106,9 @@ node {
         when(sourceChanges) {
             String[] labels = [
               /"product-update"/,
-              /"${productName}"/,
-              /"${productName}:${productVersion}"/
+              /"${productName}"/
             ]
-            String summary = "Update ${productName} to ${productVersion}"
+            String summary = "Update ${productName}"
 
             String query = createJiraQuery(labels)
             def body = createJiraBody(summary, prUrl, labels)
@@ -128,10 +127,9 @@ node {
 
             String[] labels = [
               /"product-upgrade"/,
-              /"${productName}"/,
-              /"${productName}:${productVersion}"/
+              /"${productName}"/
             ]
-            String summary = "Add upgrade sop or playbook for ${productName} ${currentProductVersion} to ${productVersion}"
+            String summary = "Add upgrade sop or playbook for ${productName}"
 
             String query = createJiraQuery(labels)
             def body = createJiraBody(summary, prUrl, labels)
