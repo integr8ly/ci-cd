@@ -34,6 +34,13 @@
           default: 'Password1'
           description: 'Password to login to Integreatly cluster.'
       - string:
+          name: EVALS_USERNAME
+          default: 'evals11@example.com'
+          description: 'Evals account email address used to access the available consoles'
+      - string:
+          name: SSO_URL
+          description: 'SSO URL for the cluster. Used to obtain authentication for CRUD operations on keycloak resources'
+      - string:
           name: NAMESPACE_PREFIX
           description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
       - string:
