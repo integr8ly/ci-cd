@@ -3,8 +3,8 @@
 
 def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
 def installationGitRef = params.installationGitRef ?: 'master'
-def githubToken = params.githubToken ?: 'jenkins-github-api-token'
-def githubCredentialsID = params.credentialId ?: 'jenkinsgithub'
+def githubCredentialsID = params.credentialId ?: 'githubjenkins'
+def githubSSHCredentialsID = params.sshCredentialId ?: 'jenkinsgithub'
 def releaseTagVar = params.manifestVar ?: params.releaseTagVar
 def productVersionVar = params.productVersionVar
 def projectOrg = params.projectOrg
@@ -25,7 +25,7 @@ node {
     stage('Fetch Installation Repo') {
         println '[INFO] Fetch Installation Repo'
         cleanWs()
-        gitCheckoutRepo(installationGitUrl, installationGitRef, githubCredentialsID, 'installation')
+        gitCheckoutRepo(installationGitUrl, installationGitRef, githubSSHCredentialsID, 'installation')
         dir('installation') {
             if (!isProduct) {
                 releaseConfig = readYaml file: installationManifestFile
@@ -48,7 +48,7 @@ node {
     }
 
     stage('Fetch Latest GitHub Release') {
-        latestRelease = getLatestGaRelease(projectOrg, projectRepo, githubToken, releaseFetchMethod, gaReleaseTagRef)
+        latestRelease = getLatestGaRelease(projectOrg, projectRepo, githubCredentialsID, releaseFetchMethod, gaReleaseTagRef)
         if (!latestRelease) {
             error "[ERROR] Unable to retrieve latest release version!"
         }
@@ -101,7 +101,7 @@ node {
     currentBuild.description = "current: ${componentRelease}\n latest: ${latestRelease}\n productVersion: ${productVersion}\n isGARelease: ${isGARelease}"
 
     dir('installation') {
-        sshagent([githubCredentialsID]) {
+        sshagent([githubSSHCredentialsID]) {
             sh 'git config --global user.name "Automatron"'
             sh 'git config --global user.email "github.eng@feedhenry.com"'
 

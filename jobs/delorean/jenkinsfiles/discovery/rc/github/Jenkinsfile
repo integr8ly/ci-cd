@@ -6,8 +6,8 @@ import org.integr8ly.RegistryImage
 
 def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
 def installationGitRef = params.installationGitRef ?: 'master'
-def githubToken = params.githubToken ?: 'jenkins-github-api-token'
-def githubCredentialsID = params.credentialId ?: 'jenkinsgithub'
+def githubCredentialsID = params.credentialId ?: 'githubjenkins'
+def githubSSHCredentialsID = params.sshCredentialId ?: 'jenkinsgithub'
 def projectOrg = params.projectOrg
 def projectRepo = params.projectRepo
 def productName = params.productName
@@ -37,20 +37,20 @@ def registryProjectIDs = params.registryProjectIDs.split(',')
 
 currentBuild.displayName = "${currentBuild.displayName} ${productName}"
 
-String getThreescalePrerelease(projectOrg, projectRepo, githubToken) {
+String getThreescalePrerelease(projectOrg, projectRepo, githubCredentialsID) {
     def ghUtils = new org.integr8ly.GitHubUtils()
     def rcTagRef = '-CR'
-    return ghUtils.ghGetLatestReleaseByTag(projectOrg, projectRepo, githubToken, rcTagRef)
+    return ghUtils.ghGetLatestReleaseByTag(projectOrg, projectRepo, githubCredentialsID, rcTagRef)
 }
 
-String getAmqOnlinePrerelease(projectOrg, projectRepo, githubCredentialsID) {
+String getAmqOnlinePrerelease(projectOrg, projectRepo, githubSSHCredentialsID) {
     def amqOnlineGitUrl = "git@github.com:${projectOrg}/${projectRepo}.git"
     def amqOnlineMasterBranch = "amq-online-1-dev"
     def amqOnlineLatestRC = ""
     def rcFilter = "grep 'amq-online-' | grep -v 'dev'"
 
     dir('amq_online') {
-        gitCheckoutRepo(amqOnlineGitUrl, amqOnlineMasterBranch, githubCredentialsID, '.')
+        gitCheckoutRepo(amqOnlineGitUrl, amqOnlineMasterBranch, githubSSHCredentialsID, '.')
         amqOnlineLatestRC = sh(returnStdout: true, script: "git for-each-ref refs/remotes/origin --format='%(refname:short)' | ${rcFilter} | sort -r | head -n 1").trim()
         amqOnlineLatestRC = amqOnlineLatestRC.minus("origin/")
     }
@@ -58,22 +58,22 @@ String getAmqOnlinePrerelease(projectOrg, projectRepo, githubCredentialsID) {
     return amqOnlineLatestRC
 }
 
-String getFuseOnlinePrerelease(projectOrg, projectRepo, githubToken) {
+String getFuseOnlinePrerelease(projectOrg, projectRepo, githubCredentialsID) {
     def ghUtils = new org.integr8ly.GitHubUtils()
-    return ghUtils.ghGetLatestReleaseByTag(projectOrg, projectRepo, githubToken)
+    return ghUtils.ghGetLatestReleaseByTag(projectOrg, projectRepo, githubCredentialsID)
 }
 
-String getLatestPreRelease(projectOrg, projectRepo, productName, githubToken, githubCredentialsID) {
+String getLatestPreRelease(projectOrg, projectRepo, productName, githubCredentialsID, githubSSHCredentialsID) {
     String result = null
     switch (productName) {
         case '3scale':
-            result = getThreescalePrerelease(projectOrg, projectRepo, githubToken)
+            result = getThreescalePrerelease(projectOrg, projectRepo, githubCredentialsID)
             break
         case 'amq-online':
-            result = getAmqOnlinePrerelease(projectOrg, projectRepo, githubCredentialsID)
+            result = getAmqOnlinePrerelease(projectOrg, projectRepo, githubSSHCredentialsID)
             break
         case 'fuse-online':
-            result = getFuseOnlinePrerelease(projectOrg, projectRepo, githubToken)
+            result = getFuseOnlinePrerelease(projectOrg, projectRepo, githubCredentialsID)
             break
     }
     return result
@@ -87,13 +87,13 @@ node {
     stage('Fetch Installation Repo') {
         println '[INFO] Fetch Installation Repo'
         dir('installation') {
-            gitCheckoutRepo(installationGitUrl, installationGitRef, githubCredentialsID, '.')
+            gitCheckoutRepo(installationGitUrl, installationGitRef, githubSSHCredentialsID, '.')
             releaseConfig = readYaml file: installationManifestFile
         }
     }
 
     stage('Fetch Latest Pre Release (RC)') {
-        latestPreRelease = getLatestPreRelease(projectOrg, projectRepo, productName, githubToken, githubCredentialsID)
+        latestPreRelease = getLatestPreRelease(projectOrg, projectRepo, productName, githubCredentialsID, githubSSHCredentialsID)
         if (!latestPreRelease) {
             error "[ERROR] Unable to retrieve latest pre release version!"
         }
@@ -103,7 +103,7 @@ node {
     stage('Fetch Product Templates Repo') {
         println '[INFO] Fetch Product Templates Repo'
         dir('product-templates') {
-            gitCheckoutRepo(templatesGitUrl, latestPreRelease, githubCredentialsID, '.')
+            gitCheckoutRepo(templatesGitUrl, latestPreRelease, githubSSHCredentialsID, '.')
         }
     }
 
@@ -113,7 +113,7 @@ node {
     String templatesResourcesBaseRaw = "https://raw.githubusercontent.com/${templatesForkOrg}/${projectRepo}/${templatesIntlyBranch}/${templatesDir}"
 
     dir('product-templates') {
-        sshagent([githubCredentialsID]) {
+        sshagent([githubSSHCredentialsID]) {
             sh 'git config --global user.name "Automatron"'
             sh 'git config --global user.email "github.eng@feedhenry.com"'
             sh "git remote add intly ${GitHubUtils.ghTransformUrl(templatesForkGitUrl, 'ssh')}"
@@ -198,7 +198,7 @@ node {
     }
 
     dir('installation') {
-        sshagent([githubCredentialsID]) {
+        sshagent([githubSSHCredentialsID]) {
             sh 'git config --global user.name "Automatron"'
             sh 'git config --global user.email "github.eng@feedhenry.com"'
 
