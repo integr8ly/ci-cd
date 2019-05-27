@@ -134,7 +134,7 @@
                                 if(GH_CLIENT_ID && GH_CLIENT_SECRET) {
                                     ansibleParams = "-e github_client_id=${GH_CLIENT_ID} -e github_client_secret=${GH_CLIENT_SECRET}"
                                 }
-                                ansibleParams = ansibleParams + "${ADDITIONAL_ANSIBLE_PARAMS} -e threescale_file_upload_storage=s3 -e threescale_storage_s3_aws_access_key=${AWS_S3_KEY_ID} -e threescale_storage_s3_aws_bucket=integreatly-qe-3scale -e threescale_storage_s3_aws_region=eu-west-1 -e threescale_storage_s3_aws_secret_key=${AWS_S3_SECRET}"
+                                ansibleParams = ansibleParams + " ${ADDITIONAL_ANSIBLE_PARAMS} -e threescale_file_upload_storage=s3 -e threescale_storage_s3_aws_access_key=${AWS_S3_KEY_ID} -e threescale_storage_s3_aws_bucket=integreatly-qe-3scale -e threescale_storage_s3_aws_region=eu-west-1 -e threescale_storage_s3_aws_secret_key=${AWS_S3_SECRET}"
 
                                 sh """
                                     sudo ansible-playbook -i ./inventories/hosts ./playbooks/install.yml ${ansibleParams} -e create_cluster_admin=true -e eval_self_signed_certs=${SELF_SIGNED_CERTS} -e openshift_login=true -e openshift_username=${OC_USER} -e openshift_password=${OC_PASSWORD} -e openshift_master_public_url=${CLUSTER_URL} -e ns_prefix=${NAMESPACE_PREFIX}
