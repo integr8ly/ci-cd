@@ -135,12 +135,12 @@
                         runTests('w1-test-executor')
                     } // stage
 
-                    stage ('Alerts test') {
-                        runTests('alerts-test')
-                    } // stage
-
                     stage ('Nexus builds test') {
                         runTests('nexus-builds-test')
+                    } // stage
+
+                    stage ('Alerts test') {
+                        runTests('alerts-test')
                     } // stage
 
                 } // node
