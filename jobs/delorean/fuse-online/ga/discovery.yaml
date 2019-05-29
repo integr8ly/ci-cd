@@ -28,6 +28,16 @@
           description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
           read-only: true
       - string:
+          name: 'templatesDir'
+          default: 'resources'
+          description: '[REQUIRED] directory where openshift templates are located'
+          read-only: true
+      - string:
+          name: 'registryProjectIDs'
+          default: 'fuse7, fuse7-tech-preview'
+          description: '[REQUIRED] registry image projects'
+          read-only: true
+      - string:
           name: 'releaseFetchMethod'
           default: 'tag'
           description: '[REQUIRED] Method to fetch latest release which can either be by tag or by release'
