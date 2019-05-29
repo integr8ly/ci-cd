@@ -72,7 +72,7 @@ node {
                 
                 dir(templatesDir) {
                     registryProjectIDs = registryProjectIDs.replaceAll(" ", "").split(',')
-                    // Get product images (ignore fuse-online-upgrade)
+                    // Get product images from public registries
                     def productImages = rhRegistries.collect { registry ->
                         registryProjectIDs.collect { registryID ->
                             // Ignore the file fuse-online-upgrade as it contains an image with a typo (registry.redhat.io/fuse7/fuse-ignite-uprade)
@@ -80,28 +80,33 @@ node {
                         }
                     }.flatten() - null - ''
 
-                    // Check if the product images are available for GA
-                    def preReleaseImages = productImages.collect { imageUrl ->
-                        def image = new RegistryImage(imageUrl)
-                        try {
-                            def params = [
-                                credentials: targetRegistrySecret,
-                                host: image.getHttpsHost(),
-                                image: image.getPath(),
-                                tag: image.getTag()
-                            ]
-                            registryHasImage(params) ? null : imageUrl
-                        } catch (Exception e) {
-                            println "Failed to check the availability of ${imageUrl}, adding image to preReleaseImages"
-                            imageUrl
-                        }
-                    }.flatten() - null - ''
-
-                    if (preReleaseImages.size != 0) {
-                      println "${latestRelease} is not GA. The following images are not yet available: ${preReleaseImages}"
+                    if (productImages.size() == 0) {
+                      println "${latestRelease} is not GA. There are no images available in public registries."
                       latestRelease = componentRelease
                     } else {
-                      println "Verified that the latest release ${latestRelease} is GA"
+                        // Check if the product images are available for GA
+                        def preReleaseImages = productImages.collect { imageUrl ->
+                            def image = new RegistryImage(imageUrl)
+                            try {
+                                def params = [
+                                    credentials: targetRegistrySecret,
+                                    host: image.getHttpsHost(),
+                                    image: image.getPath(),
+                                    tag: image.getTag()
+                                ]
+                                registryHasImage(params) ? null : imageUrl
+                            } catch (Exception e) {
+                                println "Failed to check the availability of ${imageUrl}, adding image to preReleaseImages"
+                                imageUrl
+                            }
+                        }.flatten() - null - ''
+
+                        if (preReleaseImages.size != 0) {
+                          println "${latestRelease} is not GA. The following images are not yet available: ${preReleaseImages}"
+                          latestRelease = componentRelease
+                        } else {
+                          println "Verified that the latest release ${latestRelease} is GA"
+                        }
                     }
                 }
             }
