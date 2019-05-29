@@ -33,7 +33,7 @@ String clusterContainerRegistryPrivate = "docker-registry.default.svc:5000"
 def rhRegistries = [brewContainerRegistry, rhContainerRegistry, rhContainerRegistry2]
 def productImages = []
 def productPreReleaseImages = []
-def registryProjectIDs = params.registryProjectIDs.split(',')
+def registryProjectIDs = params.registryProjectIDs.replaceAll(" ", "").split(',')
 
 currentBuild.displayName = "${currentBuild.displayName} ${productName}"
 
@@ -124,7 +124,8 @@ node {
                     productImages = rhRegistries.collect { registry ->
                         registryProjectIDs.collect { registryID ->
                             println "Checking for registry: ${registry}, registryID: ${registryID}"
-                            sh(returnStdout: true, script: "find . -name \'*.y*ml\' -exec grep -oP \'${registry}/${registryID}.*/[^[:blank:]].*\' {} \\; | sort | uniq").replace('"', '').split('\n')
+                            // Ignore fuse-online-upgrade as it contains an image with a typo (registry.redhat.io/fuse7/fuse-ignite-uprade)
+                            sh(returnStdout: true, script: "find . -name \'*.y*ml\' ! -name \'fuse-online-upgrade.yml\' -exec grep -oP \'${registry}/${registryID}.*/[^[:blank:]].*\' {} \\; | sort | uniq").replace('"', '').split('\n')
                         }
                     }.flatten() - null - ''
                     productImages = productImages.unique()
@@ -149,7 +150,6 @@ node {
                         ]
                         registryHasImage(params) ? null : imageUrl
                     } catch (Exception e) {
-                        //ToDo Unsure what to do here, some images don't appear to be made available on registry.redhat.io (fuse7/fuse-postgres-exporter and fuse7/fuse-ignite-uprade)
                         println "Failed checking ${image.getPath()} with ${image.getTag()}, adding image to productPreReleaseImages"
                         imageUrl
                     }
