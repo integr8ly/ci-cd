@@ -70,45 +70,32 @@ node {
             dir(productName) {
                 productGitUrl = "git@github.com:${projectOrg}/${projectRepo}.git"
                 gitCheckoutRepo(productGitUrl, latestRelease, githubSSHCredentialsID, '.')
-                
-                dir(templatesDir) {
-                    registryProjectIDs = registryProjectIDs.replaceAll(" ", "").split(',')
-                    // Get product images from public registries
-                    def productImages = rhRegistries.collect { registry ->
-                        registryProjectIDs.collect { registryID ->
-                            // Ignore the file fuse-online-upgrade as it contains an image with a typo (registry.redhat.io/fuse7/fuse-ignite-uprade)
-                            sh(returnStdout: true, script: "find . -name \'*.y*ml\' ! -name \'fuse-online-upgrade.yml\' -exec grep -oP \'${registry}/${registryID}.*/[^[:blank:]].*\' {} \\; | sort | uniq").replace('"', '').split('\n')
-                        }
-                    }.flatten() - null - ''
+                registryProjectIDs = registryProjectIDs.replaceAll(" ", "").split(',')
 
-                    if (productImages.size() == 0) {
-                      println "${latestRelease} is not GA. There are no images available in public registries."
-                      latestRelease = componentRelease
-                    } else {
-                        // Check if the product images are available for GA
-                        def preReleaseImages = productImages.collect { imageUrl ->
-                            def image = new RegistryImage(imageUrl)
-                            try {
-                                def params = [
-                                    credentials: targetRegistrySecret,
-                                    host: image.getHttpsHost(),
-                                    image: image.getPath(),
-                                    tag: image.getTag()
-                                ]
-                                registryHasImage(params) ? null : imageUrl
-                            } catch (Exception e) {
-                                println "Failed to check the availability of ${imageUrl}, adding image to preReleaseImages"
-                                imageUrl
-                            }
-                        }.flatten() - null - ''
+                def getProductImagesParams = [
+                    targetDir: templatesDir,
+                    excludeFiles: ['fuse-online-upgrade.yml'], // Ignore the file fuse-online-upgrade as it contains an image with a typo (registry.redhat.io/fuse7/fuse-ignite-uprade)
+                    registries: rhRegistries,
+                    registryIDs: registryProjectIDs
+                ]
+                def productImages = getProductImages(getProductImagesParams)
 
-                        if (preReleaseImages.size != 0) {
-                          println "${latestRelease} is not GA. The following images are not yet available: ${preReleaseImages}"
-                          latestRelease = componentRelease
-                        } else {
-                          println "Verified that the latest release ${latestRelease} is GA"
-                        }
-                    }
+                if (productImages.size() == 0) {
+                    println "${latestRelease} is not GA. There are no images available using public registries."
+                    latestRelease = componentRelease
+                }
+
+                def getPreReleaseImagesParams = [
+                    imageUrls: productImages,
+                    registryCredentials: targetRegistrySecret
+                ]
+                def preReleaseImages = getPreReleaseImages(getPreReleaseImagesParams)
+
+                if (preReleaseImages.size != 0) {
+                    println "${latestRelease} is not GA. The following images are not yet available: ${preReleaseImages}"
+                    latestRelease = componentRelease
+                } else {
+                    println "Verified that the latest release ${latestRelease} is GA"
                 }
             }
         }
