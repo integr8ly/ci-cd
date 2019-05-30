@@ -26,6 +26,7 @@ String rhContainerRegistry = "registry.redhat.io"
 String rhContainerRegistry2 = "registry.access.redhat.com"
 def rhRegistries = [rhContainerRegistry, rhContainerRegistry2]
 def targetRegistrySecret = 'intly-redhat-registry-sa'
+Boolean verifyReleaseIsGA = (templatesDir && registryProjectIDs) ? true : false
 
 currentBuild.displayName = "${currentBuild.displayName} ${productName}"
 
@@ -65,7 +66,7 @@ node {
     }
 
     stage('Verify GA Release') {
-        if (templatesDir && registryProjectIDs) {
+        when(verifyReleaseIsGA) {
             dir(productName) {
                 productGitUrl = "git@github.com:${projectOrg}/${projectRepo}.git"
                 gitCheckoutRepo(productGitUrl, latestRelease, githubSSHCredentialsID, '.')
