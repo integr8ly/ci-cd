@@ -95,7 +95,7 @@ node {
                     println "${latestRelease} is not GA. The following images are not yet available: ${preReleaseImages}"
                     latestRelease = componentRelease
                 } else {
-                    println "Verified that the latest release ${latestRelease} is GA"
+                    println "Found ${preReleaseImages.size()} prerelease images. Verified that the latest release ${latestRelease} is GA"
                 }
             }
         }
