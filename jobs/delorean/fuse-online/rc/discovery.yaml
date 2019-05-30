@@ -39,7 +39,7 @@
           read-only: true
       - string:
           name: 'registryProjectIDs'
-          default: 'fuse7'
+          default: 'fuse7, fuse7-tech-preview'
           description: '[REQUIRED] registry image projects'
           read-only: true
       - bool:
