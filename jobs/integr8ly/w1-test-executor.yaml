@@ -62,6 +62,7 @@
                                     string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                                     string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
+                                    string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
                                     booleanParam(name: 'CLEAN_RESOURCES', value: false)
                                 ]).result;
 
@@ -81,6 +82,7 @@
                                     string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                                     string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
+                                    string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
                                     booleanParam(name: 'CLEAN_RESOURCES', value: true),
                                     booleanParam(name: 'W1_FINAL_VERIFICATION', value: true)
                                 ]).result;
