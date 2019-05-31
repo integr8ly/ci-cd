@@ -82,7 +82,7 @@
           default: '1'
           description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
     dsl: |
-        parameters = [
+        jobParams = [
             string(name: 'REPOSITORY', value: "${REPOSITORY}"),
             string(name: 'BRANCH', value: "${BRANCH}"),
             string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
@@ -150,7 +150,7 @@
         }
 
         def runTests(testPipeline) {
-            buildStatus = build(job: testPipeline, propagate: false, parameters: parameters).result
+            buildStatus = build(job: testPipeline, propagate: false, parameters: jobParams).result
             println "Build finished with ${buildStatus}"
                             
             if (buildStatus != 'SUCCESS') {

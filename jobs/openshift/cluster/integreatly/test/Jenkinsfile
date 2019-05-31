@@ -26,6 +26,20 @@ def setClusterAdminCredentials() {
   return clusterAdminCredentials
 }
 
+def notifyBuild(String buildStatus, err) {
+  buildStatus =  buildStatus ?: 'SUCCESS'
+  
+  String mailRecipients = "integreatly-qe@redhat.com"
+  String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+  String body = "${subject}\n\n(${env.BUILD_URL})"
+
+  if(err != null) {
+      body = "${body}\n\n FAILURE was ${err}"
+  }
+
+  mail body: body, subject: subject, to: mailRecipients
+}
+
 def clusterAdminCredentials = setClusterAdminCredentials()
 
 pipeline {
@@ -86,52 +100,34 @@ pipeline {
 
     stage('Test Integreatly') {
       steps {
-        echo "[INFO] Running Browser Tests on Integreatly"
+        echo "[INFO] Running Tests on Integreatly"
         script { 
-          jobName = 'browser-based-testsuite-pipeline'
           jobParams = [
             [$class: 'StringParameterValue', name: 'REPOSITORY', value: QE_REPO_URL],
             [$class: 'StringParameterValue', name: 'BRANCH', value: 'master'],
-            [$class: 'StringParameterValue', name: 'WEBAPP_URL', value: "https://tutorial-web-app-openshift-webapp.apps.${testOptions.clusterName}.skunkhenry.com"],
             [$class: 'StringParameterValue', name: 'CLUSTER_URL', value: testOptions.openshiftMasterUrl],
-            [$class: 'StringParameterValue', name: 'ADMIN_USERNAME', value: clusterAdminCredentials.clusterAdminUsername],
-            [$class: 'StringParameterValue', name: 'ADMIN_PASSWORD', value: clusterAdminCredentials.clusterAdminPassword],
-            [$class: 'StringParameterValue', name: 'EVALS_USERNAME', value: 'evals11@example.com'],
+            [$class: 'StringParameterValue', name: 'EVALS_USERNAME', value: 'evals05@example.com'],
             [$class: 'StringParameterValue', name: 'EVALS_PASSWORD', value: 'Password1'],
-            [$class: 'StringParameterValue', name: 'TIMEOUT_THRESHOLD', value: '2'],
-            [$class: 'StringParameterValue', name: 'NAMESPACE_PREFIX', value: 'openshift-']
-          ]
-          build job: jobName, parameters: jobParams
-              
-          echo "[INFO] Running Walkthroughs 1 Tests on Integreatly"
-                
-          jobName = 'w1-test-executor'
-          jobParams = [
-            [$class: 'StringParameterValue', name: 'REPOSITORY', value: QE_REPO_URL],
-            [$class: 'StringParameterValue', name: 'BRANCH', value: 'master'],
-            [$class: 'StringParameterValue', name: 'CLUSTER_URL', value: testOptions.openshiftMasterUrl],
             [$class: 'StringParameterValue', name: 'ADMIN_USERNAME', value: clusterAdminCredentials.clusterAdminUsername],
             [$class: 'StringParameterValue', name: 'ADMIN_PASSWORD', value: clusterAdminCredentials.clusterAdminPassword],
-            [$class: 'StringParameterValue', name: 'EVALS_USERNAME', value: 'evals11@example.com'],
-            [$class: 'StringParameterValue', name: 'EVALS_PASSWORD', value: 'Password1'],
+            [$class: 'StringParameterValue', name: 'CUSTOMER_ADMIN_USERNAME', value: 'customer-admin@example.com'],
+            [$class: 'StringParameterValue', name: 'CUSTOMER_ADMIN_PASSWORD', value: 'Password1'],
             [$class: 'StringParameterValue', name: 'TIMEOUT_THRESHOLD', value: '2'],
-            [$class: 'StringParameterValue', name: 'NAMESPACE_PREFIX', value: 'openshift-']
-          ]
-          build job: jobName, parameters: jobParams
-        
-          echo "[INFO] Running Launcher Booster Creation Test on Integreatly"
-        
-          jobName = 'launcher-tests'
-          jobParams = [
-            [$class: 'StringParameterValue', name: 'REPOSITORY', value: QE_REPO_URL],
-            [$class: 'StringParameterValue', name: 'BRANCH', value: 'master'],
-            [$class: 'StringParameterValue', name: 'CLUSTER_URL', value: testOptions.openshiftMasterUrl],
-            [$class: 'StringParameterValue', name: 'ADMIN_USERNAME', value: clusterAdminCredentials.clusterAdminUsername],
-            [$class: 'StringParameterValue', name: 'ADMIN_PASSWORD', value: clusterAdminCredentials.clusterAdminPassword],
             [$class: 'StringParameterValue', name: 'NAMESPACE_PREFIX', value: 'openshift-'],
-            [$class: 'StringParameterValue', name: 'CLEAN_RESOURCES', value: 'true']
+            [$class: 'StringParameterValue', name: 'WEBAPP_URL', value: "https://tutorial-web-app-openshift-webapp.apps.${testOptions.clusterName}.skunkhenry.com"],
+            [$class: 'BooleanParameterValue', name: 'CLEAN_RESOURCES', value: true],
+            [$class: 'StringParameterValue', name: 'MANIFEST_VERSION', value: 'master'],
+            [$class: 'BooleanParameterValue', name: 'TESTING_MASTER', value: false],
+            [$class: 'StringParameterValue', name: 'SSO_URL', value: "https://sso-openshift-sso.apps.${testOptions.clusterName}.skunkhenry.com"],
+            [$class: 'StringParameterValue', name: 'NUMBER_OF_USERS', value: '5']
           ]
-          build job: jobName, parameters: jobParams
+
+          buildStatus = build(job: 'all-tests-executor', propagate: false, parameters: jobParams).result
+          println "Build finished with ${buildStatus}"
+                            
+          if (buildStatus != 'SUCCESS') {
+            currentBuild.result = 'UNSTABLE'
+          }
         }
       }
     }
@@ -168,6 +164,8 @@ pipeline {
             [$class: 'BooleanParameterValue', name: 'dryRun', value: params.dryRun]
           ]
           build job: jobName, parameters: jobParams
+
+          notifyBuild(currentBuild.result, null)
         } else {
           println "[INFO] Cluster name not available, skipping deprovision"
         }
