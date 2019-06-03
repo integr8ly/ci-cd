@@ -100,6 +100,7 @@
             booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
             string(name: 'WALKTHROUGHS_VERSION', value: "${WALKTHROUGHS_VERSION}"),
             string(name: 'SSO_URL', value: "${SSO_URL}"),
+            string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
             string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}"),
         ]
         def err = null
