@@ -28,6 +28,10 @@
       - string:
           name: EVALS_USERNAME
           description: 'evals username used to create the address'
+      - string:
+          name: EVALS_PASSWORD
+          default: 'Password1'
+          description: 'Evals user password'
       - bool:
           name: CLEAN_RESOURCES
           default: true
