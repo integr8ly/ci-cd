@@ -131,8 +131,11 @@
                             dir('installation/evals') {
 
                                 String ansibleParams = ''
-                                if(GH_CLIENT_ID && GH_CLIENT_SECRET) {
+                                if (GH_CLIENT_ID && GH_CLIENT_SECRET) {
                                     ansibleParams = "-e github_client_id=${GH_CLIENT_ID} -e github_client_secret=${GH_CLIENT_SECRET}"
+                                }
+                                if (ADDITIONAL_ANSIBLE_PARAMS.indexOf('eval_seed_users_count') == -1) {
+                                    ansibleParams = ansibleParams + " -e eval_seed_users_count=15"
                                 }
                                 ansibleParams = ansibleParams + " ${ADDITIONAL_ANSIBLE_PARAMS} -e threescale_file_upload_storage=s3 -e threescale_storage_s3_aws_access_key=${AWS_S3_KEY_ID} -e threescale_storage_s3_aws_bucket=integreatly-qe-3scale -e threescale_storage_s3_aws_region=eu-west-1 -e threescale_storage_s3_aws_secret_key=${AWS_S3_SECRET}"
 
