@@ -1,0 +1,113 @@
+---
+
+- job:
+    name: tower-clean-uninstall
+    description: 'Uninstalls Integreatly from fresh pure cluster created by Ansible Tower tooling where Integreatly has never been installed.'
+    project-type: pipeline
+    sandbox: false
+    concurrent: false
+    properties:
+      - build-discarder:
+          num-to-keep: 20
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: 'https://github.com/integr8ly/installation.git'
+          description: 'Repository of the Integreatly installer'
+      - string:
+          name: BRANCH
+          default: 'master'
+          description: 'Branch of the installer repository'
+      - string:
+          name: RECIPIENTS
+          default: integreatly-qe@redhat.com
+          description: 'Whitespace- or comma-separated list of recipient addresses'
+    triggers:
+      - timed: 'H H(0-3) * * *'
+    dsl: |
+
+        def setClusterAdminCredentials() {
+            def integreatlyCredentialsID = 'tower-openshift-cluster-credentials'
+            def clusterAdminCredentials = [:]
+            withCredentials([usernamePassword(credentialsId: integreatlyCredentialsID, usernameVariable: 'CLUSTER_ADMIN_USERNAME', passwordVariable: 'CLUSTER_ADMIN_PASSWORD')]) {
+                clusterAdminCredentials.clusterAdminUsername = "${CLUSTER_ADMIN_USERNAME}"
+                clusterAdminCredentials.clusterAdminPassword = "${CLUSTER_ADMIN_PASSWORD}"
+            }
+
+            return clusterAdminCredentials
+        }
+
+        timeout(120) { ansiColor('gnome-terminal') { timestamps {
+            node('cirhos_rhel7') {
+                String clusterName = 'qe-uninstall'
+                String clusterDomainName = 'skunkhenry.com'
+                String awsRegion = 'eu-west-2'
+
+                try {
+                    stage ('Trigger Cluster Create') {
+                        build job: 'openshift-cluster-create', parameters: [
+                            string(name: 'clusterName', value: "${clusterName}"),
+                            string(name: 'awsRegion', value: "${awsRegion}"),
+                            string(name: 'compute_group_size', value: '1'),
+                            string(name: 'infra_group_size', value: '1')]
+                    } // stage
+
+                    stage('Clone the installer') {
+                        dir('installation') {
+                            checkout scm: [
+                                        $class: 'GitSCM', 
+                                        userRemoteConfigs: [[url: REPOSITORY]], 
+                                        branches: [[name: BRANCH]]
+                                        ]
+                        } // dir
+                    } // stage
+
+                    stage('Prepare environment') {
+                        dir('installation') {
+                            sh """
+                                cp ./inventories/hosts.template ./inventories/hosts
+                                sed -i 's/ansible_user=ec2-user/ansible_user=root/g' ./inventories/hosts
+                            """
+
+                            def clusterAdminCredentials = setClusterAdminCredentials()
+
+                            // This returns an external IP of a master node of a newly created cluster
+                            def masterIP = sh(
+                                returnStdout: true,
+                                script: """
+                                    oc login https://${clusterName}.${clusterDomainName} -u ${clusterAdminCredentials.clusterAdminUsername} -p ${clusterAdminCredentials.clusterAdminPassword} > /dev/null
+                                    oc describe node `oc get nodes | grep master | head -n 1 | awk '{print \$1}'` | grep ExternalIP | awk '{print \$2}'
+                                """).trim()
+
+                            sh """
+                                sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\n${masterIP}@;P;D' ./inventories/hosts
+                            """
+
+                            println readFile('./inventories/hosts')
+                        } // dir
+                    } // stage
+
+                    stage('Uninstall') {
+                        dir('installation') {
+                            withCredentials([sshUserPrivateKey(credentialsId: 'tower-provisioner-pem', keyFileVariable: 'private_key')]){
+                              sh """
+                                  ansible-playbook -i ./inventories/hosts --private-key ${private_key} ./playbooks/uninstall.yml
+                              """
+                            } // withCredentials
+                        } // dir
+                    } // stage
+
+                } catch (any) {
+                    currentBuild.result = 'FAILURE'
+                    throw any
+                } finally {
+                    build job: 'openshift-cluster-deprovision', parameters: [
+                        string(name: 'clusterName', value: "${clusterName}"),
+                        string(name: 'awsRegion', value: "${awsRegion}"),
+                        string(name: 'clusterDomainName', value: "${clusterDomainName}")]
+
+                    step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: "${RECIPIENTS}", sendToIndividuals: true])
+                } // finally
+            } // node
+
+        }}} // timeout, ansiColor, timestamps
