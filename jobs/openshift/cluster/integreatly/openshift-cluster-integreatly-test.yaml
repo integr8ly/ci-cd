@@ -13,6 +13,9 @@
           name: 'installationGitBranch'
           default: 'master'
           description: '[REQUIRED] The name of the git branch to be used for installing Integreatly'
+      - string:
+          name: 'clusterName'
+          description: '[OPTIONAL] The name of the newly provisioned cluster on skunkhenry domain. Defaults to branch name if not provided.'    
       - bool:
           name: 'dryRun'
           default: false
