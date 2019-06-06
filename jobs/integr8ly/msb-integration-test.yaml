@@ -25,21 +25,7 @@
     dsl: |
         def testOptions = [:]
         def error = null
-
-        def verifyParameters(testOptions) {
-          if (!testOptions.gitUrl || !testOptions.gitBranch) {
-            def userInput = input message: 'Integreatly Test Options', parameters: [
-              string(defaultValue: (testOptions.gitUrl ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly installer Git URL', name: 'installationGitUrl'),
-              string(defaultValue: (testOptions.gitBranch ?: 'master'), description: 'Integreatly Git Branch', name: 'installationGitBranch'),
-            ]
-
-            testOptions.gitUrl = userInput.installationGitUrl
-            testOptions.gitBranch = userInput.installationGitBranch
-            testOptions.clusterName = userInput.installationGitBranch
-            testOptions.openshiftMasterUrl = "https://${userInput.installationGitBranch}.${testOptions.domainName}"
-            verifyParameters(testOptions)
-          }
-        }
+        final clusterName = 'qe-msb'
 
         def setClusterAdminCredentials() {
           def integreatlyCredentialsID = 'tower-openshift-cluster-credentials'
@@ -57,15 +43,14 @@
           timeout(180) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {
               
-              stage('Verify Parameters') {
+              stage('Set default parameters') {
                 testOptions.awsAccountName = 'fheng.AWS'
                 testOptions.awsRegion = 'eu-west-2'
-                testOptions.clusterName = params.installationGitBranch
+                testOptions.clusterName = clusterName
                 testOptions.domainName = 'skunkhenry.com'
                 testOptions.gitUrl = params.installationGitUrl
                 testOptions.gitBranch = params.installationGitBranch
-                testOptions.openshiftMasterUrl = "https://${params.installationGitBranch}.${testOptions.domainName}"
-                verifyParameters(testOptions)
+                testOptions.openshiftMasterUrl = "https://${clusterName}.${testOptions.domainName}"
               }   
 
               stage('Cluster Create') {
