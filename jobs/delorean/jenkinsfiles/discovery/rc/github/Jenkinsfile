@@ -120,40 +120,29 @@ node {
             sh "git fetch --all"
 
             stage('Collect Product Images') {
-                dir(templatesDir) {
-                    productImages = rhRegistries.collect { registry ->
-                        registryProjectIDs.collect { registryID ->
-                            println "Checking for registry: ${registry}, registryID: ${registryID}"
-                            // Ignore fuse-online-upgrade as it contains an image with a typo (registry.redhat.io/fuse7/fuse-ignite-uprade)
-                            sh(returnStdout: true, script: "find . -name \'*.y*ml\' ! -name \'fuse-online-upgrade.yml\' -exec grep -oP \'${registry}/${registryID}.*/[^[:blank:]].*\' {} \\; | sort | uniq").replace('"', '').split('\n')
-                        }
-                    }.flatten() - null - ''
-                    productImages = productImages.unique()
-                }
+                def getProductImagesParams = [
+                    targetDir: templatesDir,
+                    excludeFiles: ['fuse-online-upgrade.yml'], // Ignore the file fuse-online-upgrade as it contains an image with a typo (registry.redhat.io/fuse7/fuse-ignite-uprade)
+                    registries: rhRegistries,
+                    registryIDs: registryProjectIDs
+                ]
+                productImages = getProductImages(getProductImagesParams)
+              
                 println "[INFO] Found ${productImages.size()} product images"
                 currentBuild.description = currentBuild.description + "\nImages: ${productImages.size()}\n"
             }
 
             stage('Collect Product Pre Release Images') {
-                //iterate over productImages and produce an array of images that are not GA
                 def targetRegistrySecret = 'intly-redhat-registry-sa'
                 def targetRegistryHost = 'https://registry.redhat.io'
-                productPreReleaseImages = productImages.collect { imageUrl ->
-                    println "Verify Pre Release image: ${imageUrl}"
-                    def image = new RegistryImage(imageUrl)
-                    try {
-                        def params = [
-                                credentials: targetRegistrySecret,
-                                host: targetRegistryHost,
-                                image: image.getPath(),
-                                tag: image.getTag()
-                        ]
-                        registryHasImage(params) ? null : imageUrl
-                    } catch (Exception e) {
-                        println "Failed checking ${image.getPath()} with ${image.getTag()}, adding image to productPreReleaseImages"
-                        imageUrl
-                    }
-                }.flatten() - null - ''
+
+                def getPreReleaseImagesParams = [
+                    imageUrls: productImages,
+                    registryCredentials: targetRegistrySecret,
+                    registryHost: targetRegistryHost
+                ]
+                productPreReleaseImages = getPreReleaseImages(getPreReleaseImagesParams)
+
                 println "[INFO] Found ${productPreReleaseImages.size()} pre release product images"
                 currentBuild.description = currentBuild.description + "\nPre Release Images: ${productPreReleaseImages.size()}\n"
             }
