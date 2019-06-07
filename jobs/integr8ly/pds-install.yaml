@@ -168,8 +168,11 @@
                         dir('installation/evals') {
                             
                             String ansibleParams = ''
-                            if(GH_CLIENT_ID && GH_CLIENT_SECRET) {
+                            if (GH_CLIENT_ID && GH_CLIENT_SECRET) {
                                 ansibleParams = "-e github_client_id=${GH_CLIENT_ID} -e github_client_secret=${GH_CLIENT_SECRET}"
+                            }
+                            if (ADDITIONAL_ANSIBLE_PARAMS.indexOf('eval_seed_users_count') == -1) {
+                                ansibleParams = ansibleParams + " -e eval_seed_users_count=15"
                             }
                             ansibleParams = ansibleParams + " ${ADDITIONAL_ANSIBLE_PARAMS}"
                             
