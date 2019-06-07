@@ -81,6 +81,7 @@
 
                             sh """
                                 sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\n${masterIP}@;P;D' ./inventories/hosts
+                                sed -i '\$!N;s@\\[master\\]\\nmaster.evals.example.com@[master]\\n${masterIP}@;P;D' ./inventories/hosts
                             """
 
                             println readFile('./inventories/hosts')
