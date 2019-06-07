@@ -122,11 +122,15 @@ pipeline {
             [$class: 'StringParameterValue', name: 'NUMBER_OF_USERS', value: '5']
           ]
 
-          buildStatus = build(job: 'all-tests-executor', propagate: false, parameters: jobParams).result
-          println "Build finished with ${buildStatus}"
-                            
-          if (buildStatus != 'SUCCESS') {
-            currentBuild.result = 'UNSTABLE'
+          if (params.dryRun) {
+            println "Would run the job 'all-tests-executor' with the following parameters:\n${jobParams}"
+          } else {
+            buildStatus = build(job: 'all-tests-executor', propagate: false, parameters: jobParams).result
+            println "Build finished with ${buildStatus}"
+                              
+            if (buildStatus != 'SUCCESS') {
+              currentBuild.result = 'UNSTABLE'
+            }
           }
         }
       }
