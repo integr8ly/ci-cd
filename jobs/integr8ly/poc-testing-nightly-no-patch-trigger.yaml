@@ -30,7 +30,6 @@
             EVALS_PASSWORD=Password1
             CUSTOMER_ADMIN_PASSWORD=customer-admin@example.com
             CUSTOMER_ADMIN_PASSWORD=Password1
-            RELEASE_VERSION=master
             CLEAN_RESOURCES=true
             MANIFEST_VERSION=master
             TESTING_MASTER=false
@@ -60,7 +59,6 @@
                         string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
                         string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),
                         string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
-                        string(name: 'RELEASE_VERSION', value: "${RELEASE_VERSION}"),
                         booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
                         string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
                         booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
