@@ -148,6 +148,7 @@
                             
                             sh """
                                 sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\n${MASTER_URL}@;P;D' ./evals/inventories/hosts
+                                sed -i '\$!N;s@\\[master\\]\\nmaster.evals.example.com@[master]\\n${MASTER_URL}@;P;D' ./evals/inventories/hosts
                             """
                             
                             String output = readFile('./evals/inventories/hosts')
