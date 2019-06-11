@@ -16,7 +16,7 @@
             YOURCITY=yourcity-hash
             GH_CLIENT_ID=yourclientid
             GH_CLIENT_SECRET=yourclientsecret
-            SELF_SIGNED_CERTS=true
+            SELF_SIGNED_CERTS=false
             RECIPIENTS=integreatly-qe@redhat.com
             INSTALLATION_REPOSITORY=https://github.com/integr8ly/installation.git
             INSTALLATION_BRANCH=master

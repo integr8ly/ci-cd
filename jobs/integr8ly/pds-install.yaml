@@ -26,7 +26,7 @@
             description: "GitHub Client Secret for OAuth Apps, required for some of the walkthroughs. Can be left empty"
         - bool:
             name: SELF_SIGNED_CERTS
-            default: true
+            default: false
             description: "Indicates whether cluster uses self signed certificates or not"
         - string:
             name: ANSIBLE_USER
