@@ -81,6 +81,7 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/all-tests-exec
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/amq-online-address-creation-test.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/browser-based-single-test.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/browser-based-testsuite-pipeline.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/codeready-test.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/customer-admin-permissions-test.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/delorean-testing-nightly-trigger.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/fuse-test.yaml
