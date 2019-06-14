@@ -68,10 +68,6 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             name: CUSTOMER_ADMIN_PASSWORD
             default: 'Password1'
             description: 'Password to login to Integreatly cluster.'
-        - string:
-            name: RELEASE_VERSION
-            default: 'master'
-            description: 'This optional parameter allows to test particular release version. If not provided, master will be used'
         - bool:
             name: CLEAN_RESOURCES
             default: true
@@ -214,7 +210,6 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                 string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),
                 string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
-                string(name: 'RELEASE_VERSION', value: "${RELEASE_VERSION}"),
                 string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
                 string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-${NAMESPACE_PREFIX}webapp.apps.${YOURCITY}.openshiftworkshop.com"),
                 booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
