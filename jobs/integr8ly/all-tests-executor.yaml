@@ -123,6 +123,10 @@
                         runTests('launcher-tests')
                     } // stage
 
+                    stage ('CodeReady test') {
+                        runTests('codeready-tests')
+                    } // stage
+
                     stage ('SSO user creation test') {
                         runTests('sso-user-create-tests')
                     } // stage
