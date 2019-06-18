@@ -10,10 +10,7 @@ def ghUtils = new org.integr8ly.GitHubUtils()
 
 String githubEventStr = params.sqs_body
 String gitBranch = ""
-String installationGitUrl = ""
 String prUrl = ""
-boolean runBranchJob = false
-boolean runIntegrationTest = false
 
 String githubUserPassCredentialsID = "githubjenkins"
 final String ghCommitStatusContext = 'delorean/integration-tests'
@@ -27,75 +24,25 @@ node {
 
         if (ghEvent.eventType == "push") {
             gitBranch = ghEvent['ref'].tokenize('/').last()
-            runBranchJob = gitBranch.endsWith("-ga") || gitBranch.endsWith("-rc") || gitBranch.endsWith("-latest")
             currentBuild.description = "${currentBuild.description}\nevent: push\nbranch: ${gitBranch}"
         } 
 
         if (ghEvent.eventType == "pull_request") {
             def pullRequest = ghEvent.pull_request
             prUrl = pullRequest.html_url
-            def label = ghEvent.label.name
-            def ghRepo = ghEvent.repository
             gitBranch = pullRequest.head.ref
 
-            if (label == "integration tests") {
-                runIntegrationTest = true
-                installationGitUrl = ghRepo.clone_url
-            }
             currentBuild.description = "${currentBuild.description}\nevent: pull_request\nbranch: ${gitBranch}\npr: ${prUrl}"
         }
     }
 
     stage('Trigger branch job') {
-        when(runBranchJob) {
+        when(gitBranch.endsWith("-ga") || gitBranch.endsWith("-rc") || gitBranch.endsWith("-latest")) {
             println "Run branch job for ${productName}/${branchType}"
             def branchType = gitBranch.split("-").last()
             def productName = gitBranch.minus("-${branchType}")
             def jobName = "delorean-${productName}/${branchType}/branch"
             build job: jobName, wait: false
-        }
-    }
-
-    stage('Trigger integration test') {
-        when(runIntegrationTest) {
-            println "Run integration test with ${installationGitUrl} ${gitBranch}"
-            withCredentials([usernamePassword(
-                    credentialsId: githubUserPassCredentialsID,
-                    passwordVariable: 'GITHUB_PASSWORD',
-                    usernameVariable: 'GITHUB_USERNAME')]) {
-                final GitHub gitHub = new GitHubBuilder()
-                        .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
-                        .build()
-                ghUtils.ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.PENDING, env.BUILD_URL, 'Pending', ghCommitStatusContext)
-            }
-            try {
-                def jobName = "openshift-cluster-integreatly-test"
-                def jobParams = [
-                    [$class: 'StringParameterValue', name: 'installationGitUrl', value: installationGitUrl],
-                    [$class: 'StringParameterValue', name: 'installationGitBranch', value: gitBranch]
-                ]
-                build job: jobName, parameters: jobParams
-            } catch (Exception e) {
-                withCredentials([usernamePassword(
-                        credentialsId: githubUserPassCredentialsID,
-                        passwordVariable: 'GITHUB_PASSWORD',
-                        usernameVariable: 'GITHUB_USERNAME')]) {
-                    final GitHub gitHub = new GitHubBuilder()
-                            .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
-                            .build()
-                    ghUtils.ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.FAILURE, env.BUILD_URL, 'Failure', ghCommitStatusContext)
-                    error "Integration test failures, ${installationGitUrl}, ${gitBranch}, ${e}"
-                }
-            }
-            withCredentials([usernamePassword(
-                    credentialsId: githubUserPassCredentialsID,
-                    passwordVariable: 'GITHUB_PASSWORD',
-                    usernameVariable: 'GITHUB_USERNAME')]) {
-                final GitHub gitHub = new GitHubBuilder()
-                        .withOAuthToken(env.GITHUB_PASSWORD, env.GITHUB_USERNAME)
-                        .build()
-                ghUtils.ghUpdatePrCommitStatus(gitHub, prUrl, GHCommitState.SUCCESS, env.BUILD_URL, 'Success', ghCommitStatusContext)
-            }
         }
     }
 }
