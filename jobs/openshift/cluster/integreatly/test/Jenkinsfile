@@ -10,8 +10,10 @@ def verifyParameters(testOptions) {
 
     testOptions.gitUrl = userInput.installationGitUrl
     testOptions.gitBranch = userInput.installationGitBranch
-    testOptions.clusterName = userInput.installationGitBranch
-    testOptions.openshiftMasterUrl = "https://${userInput.installationGitBranch}.${testOptions.domainName}"
+    if(!testOptions.clusterName) {
+      testOptions.clusterName = userInput.installationGitBranch
+      testOptions.openshiftMasterUrl = "https://${userInput.installationGitBranch}.${testOptions.domainName}"
+    }
     verifyParameters(testOptions)
   }
 }
@@ -55,11 +57,11 @@ pipeline {
         script {
           testOptions.awsAccountName = 'fheng.AWS'
           testOptions.awsRegion = 'eu-west-2'
-          testOptions.clusterName = params.installationGitBranch
+          testOptions.clusterName = params.clusterName ? params.clusterName : params.installationGitBranch
           testOptions.domainName = 'skunkhenry.com'
           testOptions.gitUrl = params.installationGitUrl
           testOptions.gitBranch = params.installationGitBranch
-          testOptions.openshiftMasterUrl = "https://${params.installationGitBranch}.${testOptions.domainName}"
+          testOptions.openshiftMasterUrl = "https://${testOptions.clusterName}.${testOptions.domainName}"
           verifyParameters(testOptions)
         }
       }
