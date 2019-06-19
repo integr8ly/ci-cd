@@ -1,5 +1,5 @@
 #!groovy
-@Library('delorean-pipeline-library')
+@Library('delorean-pipeline-library') _
 def ghUtils = new org.integr8ly.GitHubUtils()
 
 import org.kohsuke.github.GHCommitState
@@ -53,7 +53,7 @@ def sourceChanges = false
 boolean runIntegrationTests = false
 boolean dryRun = params.dryRun
 String prUrl
-final String ghCommitStatusContext = 'delorean/ga/integration-tests'
+final String ghCommitStatusContext = 'delorean/integration-tests'
 String integrationTestsGHLabel = "integration tests"
 def jiraUserPass = params.jiraUserPass ?: 'integreatly-jira-bot'
 def productVersionVar = params.productVersionVar

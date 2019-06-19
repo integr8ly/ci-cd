@@ -1,25 +1,19 @@
 #!groovy
+@Library('delorean-pipeline-library') _
 
-//Helper methods, should eventually be moved to a shared library
-//https://github.com/comquent/imperative-when
-import org.jenkinsci.plugins.pipeline.modeldefinition.Utils
+import org.kohsuke.github.GHCommitState
+import org.kohsuke.github.GHPullRequest
+import org.kohsuke.github.GitHub
+import org.kohsuke.github.GitHubBuilder
 
-def when(boolean condition, body) {
-    def config = [:]
-    body.resolveStrategy = Closure.OWNER_FIRST
-    body.delegate = config
-
-    if (condition) {
-        body()
-    } else {
-        Utils.markStageSkippedForConditional(STAGE_NAME)
-    }
-}
-//Helpers
+def ghUtils = new org.integr8ly.GitHubUtils()
 
 String githubEventStr = params.sqs_body
 String gitBranch = ""
-boolean isGABranch = false
+String prUrl = ""
+
+String githubUserPassCredentialsID = "githubjenkins"
+final String ghCommitStatusContext = 'delorean/integration-tests'
 
 currentBuild.description = "sqsMessageId: ${params.sqs_messageId}"
 
@@ -27,20 +21,28 @@ node {
     cleanWs()
     stage('Parse GitHub Event') {
         def ghEvent = readJSON text: githubEventStr
-        gitBranch = ghEvent['ref'].tokenize('/').last()
-        isGABranch = gitBranch.endsWith("-ga")
-        isRCBranch = gitBranch.endsWith("-rc")
-        isLatestBranch = gitBranch.endsWith("-latest")
-        currentBuild.description = "${currentBuild.description}\nbranch: ${gitBranch}"
-    }
 
-    stage('Trigger ga branch job') {
-        when(isGABranch || isRCBranch || isLatestBranch) {
-            def branchType = gitBranch.split("-").last()
-            def productName = gitBranch.minus("-${branchType}")
-            jobName = "delorean-${productName}/${branchType}/branch"
-            build job: jobName, wait: false
+        if (ghEvent.eventType == "push") {
+            gitBranch = ghEvent['ref'].tokenize('/').last()
+            currentBuild.description = "${currentBuild.description}\nevent: push\nbranch: ${gitBranch}"
+        } 
+
+        if (ghEvent.eventType == "pull_request") {
+            def pullRequest = ghEvent.pull_request
+            prUrl = pullRequest.html_url
+            gitBranch = pullRequest.head.ref
+
+            currentBuild.description = "${currentBuild.description}\nevent: pull_request\nbranch: ${gitBranch}\npr: ${prUrl}"
         }
     }
 
+    stage('Trigger branch job') {
+        when(gitBranch.endsWith("-ga") || gitBranch.endsWith("-rc") || gitBranch.endsWith("-latest")) {
+            println "Run branch job for ${productName}/${branchType}"
+            def branchType = gitBranch.split("-").last()
+            def productName = gitBranch.minus("-${branchType}")
+            def jobName = "delorean-${productName}/${branchType}/branch"
+            build job: jobName, wait: false
+        }
+    }
 }
