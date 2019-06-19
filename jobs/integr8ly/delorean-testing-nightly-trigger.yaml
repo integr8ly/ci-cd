@@ -23,7 +23,8 @@
                     buildStatus = build(job: 'openshift-cluster-integreatly-test', propagate: false, parameters: [
                         string(name: 'installationGitUrl', value: "${installationGitUrl}"),
                         string(name: 'installationGitBranch', value: "${installationGitBranch}"),
-                         booleanParam(name: 'dryRun', value: Boolean.valueOf("${dryRun}"))
+                        string(name: 'clusterName', value: "qe-master"),
+                        booleanParam(name: 'dryRun', value: Boolean.valueOf("${dryRun}"))
                     ]).result
 
                     if(buildStatus == 'UNSTABLE') {
