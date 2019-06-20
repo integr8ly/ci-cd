@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Add credentials
+      include_role:
+        name: add_credentials
