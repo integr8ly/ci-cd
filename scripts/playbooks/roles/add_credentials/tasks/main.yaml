@@ -8,6 +8,7 @@
     user: "{{ jenkins_admin_username }}"
     password: "{{ jenkins_admin_password }}"
     force_basic_auth: yes
+    validate_certs: no
   register: get_crumb_token_cmd
   when: jenkins_csrf_enabled == 'true'
 
