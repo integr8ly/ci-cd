@@ -1,7 +1,4 @@
 ---
-- debug:
-    msg: "Adding credentials"
-
 - name: Get crumb token
   uri:
     url: "{{ jenkins_url }}/crumbIssuer/api/json"
@@ -17,16 +14,14 @@
     crumb_token: "{{ get_crumb_token_cmd.json.crumb }}"
 
 - set_fact:
-    req_headers:
+    headers:
     - key: "{{ crumb_request_field }}"
       value: "{{ crumb_token }}"
 
 - name: Create Username/Password Credentials
   include_tasks: _create_credentials.yaml
   vars:
-    req_headers: 
-      - key: "{{ crumb_request_field }}"
-        value: "{{ crumb_token }}"
+    req_headers: "{{ headers }}"
     credential: "{{ user_pass_credential }}"
     type: "user_pass"
   with_dict: "{{ jenkins_user_pass_credentials }}"
@@ -36,9 +31,7 @@
 - name: Create SSH username with private key credentials
   include_tasks: _create_credentials.yaml
   vars:
-    req_headers: 
-      - key: "{{ crumb_request_field }}"
-        value: "{{ crumb_token }}"
+    req_headers: "{{ headers }}"
     credential: "{{ ssh_user_key_credential }}"
     type: "ssh_user_with_private_key"
   with_dict: "{{ jenkins_ssh_user_key_credentials }}"
