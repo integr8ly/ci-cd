@@ -1,0 +1,16 @@
+---
+- set_fact:
+    base_dir: "{{ playbook_dir | dirname}}"
+
+# Create config file for jenkins plugin install
+- name: Generate jenkins plugin install template
+  template:
+    src: "jpi-config.ini.j2"
+    dest: "{{base_dir}}/jpi-config.ini"
+
+# Install playbooks listed in plugin.txt
+- name: Install playbooks
+  shell: "docker run --privileged --rm -v {{ base_dir }}:{{ base_dir }} quay.io/feedhenry/jenkins-plugin-install jpi install --conf {{ base_dir }}/jpi-config.ini {{base_dir}}/plugins.txt"
+  register: install_plugins_cmd
+  failed_when: install_plugins_cmd.stderr != ""
+

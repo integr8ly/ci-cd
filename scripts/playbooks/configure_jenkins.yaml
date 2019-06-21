@@ -2,6 +2,9 @@
 - hosts: localhost
   gather_facts: no
   tasks:
+    - name: Install Plugins
+      include_role:
+        name: install_plugins
     - name: Add credentials
       include_role:
         name: add_credentials
