@@ -1,0 +1,3 @@
+---
+- name: Ensure credentials to be created are not available
+  include_tasks: check_credentials.yaml

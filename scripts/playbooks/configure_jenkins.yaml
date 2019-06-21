@@ -2,6 +2,9 @@
 - hosts: localhost
   gather_facts: no
   tasks:
+    - name: Preflight Checks
+      include_role:
+        name: preflight_checks
     - name: Install Plugins
       include_role:
         name: install_plugins
