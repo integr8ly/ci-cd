@@ -119,8 +119,12 @@
                         runTests('customer-admin-permissions-test')
                     } // stage
 
-                    stage ('Launcher test') {
-                        runTests('launcher-tests')
+                    stage ('Walkthrough 1 test') {
+                        runTests('w1-test-executor')
+                    } // stage
+
+                    stage ('Walkthrough 2 test') {
+                        runTests('w2-test-executor')
                     } // stage
 
                     stage ('CodeReady test') {
@@ -129,10 +133,6 @@
 
                     stage ('SSO user creation test') {
                         runTests('sso-user-create-tests')
-                    } // stage
-
-                    stage ('Walkthrough 1 test') {
-                        runTests('w1-test-executor')
                     } // stage
 
                     stage ('Nexus builds test') {
