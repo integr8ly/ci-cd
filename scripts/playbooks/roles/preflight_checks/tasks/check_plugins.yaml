@@ -29,7 +29,7 @@
   - name: Get list of incompatible plugins
     set_fact:
       incompatible_plugins: "{{ incompatible_plugins | combine({plugin.key: {'current_version': installed_plugins[plugin.key], 'target_version': plugin.value }}) }}"
-    when: installed_plugins[plugin.key] is defined and installed_plugins[plugin.key] != "{{ plugin.value | replace(' ', '') }}"
+    when: installed_plugins[plugin.key] is defined and installed_plugins[plugin.key] != plugin.value | replace(' ', '')
     with_dict: "{{ plugins_to_install }}"
     loop_control:
       loop_var: "plugin"
