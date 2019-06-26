@@ -1,0 +1,6 @@
+---
+- name: Ensure credentials to be created are not available
+  include_tasks: check_credentials.yaml
+
+- name: Ensure existing plugins are compatible
+  include_tasks: check_plugins.yaml

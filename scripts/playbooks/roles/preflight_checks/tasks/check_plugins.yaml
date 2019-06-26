@@ -1,0 +1,45 @@
+---
+- set_fact:
+    base_dir: "{{ playbook_dir | dirname}}"
+
+# Create config file for jenkins plugin install
+- name: Generate jenkins plugin install template
+  template:
+    src: "jpi-config.ini.j2"
+    dest: "{{base_dir}}/jpi-config.ini"
+
+- name: Get a list of installed plugins
+  shell: "docker run --privileged --rm -v {{ base_dir }}:{{ base_dir }} quay.io/feedhenry/jenkins-plugin-install jpi list --conf {{ base_dir }}/jpi-config.ini"
+  register: get_installed_plugins
+
+- set_fact:
+    installed_plugins: {}
+    plugins_to_install: {}
+    incompatible_plugins: {}
+
+- block:
+  - name: Parse list of installed plugins
+    set_fact:
+      installed_plugins: "{{ installed_plugins | combine({item.split(':')[0]: item.split(':')[1]}) }}"
+    with_items: "{{ get_installed_plugins.stdout_lines}}"
+  - name: Parse list of plugins to install
+    set_fact: 
+      plugins_to_install: "{{ plugins_to_install | combine({item.split(':')[0]: item.split(':')[1]}) }}"
+    with_items: "{{ lookup('file', '{{ base_dir }}/plugins.txt').splitlines() }}"
+  - name: Get list of incompatible plugins
+    set_fact:
+      incompatible_plugins: "{{ incompatible_plugins | combine({plugin.key: {'current_version': installed_plugins[plugin.key], 'target_version': plugin.value }}) }}"
+    when: installed_plugins[plugin.key] is defined and installed_plugins[plugin.key] != plugin.value | replace(' ', '')
+    with_dict: "{{ plugins_to_install }}"
+    loop_control:
+      loop_var: "plugin"
+  when: get_installed_plugins.stdout_lines | length > 0
+
+- pause:
+    prompt: "Incompatible plugins found. This may cause the Delorean jobs to not work as expected.\n{{ incompatible_plugins }}\nDo you want to continue? [y/n]"
+  register: user_confirmation
+  when: incompatible_plugins != {}
+
+- fail:
+    msg: "Jenkins configuration discontinued. Please update or uninstall these plugins before running this script again."
+  when: user_confirmation.user_input is defined and user_confirmation.user_input != 'y'
