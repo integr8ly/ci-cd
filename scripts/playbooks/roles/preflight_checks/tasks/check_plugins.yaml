@@ -35,6 +35,11 @@
       loop_var: "plugin"
   when: get_installed_plugins.stdout_lines | length > 0
 
-- fail:
-    msg: "Found the following incompatible plugins, please update these to the target version. {{ incompatible_plugins }}"
+- pause:
+    prompt: "Incompatible plugins found. This may cause the Delorean jobs to not work as expected.\n{{ incompatible_plugins }}\nDo you want to continue? [y/n]"
+  register: user_confirmation
   when: incompatible_plugins != {}
+
+- fail:
+    msg: "Jenkins configuration discontinued. Please update or uninstall these plugins before running this script again."
+  when: user_confirmation.user_input is defined and user_confirmation.user_input != 'y'
