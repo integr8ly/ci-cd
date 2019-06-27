@@ -14,3 +14,15 @@
       load_implicit: "{{ delorean_shared_library_load_implicit }}"
   register: configure_global_library
   changed_when: not configure_global_library.failed
+
+- name: Configure Ansible Tower settings
+  jenkins_script:
+    script: "{{ lookup('file', 'configure_ansible_tower.groovy') }}"
+    url: "{{ jenkins_url }}"
+    user: "{{ jenkins_admin_username }}"
+    password: "{{ jenkins_admin_password }}"
+    validate_certs: no
+    args:
+      tower_installations: "{{ ansible_tower_installations | to_json }}"
+  register: configure_ansible_tower
+  changed_when: not configure_ansible_tower.failed
