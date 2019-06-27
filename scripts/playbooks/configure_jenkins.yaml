@@ -11,3 +11,6 @@
     - name: Add credentials
       include_role:
         name: add_credentials
+    - name: Configure Global Settings
+      include_role:
+        name: configure_global_settings

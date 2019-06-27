@@ -1,0 +1,16 @@
+---
+
+- name: Configure Delorean shared pipline library
+  jenkins_script:
+    script: "{{ lookup('file', 'configure_global_library.groovy') }}"
+    url: "{{ jenkins_url }}"
+    user: "{{ jenkins_admin_username }}"
+    password: "{{ jenkins_admin_password }}"
+    validate_certs: no
+    args:
+      library_name: "delorean-pipeline-library"
+      gitUrl: "https://github.com/integr8ly/delorean-pipeline-library.git"
+      default_version: "master"
+      load_implicit: false
+  register: global_library_status
+  changed_when: not global_library_status.failed
