@@ -1,14 +1,14 @@
 ---
 
 - job:
-    name: w1-test-executor
+    name: w2-test-executor
     project-type: pipeline
     sandbox: false
     parameters:
       - string:
           name: REPOSITORY
           default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
-          description: 'QE repository containing the smoke tests source code.'
+          description: 'QE repository containing the tests source code.'
       - string:
           name: BRANCH
           default: 'master'
@@ -52,8 +52,8 @@
                                 } // if
                             } // stage
 
-                            stage('Run create AMQ Online address test') {
-                                buildStatus = build(job: 'amq-online-address-creation-test', parameters: [
+                            stage('Run Launcher test') {
+                                buildStatus = build(job: 'launcher-tests', parameters: [
                                     string(name: 'REPOSITORY', value: "${REPOSITORY}"),
                                     string(name: 'BRANCH', value: "${BRANCH}"),
                                     string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
@@ -63,7 +63,7 @@
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                                     string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
-                                    booleanParam(name: 'CLEAN_RESOURCES', value: false)
+                                    booleanParam(name: 'CLEAN_RESOURCES', value: true)
                                 ]).result;
 
                                 println "Build finished with ${buildStatus}"
@@ -72,26 +72,28 @@
                                 }
                             }
 
-                            stage('Run Fuse integration test') {
-                                buildStatus = build(job: 'fuse-tests', parameters: [
-                                    string(name: 'REPOSITORY', value: "${REPOSITORY}"),
-                                    string(name: 'BRANCH', value: "${BRANCH}"),
-                                    string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
-                                    string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
-                                    string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
-                                    string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
-                                    string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
-                                    string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
-                                    string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
-                                    booleanParam(name: 'CLEAN_RESOURCES', value: true),
-                                    booleanParam(name: 'W1_FINAL_VERIFICATION', value: true)
-                                ]).result;
-
-                                println "Build finished with ${buildStatus}"
-                                if (buildStatus != 'SUCCESS') {
-                                    currentBuild.result = 'UNSTABLE'
+                            stage('Clone QE repository') {
+                                dir('.') {
+                                    git branch: "${BRANCH}", url: "${REPOSITORY}"
                                 }
-                            } // stage end
+                            }
+                
+                            stage('Run the 3scale test') {
+                                dir('test-suites/backend-testsuite') {
+                                    sh '''
+                                        npm install
+                                        ./node_modules/gulp/bin/gulp.js 3scale | tee output.txt
+                                    '''  
+                                    String output = readFile("output.txt");
+                                    
+                                    if(!output.contains('3scale W2 API management tests')) {
+                                        currentBuild.result = 'FAILURE'
+                                        publishTestResults = false
+                                    } else if(output.contains('There were test failures')) {
+                                        currentBuild.result = 'UNSTABLE'
+                                    }
+                                }
+                            }
                         } // node end
                     }
                 }  

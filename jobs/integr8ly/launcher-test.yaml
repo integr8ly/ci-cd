@@ -24,6 +24,14 @@
           name: ADMIN_PASSWORD
           default: 'Password1'
           description: 'Password to login to Integreatly cluster.'
+      - string:
+          name: EVALS_USERNAME
+          default: 'evals11@example.com'
+          description: 'Evals user name'
+      - string:
+          name: EVALS_PASSWORD
+          default: 'Password1'
+          description: 'Evals user password'
       - bool:
           name: CLEAN_RESOURCES
           default: true
