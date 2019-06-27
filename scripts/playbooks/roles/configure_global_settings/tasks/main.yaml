@@ -8,9 +8,9 @@
     password: "{{ jenkins_admin_password }}"
     validate_certs: no
     args:
-      library_name: "delorean-pipeline-library"
-      gitUrl: "https://github.com/integr8ly/delorean-pipeline-library.git"
-      default_version: "master"
-      load_implicit: false
-  register: global_library_status
-  changed_when: not global_library_status.failed
+      library_name: "{{ delorean_shared_library_name }}"
+      gitUrl: "{{ delorean_shared_library_git_url }}"
+      default_version: "{{ delorean_shared_library_version }}"
+      load_implicit: "{{ delorean_shared_library_load_implicit }}"
+  register: configure_global_library
+  changed_when: not configure_global_library.failed

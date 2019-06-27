@@ -1,0 +1,5 @@
+---
+delorean_shared_library_name: "delorean-pipeline-library"
+delorean_shared_library_git_url: "https://github.com/integr8ly/delorean-pipeline-library.git"
+delorean_shared_library_version: "master"
+delorean_shared_library_load_implicit: false
