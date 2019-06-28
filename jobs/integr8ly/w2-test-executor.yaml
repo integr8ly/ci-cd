@@ -42,7 +42,7 @@
     dsl: |
         def err = null
         try {
-            timeout(20) { 
+            timeout(40) { 
                 ansiColor('gnome-terminal') { 
                     timestamps {
                         node('cirhos_rhel7') {        
