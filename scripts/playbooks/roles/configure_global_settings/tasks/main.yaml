@@ -26,3 +26,18 @@
       tower_installations: "{{ ansible_tower_installations | to_json }}"
   register: configure_ansible_tower
   changed_when: not configure_ansible_tower.failed
+
+- set_fact:
+    queues: "{{ aws_sqs_queues }}"
+
+- name: Configure Amazon SQS Queue
+  jenkins_script:
+    script: "{{ lookup('file', 'configure_aws_sqs_queue.groovy') }}"
+    url: "{{ jenkins_url }}"
+    user: "{{ jenkins_admin_username }}"
+    password: "{{ jenkins_admin_password }}"
+    validate_certs: no
+    args:
+      sqs_queues: "{{ queues | to_json}}"
+  register: configure_aws_sqs
+  changed_when: not configure_aws_sqs.failed
