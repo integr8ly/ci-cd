@@ -10,6 +10,7 @@ http_request:1.8.22
 groovy:2.0 
 gitlab-plugin:1.5.9
 gitlab-hook:1.4.2
+git:3.9.1
 ghprb:1.42.0
 extended-choice-parameter:0.76
 delivery-pipeline-plugin:1.2.0

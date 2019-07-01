@@ -37,3 +37,13 @@
   with_dict: "{{ jenkins_ssh_user_key_credentials }}"
   loop_control:
     loop_var: ssh_user_key_credential
+
+- name: Create secret text credentials
+  include_tasks: _create_credentials.yaml
+  vars:
+    req_headers: "{{ headers }}"
+    credential: "{{ secret_text_credential }}"
+    type: "secret_text"
+  with_dict: "{{ jenkins_secret_text_credentials }}"
+  loop_control:
+    loop_var: secret_text_credential
