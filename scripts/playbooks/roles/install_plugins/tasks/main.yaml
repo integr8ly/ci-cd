@@ -9,8 +9,29 @@
     dest: "{{base_dir}}/jpi-config.ini"
 
 # Install playbooks listed in plugin.txt
-- name: Install playbooks
+- name: Install plugins
   shell: "docker run --privileged --rm -v {{ base_dir }}:{{ base_dir }} quay.io/feedhenry/jenkins-plugin-install jpi install --conf {{ base_dir }}/jpi-config.ini {{base_dir}}/plugins.txt"
   register: install_plugins_cmd
   failed_when: install_plugins_cmd.stderr != ""
 
+# Check for dependency errors
+- name: Check for dependency errors
+  uri:
+    method: GET
+    url: "{{ jenkins_url }}/manage"
+    user: "{{ jenkins_admin_username }}"
+    password: "{{ jenkins_admin_password }}"
+    return_content: true
+    force_basic_auth: yes
+    validate_certs: no
+  register: check_dependency_errors
+  failed_when: false
+
+- pause:
+    prompt: "Dependency errors found. Please ensure these are fixed before continuing. Do you want to continue? [y/n]"
+  register: user_confirmation
+  when: check_dependency_errors.content | regex_search('dependency error', ignorecase=True) != ""
+
+- fail:
+    msg: "Jenkins configuration discontinued. Please fix the dependency errors before continuing."
+  when: user_confirmation.user_input is defined and user_confirmation.user_input != 'y'
