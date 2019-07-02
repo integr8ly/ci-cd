@@ -33,7 +33,7 @@ if not os.path.exists(outputDir):
 
 with open(job, 'r') as stream:
     try:
-        y = yaml.load(stream)
+        y = yaml.safe_load(stream)
         scriptPath = y[0]['job']['pipeline-scm']['script-path']
         jobName = y[0]['job']['name']
         with open(scriptPath, 'r') as myfile:

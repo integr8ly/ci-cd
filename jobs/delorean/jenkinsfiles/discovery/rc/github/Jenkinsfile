@@ -38,9 +38,15 @@ def registryProjectIDs = params.registryProjectIDs.replaceAll(" ", "").split(','
 currentBuild.displayName = "${currentBuild.displayName} ${productName}"
 
 String getThreescalePrerelease(projectOrg, projectRepo, githubCredentialsID) {
+    def latestRelease = ""
     def ghUtils = new org.integr8ly.GitHubUtils()
-    def rcTagRef = '-CR'
-    return ghUtils.ghGetLatestReleaseByTag(projectOrg, projectRepo, githubCredentialsID, rcTagRef)
+    def tags = ghUtils.ghGetRepoTags(projectOrg, projectRepo, githubCredentialsID,"")
+    tags = tags.findAll { tag -> tag.ref.matches(/.*(-CR|-ER).*/) }
+    if (tags) {
+        latestRelease = tags.last().ref
+        latestRelease = latestRelease.minus("refs/tags/")
+    }
+    return latestRelease
 }
 
 String getAmqOnlinePrerelease(projectOrg, projectRepo, githubSSHCredentialsID) {
