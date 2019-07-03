@@ -13,7 +13,7 @@
     - [4.1 Tools](#tools)
     - [4.2 Red Hat Registry CA](#red-hat-registry-ca)
     - [4.3 Environment Variables](#environment-variables)
-    - [4.4 SSH/Git Configuration](#ssh/git-configuration)
+    - [4.4 SSH and Git Configuration](#ssh-and-git-configuration)
 
 
 ## Prerequisites
@@ -146,7 +146,7 @@ QUAY_USERNAME=<quay.io-username>
 QUAY_PASSWORD=<quay.io-password>
 ```
 
-### SSH/Git Configuration
+### SSH and Git Configuration
 Create a `jenkins` user and add it to the group `wheel`
 
 #### Configure sudo
