@@ -9,6 +9,12 @@
   - [3. Running the Script](#4-running-the-script)
     - [3.1 Plugins Installation](#plugins-installation)
     - [3.2 Potential Issues During Configuraiton](#potential-issues-during-configuration)
+  - [4. Node Configuration](#node-configuration)
+    - [4.1 Tools](#tools)
+    - [4.2 Red Hat Registry CA](#red-hat-registry-ca)
+    - [4.3 Environment Variables](#environment-variables)
+    - [4.4 SSH/Git Configuration](#ssh/git-configuration)
+
 
 ## Prerequisites
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#intro-installation-guide)
@@ -69,4 +75,88 @@ If any dependency errors were found, a notification will appear during the confi
 
 Any dependency errors that are not fixed may cause the configuration process to fail.
 
+## Node Configuration
+The Delorean jobs require a node labeled as `cirhos_rhel7` and needs to be configured with the following tools and settings
+
+### Tools
+Tools that needs to be installed:
+- ansible
+- bzip2
+- docker
+- git
+- go (Golang)
+- java-1.8.0-openjdk-devel (openjdk 8)
+- libselinux-python
+- lsof
+- ncurses-devel
+- nfs-utils
+- nfs-utils-lib
+- nodejs (node.js 8)
+- oc (openshift cli 3.11)
+- python-pip
+- python-wheel
+- python-devel
+- rpcbind
+- svcat
+- tar
+- wget
+- zlib-devel
+
+#### Tools to be installed with pip
+- ansible-tower-cli
+- docker-py
+- shade
+- virtualenv
+
+#### Additional Notes
+##### Docker
+Ensure Docker service is enabled and started
+
+##### Go
+Ensure that go is available on PATH
+
+##### Node.js
+Ensure the following packages are available globally:
+- json
+- gulp-cli
+- gulp
+
+### Red Hat Registry CA
+Red Hat registry CA needs to be downloaded and installed. Once the CA has been downloaded, run:
+
+```
+update-ca-trust extract
+```
+
+### Environment Variables
+The following environment variables needs to be set and exported:
+```
+NODE_TLS_REJECT_UNAUTHORIZED=0
+QUAY_USERNAME=<quay.io-username>
+QUAY_PASSWORD=<quay.io-password>
+```
+
+### SSH/Git Configuration
+Create a `jenkins` user and add it to the group `wheel`
+
+#### Configure sudo
+The following configuration should be applied to `/etc/sudoers` 
+- Ensure that users in the `wheel` group allows all command without using a password.
+  ```
+    %wheel	ALL=(ALL)	NOPASSWD: ALL
+  ```
+- Remove the line `requiretty` to disable tty
+- Replace `env_reset` with `!env_reset` to ensure that env is not reset with sudo
+  ```
+    Defaults    !env_reset
+  ```
+- Ensure `secure_path` is not set by commenting out the following line:
+  ```
+    # Defaults    secure_path = ...
+  ```
+
+Ensure the `jenkins` user has a `.ssh` directory
+
+#### Docker
+Ensure the user `jenkins` gets added to the group `docker`
 
