@@ -138,6 +138,8 @@ Red Hat registry CA needs to be downloaded and installed. Once the CA has been d
 update-ca-trust extract
 ```
 
+This CA must also be saved as a user with private key credential in the Jenkins instance.
+
 ### Environment Variables
 The following environment variables needs to be set and exported:
 ```
@@ -147,6 +149,8 @@ QUAY_PASSWORD=<quay.io-password>
 ```
 
 ### SSH and Git Configuration
+Ensure the root user has a `.ssh` directory and all required `authorized_keys` and private keys are available within this directory in order to ssh into this node.
+
 Create a `jenkins` user and add it to the group `wheel`
 
 #### Configure sudo
@@ -165,7 +169,7 @@ The following configuration should be applied to `/etc/sudoers`
     # Defaults    secure_path = ...
   ```
 
-Ensure the `jenkins` user has a `.ssh` directory
+Ensure the `jenkins` user has a `.ssh` directory with `authorized_keys` available to ssh into this node as this user
 
 #### Docker
 Ensure the user `jenkins` gets added to the group `docker`
