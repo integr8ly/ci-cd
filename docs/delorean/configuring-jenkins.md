@@ -1,12 +1,12 @@
 # Configuring Jenkins
 
 ## Table of Contents
-  - [1. Prerequisites](#1-prerequisites)
-  - [2. Configuring the inventory](#2-configuring-the-inventory)
+  - [1. Prerequisites](#prerequisites)
+  - [2. Configuring the inventory](#configuring-the-inventory)
     - [2.1 Host File](#host-file)
     - [2.2 Host Vars](#host-vars)
     - [2.3 Credentials and Global Settings](#credentials-and-global-settings)
-  - [3. Running the Script](#4-running-the-script)
+  - [3. Running the Script](#running-the-script)
     - [3.1 Plugins Installation](#plugins-installation)
     - [3.2 Potential Issues During Configuraiton](#potential-issues-during-configuration)
   - [4. Node Configuration](#node-configuration)
