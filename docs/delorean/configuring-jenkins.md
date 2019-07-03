@@ -41,6 +41,16 @@ A host vars file must be created for each Jenkins host. This will contain the Je
 cp inventories/host_vars/jenkins-host.template inventories/host_vars/<jenkins-host>.yaml
 ```
 
+**IMPORTANT:** The jenkins host entry under the `jenkins` group in the hosts file should match the name of this `host_vars` file. For example:
+
+```
+...
+[jenkins]
+jenkins.example.com
+```
+
+The host `jenkins.example.com` should have a host_vars with the filename `host_vars/jenkins.example.com.yaml`
+
 ### Credentials and Global Settings
 Configure the `inventories/group_vars/all/credentials.yaml` file. This contains all the configuration for global settings and credentials required by the Delorean jobs.
 
@@ -160,3 +170,24 @@ Ensure the `jenkins` user has a `.ssh` directory
 #### Docker
 Ensure the user `jenkins` gets added to the group `docker`
 
+## Delorean Jobs Configuration
+
+Create a `jenkins.ini` file with the following configuration:
+```
+[job_builder]
+ignore_cache=True
+keep_descriptions=False
+include_path=.:scripts:~/git/
+recursive=False
+exclude=.*:manual:./development
+allow_duplicates=False
+
+[jenkins]
+user=<jenkins-userid>
+password=<jenkins-password-or-token>
+url=<jenkins-url>
+query_plugins_info=False
+```
+
+Run:
+./scripts/configure_jenkins.sh jenkins.ini
