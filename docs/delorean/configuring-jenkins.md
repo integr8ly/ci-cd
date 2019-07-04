@@ -7,8 +7,9 @@
     - [2.2 Host Vars](#host-vars)
     - [2.3 Credentials and Global Settings](#credentials-and-global-settings)
   - [3. Running the Script](#running-the-script)
-    - [3.1 Plugins Installation](#plugins-installation)
-    - [3.2 Potential Issues During Configuraiton](#potential-issues-during-configuration)
+    - [3.1 Configuring the Delorean Jobs](#configuring-the-delorean-jobs)
+    - [3.2 Plugins Installation](#plugins-installation)
+    - [3.3 Potential Issues During Configuraiton](#potential-issues-during-configuration)
   - [4. Node Configuration](#node-configuration)
     - [4.1 Tools](#tools)
     - [4.2 Red Hat Registry CA](#red-hat-registry-ca)
@@ -57,6 +58,19 @@ Configure the `inventories/group_vars/all/credentials.yaml` file. This contains 
 ## Running the script
 ```sh
 ansible-playbook -i inventories/hosts playbooks/configure_jenkins.yaml
+```
+
+### Configuring the Delorean Jobs
+The Delorean jobs are not configured by the script by default. If you choose to configure this, set the variable `configure_delorean_jobs` to `true` as a parameter when running the script.
+
+```sh
+ansible-playbook -i inventories/hosts playbooks/configure_jenkins.yaml -e configure_delorean_jobs=true
+```
+
+A playbook is available to run this task separately
+
+```
+ansible-playbook -i inventories/hosts playbooks/configure_delorean_jobs.yaml
 ```
 
 ### Plugins Installation
@@ -173,25 +187,3 @@ Ensure the `jenkins` user has a `.ssh` directory with `authorized_keys` availabl
 
 #### Docker
 Ensure the user `jenkins` gets added to the group `docker`
-
-## Delorean Jobs Configuration
-
-Create a `jenkins.ini` file with the following configuration:
-```
-[job_builder]
-ignore_cache=True
-keep_descriptions=False
-include_path=.:scripts:~/git/
-recursive=False
-exclude=.*:manual:./development
-allow_duplicates=False
-
-[jenkins]
-user=<jenkins-userid>
-password=<jenkins-password-or-token>
-url=<jenkins-url>
-query_plugins_info=False
-```
-
-Run:
-./scripts/configure_jenkins.sh jenkins.ini
