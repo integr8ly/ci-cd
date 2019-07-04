@@ -14,3 +14,7 @@
     - name: Configure Global Settings
       include_role:
         name: configure_global_settings
+    - name: Configure Delorean Jobs
+      include_role:
+        name: configure_delorean_jobs
+      when: configure_delorean_jobs is defined and configure_delorean_jobs == true

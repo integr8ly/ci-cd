@@ -1,0 +1,7 @@
+---
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: Configure Delorean Jobs
+      include_role:
+        name: configure_delorean_jobs
