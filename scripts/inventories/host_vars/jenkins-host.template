@@ -1,0 +1,4 @@
+jenkins_url: "https://jenkins.example.com" # Jenkins url
+jenkins_admin_username: "admin"            # Jenkins admin user ID
+jenkins_admin_password: "admin"            # Jenkins admin password/token
+jenkins_csrf_enabled: "false"              # Set to 'true' if CSRF prevention is enabled
