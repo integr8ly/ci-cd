@@ -5,7 +5,7 @@
   - [2. Configuring the inventory](#configuring-the-inventory)
     - [2.1 Host File](#host-file)
     - [2.2 Host Vars](#host-vars)
-    - [2.3 Credentials and Global Settings](#credentials-and-global-settings)
+    - [2.3 Group Vars](#group-vars)
   - [3. Running the Script](#running-the-script)
     - [3.1 Configuring the Delorean Jobs](#configuring-the-delorean-jobs)
     - [3.2 Plugins Installation](#plugins-installation)
@@ -52,8 +52,12 @@ jenkins.example.com
 
 The host `jenkins.example.com` should have a host_vars with the filename `host_vars/jenkins.example.com.yaml`
 
-### Credentials and Global Settings
-Configure the `inventories/group_vars/all/credentials.yaml` file. This contains all the configuration for global settings and credentials required by the Delorean jobs.
+### Group Vars
+#### Credentials
+Configure the [credentials.yaml](../../scripts/inventories/group_vars/all/credentials.yaml) file. This contains all the configuration for credentials required by the Delorean jobs.
+
+#### Global Settings
+Configure the [global-settings.yaml](../../scripts/inventories/group_vars/all/global-settings.yaml) file. This contains all the configuration for the global settings required by the Delorean jobs.
 
 ## Running the script
 ```sh
