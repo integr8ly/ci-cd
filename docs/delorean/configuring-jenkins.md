@@ -88,7 +88,7 @@ Preflight checks are run before creating any resources on the target Jenkins ins
 Credentials defined in the [credentials.yaml](../../scripts/inventories/group_vars/all/credentials.yaml) file will be created by the configuration script. Any existing credentials with the same credential ID will be overwritten. A warning will appear during the configuration process if any existing credentials are found and the user will be asked to confirm to continue the process.
 
 #### Incompatible Plugins
-The list of plugins that will be installed by the script, along with their target versions, can be found in the [plugins.txt](../../scripts/plugins.txt) file.
+The list of plugins that will be installed by the script, along with their target versions, can be found in the [plugins.txt](../../scripts/s2i/plugins.txt) file.
 
 Any plugins that are already available in the Jenkins instance, won't be re-installed or updated. This may cause the Delorean jobs to not work as expected. A warning will appear during the configuration process if any incompatible plugins were found and the user will be asked to confirm to continue the process.
 
