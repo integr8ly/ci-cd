@@ -1,0 +1,95 @@
+---
+# Directories
+base_dir: "{{ playbook_dir | dirname }}/.."
+scripts_dir: "{{ playbook_dir | dirname }}"
+generated_jobs_dir: "{{ base_dir }}/jobs/generated"
+jenkins_config: "{{ scripts_dir }}/jenkins-config.ini"
+
+# Alias
+jenkins_jobs: "docker run --env PYTHONHTTPSVERIFY=0 --privileged --rm -v {{ base_dir }}:{{ base_dir }} docker-registry.engineering.redhat.com/mobile/jenkins-job-builder:latest jenkins-jobs"
+jenkins_jobs_update: "{{ jenkins_jobs }} --conf {{ jenkins_config }} update"
+
+# Release Jobs
+release_jobs_dir: "{{ base_dir }}/jobs/release"
+release_jobs:
+- release-create/integreatly-release-create.yaml
+- release-delete/integreatly-release-delete.yaml
+
+repo_jobs_dir: "{{ base_dir }}/jobs/repos"
+repo_jobs:
+- repos-delete-branches-and-tags/repos-delete-branches-and-tags.yaml
+- repos-delete-docker-image-tags/repos-delete-docker-image-tags.yaml
+
+delorean_jobs_dir: "{{ base_dir }}/jobs/delorean"
+delorean_jobs:
+- misc/github-events/github-events.yaml
+- 3scale/ga/branch.yaml
+- 3scale/rc/branch.yaml
+- 3scale/ga/discovery.yaml
+- 3scale/rc/discovery.yaml
+- amq-online/ga/branch.yaml
+- amq-online/rc/branch.yaml
+- amq-online/ga/discovery.yaml
+- amq-online/rc/discovery.yaml
+- backup-container/ga/branch.yaml
+- backup-container/ga/discovery.yaml
+- codeready/ga/branch.yaml
+- codeready/ga/discovery.yaml
+- fuse/ga/branch.yaml
+- fuse/ga/discovery.yaml
+- fuse-online/ga/branch.yaml
+- fuse-online/rc/branch.yaml
+- fuse-online/ga/discovery.yaml
+- fuse-online/rc/discovery.yaml
+- gitea/ga/branch.yaml
+- gitea/ga/discovery.yaml
+- middleware-monitoring/ga/branch.yaml
+- middleware-monitoring/ga/discovery.yaml
+- msbroker/ga/branch.yaml
+- msbroker/ga/discovery.yaml
+- rhsso/ga/branch.yaml
+- rhsso/ga/discovery.yaml
+- webapp/ga/branch.yaml
+- webapp/ga/discovery.yaml
+- suites/integreatly/ga/branch.yaml
+- suites/integreatly/rc/branch.yaml
+- suites/integration/ga/branch.yaml
+- suites/integration/rc/branch.yaml
+- keycloak/ga/branch.yaml
+- keycloak/ga/discovery.yaml
+
+openshift_cluster_jobs_dir: "{{ base_dir }}/jobs/openshift/cluster"
+openshift_cluster_jobs:
+- create/openshift-cluster-create.yaml
+- deprovision/openshift-cluster-deprovision.yaml
+- integreatly/openshift-cluster-integreatly-install.yaml
+- integreatly/openshift-cluster-integreatly-uninstall.yaml
+- integreatly/openshift-cluster-integreatly-test.yaml
+- brew/openshift-cluster-brew-image-sync.yaml
+
+integr8ly_jobs:
+- after-first-login-tests.yaml
+- alerts-test.yaml
+- all-tests-executor.yaml
+- amq-online-address-creation-test.yaml
+- browser-based-single-test.yaml
+- browser-based-testsuite-pipeline.yaml
+- codeready-test.yaml
+- customer-admin-permissions-test.yaml
+- delorean-testing-nightly-trigger.yaml
+- fuse-test.yaml
+- installation-smoke-tests.yaml
+- launcher-test.yaml
+- msb-integration-test.yaml
+- nexus-builds-test.yaml
+- pds-install.yaml
+- pds-testing-executor.yaml
+- pds-uninstall.yaml
+- poc-install.yaml
+- poc-testing-executor.yaml
+- poc-uninstall.yaml
+- tower-clean-uninstall.yaml
+- recreate-pipelines.yaml
+- sso-user-create.yaml
+- w1-test-executor.yaml
+- w2-test-executor.yaml

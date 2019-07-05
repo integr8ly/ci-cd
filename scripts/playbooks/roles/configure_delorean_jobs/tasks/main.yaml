@@ -1,14 +1,63 @@
 ---
-- set_fact:
-    base_dir: "{{ playbook_dir | dirname}}"
-
 # Create config file for configuring the delorean jobs
 - name: Generate jenkins config template
   template:
     src: "jenkins-config.ini.j2"
-    dest: "{{base_dir}}/jenkins-config.ini"
+    dest: "{{ jenkins_config }}"
 
-- name: "Configure Delorean Jobs"
-  shell: "sh ./scripts/configure_jenkins.sh ./scripts/jenkins-config.ini"
+# Generate pipeline jobs
+- name: Generate pipeline jobs
+  shell: "./scripts/generate_inline_script_pipeline_job -j {{ release_jobs_dir }}/{{ release_job }} -o {{ generated_jobs_dir }}"
   args:
-    chdir: "{{ base_dir }}/../"
+    chdir: "{{ base_dir }}"
+  with_items: 
+    - "{{ release_jobs }}"
+  loop_control:
+    loop_var: "release_job"
+
+- name: Generate repo jobs
+  shell: "./scripts/generate_inline_script_pipeline_job -j {{ repo_jobs_dir }}/{{ repo_job }} -o {{ generated_jobs_dir }}"
+  args:
+    chdir: "{{ base_dir }}"
+  with_items: "{{ repo_jobs }}"
+  loop_control:
+    loop_var: "repo_job"
+
+- name: Generate delorean jobs
+  shell: "./scripts/generate_inline_script_pipeline_job -j {{ delorean_jobs_dir }}/{{ delorean_job }} -o {{ generated_jobs_dir }}"
+  args:
+    chdir: "{{ base_dir }}"
+  with_items: "{{ delorean_jobs }}"
+  loop_control:
+    loop_var: "delorean_job"
+
+- name: Generate openshift cluster jobs
+  shell: "./scripts/generate_inline_script_pipeline_job -j {{ openshift_cluster_jobs_dir }}/{{ openshift_cluster_job }} -o {{ generated_jobs_dir }}"
+  args:
+    chdir: "{{ base_dir }}"
+  with_items: "{{ openshift_cluster_jobs }}"
+  loop_control:
+    loop_var: "openshift_cluster_job"
+
+# Update jobs on jenkins instance
+- name: Update delorean folders
+  shell: "{{ jenkins_jobs_update }} {{ delorean_jobs_dir }}/folders.yaml"
+
+- name: Update generated jobs
+  shell: "{{ jenkins_jobs_update }} {{ generated_jobs_dir }}/"
+
+- name: Update integr8ly jobs
+  shell: "{{ jenkins_jobs_update }} {{ base_dir }}/jobs/integr8ly/{{ integr8ly_job }}"
+  with_items: "{{ integr8ly_jobs }}"
+  loop_control:
+    loop_var: "integr8ly_job"
+
+- name: Update views
+  shell: "{{ jenkins_jobs_update }} {{ base_dir }}/views/{{ view }}/"
+  with_items:
+    - repos
+    - release
+    - delorean
+    - openshift
+  loop_control:
+    loop_var: "view"
