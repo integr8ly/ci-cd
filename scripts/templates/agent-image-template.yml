@@ -10,7 +10,7 @@ metadata:
       You must have persistent volumes available in your cluster to use this template.
     iconClass: icon-jenkins
     tags: jenkins
-  name: agent-image-wendy
+  name: agent-image-integreatly
 objects:
 - apiVersion: v1
   kind: ImageStream

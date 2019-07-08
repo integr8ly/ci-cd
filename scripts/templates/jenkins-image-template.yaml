@@ -10,7 +10,7 @@ metadata:
         Jenkins build config template
     iconClass: icon-jenkins
     tags: instant-app,jenkins
-  name: jenkins-wendy
+  name: jenkins-integreatly
 objects:
 - apiVersion: v1
   kind: ImageStream
