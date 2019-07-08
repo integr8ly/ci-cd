@@ -48,8 +48,8 @@
                         build job: 'openshift-cluster-create', parameters: [
                             string(name: 'clusterName', value: "${clusterName}"),
                             string(name: 'awsRegion', value: "${awsRegion}"),
-                            string(name: 'compute_group_size', value: '1'),
-                            string(name: 'infra_group_size', value: '1')]
+                            string(name: 'compute_group_size', value: '2'),
+                            string(name: 'infra_group_size', value: '3')]
                     } // stage
 
                     stage('Clone the installer') {
