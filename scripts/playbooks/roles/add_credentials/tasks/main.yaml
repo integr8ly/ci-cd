@@ -10,13 +10,14 @@
   when: jenkins_csrf_enabled == 'true'
 
 - set_fact:
-    crumb_request_field: "{{ get_crumb_token_cmd.json.crumbRequestField }}"
-    crumb_token: "{{ get_crumb_token_cmd.json.crumb }}"
+    headers:
+    - key: "{{ get_crumb_token_cmd.json.crumbRequestField }}"
+      value: "{{ get_crumb_token_cmd.json.crumb }}"
+  when: jenkins_csrf_enabled == 'true'
 
 - set_fact:
-    headers:
-    - key: "{{ crumb_request_field }}"
-      value: "{{ crumb_token }}"
+    headers: []
+  when: jenkins_csrf_enabled == 'false'
 
 - name: Create Username/Password Credentials
   include_tasks: _create_credentials.yaml

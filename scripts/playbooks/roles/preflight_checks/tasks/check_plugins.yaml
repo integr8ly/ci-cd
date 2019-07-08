@@ -25,7 +25,7 @@
   - name: Parse list of plugins to install
     set_fact: 
       plugins_to_install: "{{ plugins_to_install | combine({item.split(':')[0]: item.split(':')[1]}) }}"
-    with_items: "{{ lookup('file', '{{ base_dir }}/plugins.txt').splitlines() }}"
+    with_items: "{{ lookup('file', '{{ base_dir }}/s2i/plugins.txt').splitlines() }}"
   - name: Get list of incompatible plugins
     set_fact:
       incompatible_plugins: "{{ incompatible_plugins | combine({plugin.key: {'current_version': installed_plugins[plugin.key], 'target_version': plugin.value }}) }}"

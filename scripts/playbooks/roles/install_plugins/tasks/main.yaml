@@ -10,7 +10,7 @@
 
 # Install playbooks listed in plugin.txt
 - name: Install plugins
-  shell: "docker run --privileged --rm -v {{ base_dir }}:{{ base_dir }} quay.io/feedhenry/jenkins-plugin-install jpi install --conf {{ base_dir }}/jpi-config.ini {{base_dir}}/plugins.txt"
+  shell: "docker run --privileged --rm -v {{ base_dir }}:{{ base_dir }} quay.io/feedhenry/jenkins-plugin-install jpi install --conf {{ base_dir }}/jpi-config.ini {{base_dir}}/s2i/plugins.txt"
   register: install_plugins_cmd
   failed_when: install_plugins_cmd.stderr != ""
 

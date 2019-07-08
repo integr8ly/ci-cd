@@ -53,7 +53,8 @@ jenkins.example.com
 The host `jenkins.example.com` should have a host_vars with the filename `host_vars/jenkins.example.com.yaml`
 
 ### Credentials and Global Settings
-Configure the `inventories/group_vars/all/credentials.yaml` file. This contains all the configuration for global settings and credentials required by the Delorean jobs.
+Configure the `inventories/group_vars/all/credentials.yml` file. This contains all the configuration for credentials required by the Delorean jobs.
+Configure the `inventories/group_vars/all/global_settings.yml` file. This contains all the configuration for global settings required by the Delorean jobs.
 
 ## Running the script
 ```sh
@@ -85,10 +86,10 @@ docker container logs <container_id> -f
 Preflight checks are run before creating any resources on the target Jenkins instance.
 
 #### Conflicting Credentials
-Credentials defined in the [credentials.yaml](../../scripts/inventories/group_vars/all/credentials.yaml) file will be created by the configuration script. Any existing credentials with the same credential ID will be overwritten. A warning will appear during the configuration process if any existing credentials are found and the user will be asked to confirm to continue the process.
+Credentials defined in the [credentials.yml](../../scripts/inventories/group_vars/jenkins/credentials.yml) file will be created by the configuration script. Any existing credentials with the same credential ID will be overwritten. A warning will appear during the configuration process if any existing credentials are found and the user will be asked to confirm to continue the process.
 
 #### Incompatible Plugins
-The list of plugins that will be installed by the script, along with their target versions, can be found in the [plugins.txt](../../scripts/plugins.txt) file.
+The list of plugins that will be installed by the script, along with their target versions, can be found in the [plugins.txt](../../scripts/s2i/plugins.txt) file.
 
 Any plugins that are already available in the Jenkins instance, won't be re-installed or updated. This may cause the Delorean jobs to not work as expected. A warning will appear during the configuration process if any incompatible plugins were found and the user will be asked to confirm to continue the process.
 
