@@ -13,7 +13,7 @@ Continuous Integration / Continuous Delivery related bits
   - [1.6 Configure all jobs and views](#16-configure-all-jobs-and-views)
   - [1.7 Troubleshooting](#17-troubleshooting)
 - [2. Delorean](#2-delorean)
-  - [2.1 Support](#21-support)
+  - [2.1 Contributing](#21-contributing)
 
 ## 1. Jenkins Job Builder
 Job definitions are stored in form of templates for [Jenkins Job Builder](https://docs.openstack.org/infra/jenkins-job-builder/) (JJB). 
@@ -79,7 +79,7 @@ export PYTHONHTTPSVERIFY=0
 
 All documentation related to Delorean are located [here](docs/README.md)
 
-### 2.1 Support
+### 2.1 Contributing
 
 Please open a Github issue in this repository for any bugs or problems you encounter.
 
