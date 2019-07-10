@@ -34,7 +34,7 @@
           read-only: true
       - string:
           name: 'templatesDir'
-          default: 'pkg/3scale/amp/auto-generated-templates/productized_templates/amp'
+          default: 'pkg/3scale/amp/auto-generated-templates/amp'
           description: '[REQUIRED] directory where openshift templates are located'
           read-only: true
       - string:
