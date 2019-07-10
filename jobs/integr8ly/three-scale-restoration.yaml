@@ -1,0 +1,136 @@
+---
+
+- job:
+    name: three-scale-restoration
+    project-type: pipeline
+    sandbox: false
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
+          description: 'QE repository containing the tests source code.'
+      - string:
+          name: BRANCH
+          default: 'master'
+          description: 'Branch of the repository'
+      - string:
+          name: CLUSTER_URL
+          description: 'URL of cluster on which the test will be executed.'
+      - string:
+          name: WEBAPP_URL
+          description: 'URL of Tutorial Web App'
+      - string: 
+          name: ADMIN_USERNAME
+          default: 'admin@example.com'
+          description: 'Admin user name to login to Integreatly cluster.'
+      - string: 
+          name: ADMIN_PASSWORD
+          default: 'Password1'
+          description: 'Admin password to login to Integreatly cluster.'
+      - string:
+          name: EVALS_USERNAME
+          default: 'evals11@example.com'
+          description: 'Evals account email address for which 3scale data are generated.'
+      - string:
+          name: EVALS_PASSWORD
+          default: 'Password1'
+          description: 'Evals user password'
+      - string:
+          name: NAMESPACE_PREFIX
+          description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
+      - string:
+          name: TIMEOUT_THRESHOLD
+          default: '1'
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
+    dsl: |
+        jobParams = [
+            string(name: 'REPOSITORY', value: "${REPOSITORY}"),
+            string(name: 'BRANCH', value: "${BRANCH}"),
+            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+            string(name: 'WEBAPP_URL', value: "${WEBAPP_URL}"),
+            string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
+            string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
+            string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+            string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+            string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
+            booleanParam(name: 'CLEAN_RESOURCES', value: false),
+            string(name: 'TEST_TO_RUN', value: 'tests/00_walkthroughs_start/start-walkthroughs.js'),
+            string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}")
+        ]
+        def err = null
+
+        // Hard-coded, not likely there will be some other values used
+        String backupNamespace = 'openshift-integreatly-backups'
+        String backupSecret = 's3-credentials'
+
+        try {
+            timeout(60) { ansiColor('gnome-terminal') { timestamps {
+                node('cirhos_rhel7') {
+
+                    stage ('Verify backups has been installed') {
+                        
+                        // This is to fail early if backups are not installed on the cluster
+                        def exitStatus = sh( returnStatus: true, script: """
+                            oc login ${CLUSTER_URL} -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD} --insecure-skip-tls-verify
+                            oc describe project ${backupNamespace}
+                            oc describe secret ${backupSecret} -n ${backupNamespace}
+                            oc describe cronjob/3scale-postgres-backup -n ${backupNamespace}
+                            oc describe cronjob/3scale-mysql-backup -n ${backupNamespace}
+                            oc describe cronjob/3scale-redis-backupx -n ${backupNamespace}
+                            oc describe cronjob/resources-backup -n ${backupNamespace}
+                        """)
+                    }
+
+                    stage ('Start the walkthroughs') {
+                        runTests('browser-based-single-test')
+                    } // stage
+
+                    stage ('Generate data in 3scale') {
+                        runTests('w2-test-executor')
+                    } // stage
+
+                    stage('Clone QE repository') {
+                        dir('.') {
+                            git branch: "${BRANCH}", url: "${REPOSITORY}"
+                        }
+                    }
+
+                    stage ('Restore 3Scale data') {
+                        dir('test-suites/backend-testsuite') {
+                            sh '''
+                                rm -rf reports # so that any leftovers from past builds are not archived
+                                npm install
+                                ./node_modules/gulp/bin/gulp.js 3scale-restoration | tee output.txt
+                            '''  
+                            String output = readFile("output.txt");
+                         
+                            if (!output.contains('3scale backup and restore Test')) {
+                                currentBuild.result = 'FAILURE'
+                                publishTestResults = false
+                            } else if (output.contains('There were test failures')) {
+                                currentBuild.result = 'UNSTABLE'
+                            }
+                        } // dir
+                    } // stage
+
+                    stage('Publish test results') {
+                        dir('test-suites/backend-testsuite/reports') {
+                            archiveArtifacts '**/*.xml'                  
+                            junit allowEmptyResults:true, testResults: '**/*.xml'
+                        }
+                    }
+
+                } // node
+            }}} // timeout, ansiColor, timestamps
+        } catch (caughtError){
+            currentBuild.result = 'FAILURE'
+        }
+
+        def runTests(testPipeline) {
+            buildStatus = build(job: testPipeline, propagate: false, parameters: jobParams).result
+            println "Build finished with ${buildStatus}"
+                            
+            if (buildStatus != 'SUCCESS') {
+                currentBuild.result = 'UNSTABLE'
+            }
+        }
