@@ -27,10 +27,13 @@
   register: check_dependency_errors
   failed_when: false
 
+- set_fact:
+    dependency_errors: "{{ check_dependency_errors.content | regex_search('dependency error', ignorecase=True) }}"
+
 - pause:
     prompt: "Dependency errors found. Please ensure these are fixed before continuing. Do you want to continue? [y/n]"
   register: user_confirmation
-  when: check_dependency_errors.content | regex_search('dependency error', ignorecase=True) != ""
+  when: dependency_errors != ""
 
 - fail:
     msg: "Jenkins configuration discontinued. Please fix the dependency errors before continuing."
