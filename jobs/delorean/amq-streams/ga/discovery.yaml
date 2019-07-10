@@ -1,0 +1,62 @@
+---
+- job:
+    name: delorean-<product-name>/ga/discovery
+    display-name: '<product-name>-ga-discovery'
+    project-type: pipeline
+    concurrent: false
+    triggers:
+      - timed: '@daily'
+    parameters:
+      - string:
+          name: 'productVersionVar'
+          default: 'UPDATE ME'
+          description: '[REQUIRED] The manifest variable to be used as the current component version'
+          read-only: true
+      - string:
+          name: 'projectOrg'
+          default: 'UPDATE ME'
+          description: '[REQUIRED] github project organization'
+          read-only: true
+      - string:
+          name: 'projectRepo'
+          default: 'UPDATE ME'
+          description: '[REQUIRED] github project repository'
+          read-only: true
+      - string:
+          name: 'productName'
+          default: 'UPDATE ME'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
+          read-only: true
+      - string:
+          name: 'releaseFetchMethod'
+          default: ''
+          description: '[OPTIONAL] Method to fetch latest release which can either be by tag or by release'
+          read-only: true
+      - string:
+          name: 'gaReleaseTagRef'
+          default: ''
+          description: '[OPTIONAL] Reference used to filter GA releases from the repository tags'
+      - string:
+          name: 'releaseTagVar'
+          default: ''
+          description: '[OPTIONAL] The manifest variable to be used as the current component version'
+          read-only: true
+      - string:
+          name: 'productVersionLocation'
+          default: ''
+          description: '[OPTIONAL] Path to the file where the product version of the component is declared'
+          read-only: true
+      - string:
+          name: 'productVersionIdentifier'
+          default: ''
+          description: '[OPTIONAL] Identifier to be used to retrieve the product version from the productVersionLocation'
+          read-only: true
+    pipeline-scm:
+      script-path: jobs/delorean/jenkinsfiles/discovery/ga/github/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - master
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false
