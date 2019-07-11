@@ -4,14 +4,14 @@
 def imageSyncOptions = [:]
 
 def verifyImageSyncOptions(options) {
-    if(!options.openshiftMasterUrl || !options.clusterAdminUsername || !options.clusterAdminPassword || !options.installationGitBranch || !options.installationGitUrl) {
+    if (!options.openshiftMasterUrl || !options.clusterAdminUsername || !options.clusterAdminPassword || !options.installationGitBranch || !options.installationGitUrl) {
         def clusterAdminCredentials = setClusterAdminCredentials()
         def userInput = input message: 'Image Sync Options', parameters: [
-            string(defaultValue: (options.openshiftMasterUrl ?: ''), description: 'OpenShift cluster public URL', name: 'openshiftMasterUrl'),
-            string(defaultValue: (options.clusterAdminUsername ?: clusterAdminCredentials.clusterAdminUsername), description: 'OpenShift cluster admin username', name: 'clusterAdminUsername'),
-            string(defaultValue: (options.clusterAdminPassword ?: clusterAdminCredentials.clusterAdminPassword), description: 'OpenShift cluster admin password', name: 'clusterAdminPassword'),
-            string(defaultValue: (options.installationGitUrl ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly installer Git URL', name: 'installationGitUrl'),
-            string(defaultValue: (options.installationGitBranch ?: 'master'), description: 'Integreatly installer Git branch', name: 'installationGitBranch'),
+                string(defaultValue: (options.openshiftMasterUrl ?: ''), description: 'OpenShift cluster public URL', name: 'openshiftMasterUrl'),
+                string(defaultValue: (options.clusterAdminUsername ?: clusterAdminCredentials.clusterAdminUsername), description: 'OpenShift cluster admin username', name: 'clusterAdminUsername'),
+                string(defaultValue: (options.clusterAdminPassword ?: clusterAdminCredentials.clusterAdminPassword), description: 'OpenShift cluster admin password', name: 'clusterAdminPassword'),
+                string(defaultValue: (options.installationGitUrl ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly installer Git URL', name: 'installationGitUrl'),
+                string(defaultValue: (options.installationGitBranch ?: 'master'), description: 'Integreatly installer Git branch', name: 'installationGitBranch'),
         ]
         options.openshiftMasterUrl = userInput.openshiftMasterUrl
         options.clusterAdminUsername = userInput.clusterAdminUsername
@@ -42,12 +42,14 @@ String getHost(String url) {
 stage('Image Sync Options') {
     def clusterAdminCredentials = setClusterAdminCredentials()
     imageSyncOptions.openshiftMasterUrl = params.openshiftMasterUrl
-    imageSyncOptions.clusterAdminUsername = params.clusterAdminUsername ?: clusterAdminCredentials.clusterAdminUsername // Defaults to the username stored in tower-openshift-cluster-credentials
-    imageSyncOptions.clusterAdminPassword = params.clusterAdminPassword ?: clusterAdminCredentials.clusterAdminPassword // Defaults to the password stored in tower-openshift-cluster-credentials
+    imageSyncOptions.clusterAdminUsername = params.clusterAdminUsername ?: clusterAdminCredentials.clusterAdminUsername
+    // Defaults to the username stored in tower-openshift-cluster-credentials
+    imageSyncOptions.clusterAdminPassword = params.clusterAdminPassword ?: clusterAdminCredentials.clusterAdminPassword
+    // Defaults to the password stored in tower-openshift-cluster-credentials
     imageSyncOptions.installationGitUrl = params.installationGitUrl
     imageSyncOptions.installationGitBranch = params.installationGitBranch
     verifyImageSyncOptions(imageSyncOptions)
-    
+
     println "Image Sync Options: ${imageSyncOptions}"
     currentBuild.displayName = "${currentBuild.displayName} ${imageSyncOptions.installationGitBranch}"
     currentBuild.description = imageSyncOptions.openshiftMasterUrl
@@ -68,7 +70,7 @@ node('cirhos_rhel7') {
             def imageSyncFileExists = fileExists imageSyncConfigFile
             if (imageSyncFileExists) {
                 imageSyncConfigContent = readYaml file: imageSyncConfigFile
-                if(imageSyncConfigContent.imageSync && imageSyncConfigContent.imageSync.projects) {
+                if (imageSyncConfigContent.imageSync && imageSyncConfigContent.imageSync.projects) {
                     syncImages = true
                 }
             } else {
@@ -93,7 +95,7 @@ node('cirhos_rhel7') {
 
     stage('Create Brew Projects') {
         when(syncImages) {
-            String clusterContainerRegistryConsole = "registry-console-default.apps.${getHost(imageSyncOptions.openshiftMasterUrl)}" 
+            String clusterContainerRegistryConsole = "registry-console-default.apps.${getHost(imageSyncOptions.openshiftMasterUrl)}"
             projectsToSync.keySet().each {
                 if (params.dryRun) {
                     println "Would create a new project called '${it}' and set the registry project access policy to 'Anonymous: Allow all unauthenticated users to pull images'"
@@ -109,7 +111,7 @@ node('cirhos_rhel7') {
     }
 
     stage('Sync Images') {
-        when(syncImages) { 
+        when(syncImages) {
             String clusterContainerRegistryPublic = "docker-registry-default.apps.${getHost(imageSyncOptions.openshiftMasterUrl)}"
             projectsToSync.each { project, projectConfig ->
                 println "Syncing images for ${project}"
@@ -119,16 +121,37 @@ node('cirhos_rhel7') {
                     error "Brew container registry was not specified"
                 } else {
                     projectConfig.images.each {
-                        def brewImageUrl = "${brewContainerRegistry}/${project}/${it}"
-                        def clusterImageUrlPub = "${clusterContainerRegistryPublic}/${project}/${it}"
+                        try {
+                            def brewImageUrl = "${brewContainerRegistry}/${project}/${it}"
+                            def clusterImageUrlPub = "${clusterContainerRegistryPublic}/${project}/${it}"
 
-                        if (params.dryRun) {
-                            println "Would copy the image '${it}' from ${brewImageUrl} to ${clusterImageUrlPub}"
-                        } else {
+                            if (params.dryRun) {
+                                println "Would copy the image '${it}' from ${brewImageUrl} to ${clusterImageUrlPub}"
+                            } else {
+                                retry(3) {
+                                    sh """
+                                    skopeo copy \
+                                    --dest-creds ${imageSyncOptions.clusterAdminUsername}:${
+                                        imageSyncOptions.clusterAdminAuthToken
+                                    } \
+                                    --dest-tls-verify=false \
+                                    --src-tls-verify=false \
+                                    docker://${brewImageUrl} \
+                                    docker://${clusterImageUrlPub}
+                                """
+                                }
+                            }
+                        } catch (Exception e) {
+                            //If the above fails, this will just check if the image is actually in a tech-preview repo instead, as was the case for fuse7-tech-preview/fuse-postgres-exporter:1.4-1
+                            def brewImageUrl = "${brewContainerRegistry}/${project}-tech-preview/${it}"
+                            def clusterImageUrlPub = "${clusterContainerRegistryPublic}/${project}/${it}"
+
                             retry(3) {
                                 sh """
                                     skopeo copy \
-                                    --dest-creds ${imageSyncOptions.clusterAdminUsername}:${imageSyncOptions.clusterAdminAuthToken} \
+                                    --dest-creds ${imageSyncOptions.clusterAdminUsername}:${
+                                    imageSyncOptions.clusterAdminAuthToken
+                                } \
                                     --dest-tls-verify=false \
                                     --src-tls-verify=false \
                                     docker://${brewImageUrl} \
