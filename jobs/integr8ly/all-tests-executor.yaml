@@ -25,10 +25,6 @@
           default: 'evals11@example.com'
           description: 'Evals account email address for checking created namespaces.'    
       - string:
-          name: EVALS_PASSWORD
-          default: 'Password1'
-          description: 'Evals user password'
-      - string:
           name: ADMIN_USERNAME
           default: 'admin@example.com'
           description: 'Admin sername to login to Integreatly cluster.'
@@ -83,7 +79,6 @@
             string(name: 'BRANCH', value: "${BRANCH}"),
             string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
             string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
-            string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
             string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
             string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
             string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),

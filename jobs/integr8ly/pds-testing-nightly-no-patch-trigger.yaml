@@ -23,7 +23,6 @@
             TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
             TEST_SUITES_BRANCH=master
             EVALS_USERNAME=evals11@example.com
-            EVALS_PASSWORD=Password1
             ADMIN_USERNAME=admin@example.com
             ADMIN_PASSWORD=Password1
             CUSTOMER_ADMIN_PASSWORD=customer-admin@example.com
@@ -49,7 +48,6 @@
                         string(name: 'TEST_SUITES_REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
                         string(name: 'TEST_SUITES_BRANCH', value: "${TEST_SUITES_BRANCH}"),
                         string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
-                        string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
                         string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
                         string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                         string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),
