@@ -33,7 +33,7 @@
           default: '1'
           description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
     dsl: |
-        timeout(25) { ansiColor('gnome-terminal') { timestamps {
+        timeout(40) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){
 
                 Boolean publishTestResults = true
