@@ -32,10 +32,6 @@
           default: 'evals11@example.com'
           description: 'Evals user name'
       - string:
-          name: EVALS_PASSWORD
-          default: 'Password1'
-          description: 'Evals user password'
-      - string:
           name: TIMEOUT_THRESHOLD
           default: '1'
           description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
@@ -61,7 +57,6 @@
                                     string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
                                     string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
-                                    string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
                                     booleanParam(name: 'CLEAN_RESOURCES', value: false)
                                 ]).result;
@@ -81,7 +76,6 @@
                                     string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
                                     string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
-                                    string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
                                     booleanParam(name: 'CLEAN_RESOURCES', value: true),
                                     booleanParam(name: 'W1_FINAL_VERIFICATION', value: true)

@@ -33,9 +33,8 @@
           default: 'evals11@example.com'
           description: 'Evals account email address used to access the available consoles'
       - string:
-          name: EVALS_PASSWORD
-          default: 'Password1'
-          description: 'Evals user password'
+          name: NAMESPACE_PREFIX
+          description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
       - string:
           name: TEST_TO_RUN
           default: 

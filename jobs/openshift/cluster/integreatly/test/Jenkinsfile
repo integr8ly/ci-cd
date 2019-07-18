@@ -109,7 +109,6 @@ pipeline {
             [$class: 'StringParameterValue', name: 'BRANCH', value: 'master'],
             [$class: 'StringParameterValue', name: 'CLUSTER_URL', value: testOptions.openshiftMasterUrl],
             [$class: 'StringParameterValue', name: 'EVALS_USERNAME', value: 'evals05@example.com'],
-            [$class: 'StringParameterValue', name: 'EVALS_PASSWORD', value: 'Password1'],
             [$class: 'StringParameterValue', name: 'ADMIN_USERNAME', value: clusterAdminCredentials.clusterAdminUsername],
             [$class: 'StringParameterValue', name: 'ADMIN_PASSWORD', value: clusterAdminCredentials.clusterAdminPassword],
             [$class: 'StringParameterValue', name: 'CUSTOMER_ADMIN_USERNAME', value: 'customer-admin@example.com'],

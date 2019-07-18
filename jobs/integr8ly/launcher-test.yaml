@@ -28,10 +28,6 @@
           name: EVALS_USERNAME
           default: 'evals11@example.com'
           description: 'Evals user name'
-      - string:
-          name: EVALS_PASSWORD
-          default: 'Password1'
-          description: 'Evals user password'
       - bool:
           name: CLEAN_RESOURCES
           default: true
@@ -73,7 +69,7 @@
                 stage('Publish test results') {
                     if(publishTestResults) {
                         dir('test-suites/backend-testsuite/reports/') {
-                            archiveArtifacts 'booster-creation.xml'                  
+                            archiveArtifacts 'booster-creation.xml'
                             junit allowEmptyResults:true, testResults: 'booster-creation.xml'
                         }
                     } else {

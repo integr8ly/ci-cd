@@ -32,10 +32,6 @@
           default: 'evals11@example.com'
           description: 'Evals account email address for which 3scale data are generated.'
       - string:
-          name: EVALS_PASSWORD
-          default: 'Password1'
-          description: 'Evals user password'
-      - string:
           name: NAMESPACE_PREFIX
           description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
       - string:
@@ -49,7 +45,6 @@
             string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
             string(name: 'WEBAPP_URL', value: "${WEBAPP_URL}"),
             string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
-            string(name: 'EVALS_PASSWORD', value: "${EVALS_PASSWORD}"),
             string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
             string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
             string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
@@ -115,7 +110,7 @@
 
                     stage('Publish test results') {
                         dir('test-suites/backend-testsuite/reports') {
-                            archiveArtifacts '**/*.xml'                  
+                            archiveArtifacts '**/*.xml'
                             junit allowEmptyResults:true, testResults: '**/*.xml'
                         }
                     }

@@ -20,15 +20,22 @@
       - string:
           name: EVALS_USERNAME
           default: 'evals11@example.com'
-          description: 'Evals account email address for checking created namespaces.'    
+          description: 'Evals account email address for checking created namespaces.'
       - string:
-          name: EVALS_PASSWORD
+          name: ADMIN_USERNAME
+          default: 'admin@example.com'
+          description: 'Username for Tutorial Web App log in'
+      - string:
+          name: ADMIN_PASSWORD
           default: 'Password1'
-          description: 'Evals user password'    
+          description: 'Password for the Tutorial Web App log in'
+      - string:
+          name: NAMESPACE_PREFIX
+          description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
       - string:
           name: TIMEOUT_THRESHOLD
           default: '1'
-          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'
     dsl: |
         timeout(10) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {
@@ -56,13 +63,13 @@
                             publishTestResults = false
                         } else if(output.contains('There were test failures')) {
                             currentBuild.result = 'UNSTABLE'
-                        }              
+                        }
                     }
                 }
                 stage('Publish test results') {
                     if (publishTestResults) {
                         dir('test-suites/backend-testsuite/reports/') {
-                            archiveArtifacts 'after-first-login.xml'                  
+                            archiveArtifacts 'after-first-login.xml'
                             junit allowEmptyResults:true, testResults: 'after-first-login.xml'
                         } 
                     } else {
