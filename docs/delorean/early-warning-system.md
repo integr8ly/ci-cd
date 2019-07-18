@@ -1,22 +1,14 @@
 ## Delorean Early Warning System
 
 ## Table of Contents
-  - [1. Overview](#overview)
-  - [2. Job Structure](#job-structure)
-  - [3. Job Types](#job-types)
-    - [3.1 GA](#ga)
-    - [3.2 RC](#rc)
-    - [3.3 latest](#latest)
-  - [4. Jobs](#jobs)
-    - [4.1 Discovery](#discovery)
-    - [4.2 Branch](#branch)
-
-### Overview
-
-Multiple products are installed as part of the Integreatly environment. 
-It is important that we are able to move quickly to new releases of these products to enable PoCs and ensure any new managed 
-environment is always using the latest and greatest versions. The Delorean suite of jobs are intended to provide an automated way to
-discover, update and test new versions of these products.
+  - [1. Job Structure](#job-structure)
+  - [2. Job Types](#job-types)
+    - [2.1 GA](#ga)
+    - [2.2 RC](#rc)
+    - [2.3 latest](#latest)
+  - [3. Jobs](#jobs)
+    - [3.1 Discovery](#discovery)
+    - [3.2 Branch](#branch)
 
 ### Job Structure
 
