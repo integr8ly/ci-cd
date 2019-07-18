@@ -17,7 +17,7 @@ Multiple products are installed as part of the Integreatly environment. It is im
 These products are configured to integrate with each other, therefore, it is important to receive early warnings of changes to the installation, configuration and functionality of each of these products.
 
 ### Release Discovery
-Delorean provides service discovery for each of the products installed in the Integreatly environment. For further information on the different types of Delorean jobs, please go [here](delorean/early-warning-system.md).
+Delorean provides discovery of latest releases for each of the products installed in the Integreatly environment. For further information on the different types of Delorean jobs, please go [here](delorean/early-warning-system.md).
 
 ### Adding New Products
 Follow this [guide](delorean/add-new-product.md) on how to add new products to the Delorean early warning system.
