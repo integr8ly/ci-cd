@@ -25,7 +25,7 @@ Follow this [guide](delorean/add-new-product.md) on how to add new products to t
 ## Cluster Management
 The cluster management jobs enables you to create PoC clusters for installing and testing new versions of products in an Integreatly environment.
 
-Follow this [guide](delorean/cluster-management.md) on how to provision PoC clusters and install Integreatly using the Delorean cluster management jobs.
+For more information on the Delorean cluster management jobs, see the [cluster management](delorean/cluster-management.md) documentation.
 
 ## Automated Tests
 TODO
