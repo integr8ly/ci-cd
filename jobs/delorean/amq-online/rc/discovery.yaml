@@ -39,7 +39,7 @@
           read-only: true
       - string:
           name: 'registryProjectIDs'
-          default: 'amq7,amq7-tech-preview'
+          default: 'amq7,amq-broker-7,amq7-tech-preview'
           description: '[REQUIRED] registry image projects'
           read-only: true
       - bool:
