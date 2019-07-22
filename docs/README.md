@@ -28,7 +28,7 @@ The cluster management jobs enables you to create PoC clusters for installing an
 For more information on the Delorean cluster management jobs, see the [cluster management](delorean/cluster-management.md) documentation.
 
 ## Automated Tests
-TODO
+Delorean provides automated tests to be run when new versions of products are discovered by the early warning system. For more information, see the [automated tests](delorean/automated-tests.md) documentation.
 
 ## Jenkins Configuration
 The Delorean jobs can be configured in any existing Jenkins instance. Follow this [guide](delorean/configuring-jenkins.md) on how to configure Delorean to an existing Jenkins instance.
