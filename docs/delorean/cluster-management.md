@@ -100,6 +100,14 @@ To run this pipeline on Jenkins:
 
   If no values are specified, it defaults to the username and password stored in a Jenkins credential called `tower-openshift-cluster-credentials`. This credential is set during Jenkins configuration. For more information on how to set this, please see the [configuring jenkins](./configuring-jenkins#credentials-and-global-settings) guide.
   
+### Installing RC Branches
+Product images used for RC releases are located in an internal registry called Brew. These images must firstly be made available to the PoC cluster's internal registry before running any Integreatly installation. In order to do this, the pipeline `OpenShift Cluster Brew Image Sync` must be executed.
+
+**IMPORTANT**:
+- This pipeline is executed as part of the pre-install stage of the `Openshift Cluster Integreatly Install` job. If you wish to install Integreatly through other means, please sync the brew images first using the pipline mentioned above before running any installation.
+
+For more information about this pipeline, see the [syncing brew images](#syncing-brew-images) guide.
+
 ## Uninstalling Integreatly
 Integreatly can be uninstalled on an existing PoC cluster with Integreatly installed by building the `OpenShift Cluster Integreatly Uninstall` pipeline which is defined in the [jobs/openshift/cluster/integreatly/](../../jobs/openshift/cluster/integreatly/) directory.
 
@@ -149,7 +157,7 @@ To run this pipeline on Jenkins:
 **NOTE**:
 - The `awsAccountName` is the name of the AWS credential configured in Ansible Tower. To configure this in Ansible Tower, please follow this [guide](https://github.com/integr8ly/tower_dummy_credentials/blob/master/VARIABLES.md#aws_credentials).
 
-## Brew Image Sync
+## Syncing Brew Images
 
 Product images used for RC releases are located in an internal registry called Brew. In order to use the product templates during the installation, the images defined in the templates needs to be available in the OpenShift cluster's internal registry. These images are listed in the `integreatly.yml` file located in the given RC branch which is generated during the discovery of an RC release.
 
@@ -157,6 +165,7 @@ The `OpenShift Cluster Brew Image Sync` pipeline must be ran before any Integrea
 
 **IMPORTANT**: 
 - Since the images used for RC releases are located in an internal registry, this job must be run on a Red Hat internal network.
+- This job is ran as part of the pre-install of the `OpenShift Cluster Integreatly Install` pipeline. If you wish to install Integreatly through other means, please ensure this pipeline is executed first before attempting any installation.
 
 This job is defined in the [jobs/openshift/cluster/brew/](../../jobs/openshift/cluster/brew/) directory.
 
