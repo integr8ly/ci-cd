@@ -149,7 +149,7 @@ To run this pipeline on Jenkins:
 **NOTE**:
 - The `awsAccountName` is the name of the AWS credential configured in Ansible Tower. To configure this in Ansible Tower, please follow this [guide](https://github.com/integr8ly/tower_dummy_credentials/blob/master/VARIABLES.md#aws_credentials).
 
-## Brew Image Sync
+## Syncing Brew Images
 
 Product images used for RC releases are located in an internal registry called Brew. In order to use the product templates during the installation, the images defined in the templates needs to be available in the OpenShift cluster's internal registry. These images are listed in the `integreatly.yml` file located in the given RC branch which is generated during the discovery of an RC release.
 
