@@ -112,7 +112,7 @@ node('cirhos_rhel7') {
 
     stage('Sync Images') {
         when(syncImages) {
-            String clusterContainerRegistryPublic = "docker-registry-default.apps.${getHost(imageSyncOptions.openshiftMasterUrl)}"
+            imageSyncOptions.dockerRegistryRoute = sh(returnStdout: true, script: "oc get route/docker-registry -o jsonpath='{.spec.host}' -n default").trim()
             projectsToSync.each { project, projectConfig ->
                 println "Syncing images for ${project}"
                 brewContainerRegistry = projectConfig.sourceRepo ?: brewContainerRegistry
@@ -123,7 +123,7 @@ node('cirhos_rhel7') {
                     projectConfig.images.each {
                         try {
                             def brewImageUrl = "${brewContainerRegistry}/${project}/${it}"
-                            def clusterImageUrlPub = "${clusterContainerRegistryPublic}/${project}/${it}"
+                            def clusterImageUrlPub = "${imageSyncOptions.dockerRegistryRoute}/${project}/${it}"
 
                             if (params.dryRun) {
                                 println "Would copy the image '${it}' from ${brewImageUrl} to ${clusterImageUrlPub}"
@@ -144,7 +144,7 @@ node('cirhos_rhel7') {
                         } catch (Exception e) {
                             //If the above fails, this will just check if the image is actually in a tech-preview repo instead, as was the case for fuse7-tech-preview/fuse-postgres-exporter:1.4-1
                             def brewImageUrl = "${brewContainerRegistry}/${project}-tech-preview/${it}"
-                            def clusterImageUrlPub = "${clusterContainerRegistryPublic}/${project}/${it}"
+                            def clusterImageUrlPub = "${imageSyncOptions.dockerRegistryRoute}/${project}/${it}"
 
                             retry(3) {
                                 sh """
