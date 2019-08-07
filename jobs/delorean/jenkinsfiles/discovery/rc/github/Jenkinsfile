@@ -13,7 +13,7 @@ def projectRepo = params.projectRepo
 def productName = params.productName
 def rcBranch = params.installationProductBranch ?: "${productName}-rc"
 def installationManifestFile = './inventories/group_vars/all/manifest.yaml'
-def integreatlyMetaFile = "integreatly.yml"
+def integreatlyMetaFile = "integreatly.${rcBranch}.yml"
 def integreatlyMetaFileForceUpdate = true
 
 def templatesGitTagVar = params.releaseTagVar ?: params.productVersionVar
@@ -221,7 +221,7 @@ node {
                             metaConfig = readYaml file: integreatlyMetaFile
                         }
                         //Delete the file here since 'writeYaml' will fail if the file already exists
-                        sh "rm integreatly.yml"
+                        sh "rm ${integreatlyMetaFile}"
                     }
                     productPreReleaseImages.each { imageUrl ->
                         URI uri = new URI("docker://${imageUrl}");
@@ -234,7 +234,7 @@ node {
                         metaConfig['imageSync']['projects'][project]['images'] << image
                     }
                     writeYaml file: integreatlyMetaFile, data: metaConfig
-                    sh "git add integreatly.yml"
+                    sh "git add ${integreatlyMetaFile}"
                     sh "git status"
                 }
             }
