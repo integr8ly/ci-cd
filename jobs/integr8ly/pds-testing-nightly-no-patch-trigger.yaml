@@ -29,6 +29,7 @@
             CUSTOMER_ADMIN_PASSWORD=Password1
             CLEAN_RESOURCES=true
             MANIFEST_VERSION=master
+            INSTALL_BACKUPS=false
             TESTING_MASTER=false
             NUMBER_OF_USERS=5
             PATCH_TO_MASTER=false
@@ -57,6 +58,7 @@
                         booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
                         string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}"),
                         booleanParam(name: 'PATCH_TO_MASTER', value: Boolean.valueOf("${PATCH_TO_MASTER}")),
+                        booleanParam(name: 'INSTALL_BACKUPS', value: Boolean.valueOf("${INSTALL_BACKUPS}")),
                         string(name: 'TO_DO', value: "${TO_DO}")
                     ]).result
 

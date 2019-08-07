@@ -84,6 +84,10 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             name: PATCH_TO_MASTER
             default: false
             description: "Indicates whether the components should be patched to master during installation"
+        - bool:
+            name: INSTALL_BACKUPS
+            default: false
+            description: "Indicates whether backups namespace should be installed during Integr8ly installation"
         - string:
             name: NAMESPACE_PREFIX
             description: "This value will be prefixed to the names of the namespaces created during Integr8ly installation. Defaulting to empty string for RHPDS"
@@ -170,7 +174,8 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 string(name: 'YOURCITY', value: "${YOURCITY}"),
                 string(name: 'BASTION_USER', value: 'ec2-user'),
                 string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
-                string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
+                string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')
+            ]
 
             sleep time: sleepTime, unit: 'MINUTES'
         }
@@ -181,13 +186,15 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
                 string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
                 string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
+                booleanParam(name: 'INSTALL_BACKUPS', value: Boolean.valueOf("${INSTALL_BACKUPS}")),
                 booleanParam(name: 'PATCH_TO_MASTER', value: Boolean.valueOf("${PATCH_TO_MASTER}")),
                 booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
                 string(name: 'ANSIBLE_USER', value: 'ec2-user'),
                 string(name: 'YOURCITY', value: "${YOURCITY}"),
                 string(name: 'BASTION_USER', value: 'ec2-user'),
                 string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
-                string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')]
+                string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')
+            ]
             
             if (sleepAfterInstall) {
                 sleep time: 3, unit: 'MINUTES'
@@ -195,7 +202,6 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
         }
 
         def runTests() {
-
             parameters = [
                 string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
                 string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
