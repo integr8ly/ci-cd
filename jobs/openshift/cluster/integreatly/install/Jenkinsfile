@@ -10,7 +10,7 @@ def verifyInstallerOptions(installerOptions) {
                 string(defaultValue: (installerOptions.clusterName ?: ''), description: 'Cluster name', name: 'clusterName'),
                 string(defaultValue: (installerOptions.openshiftMasterUrl ?: ''), description: 'OpenShift cluster public URL', name: 'openshiftMasterUrl'),
                 string(defaultValue: (installerOptions.clusterAdminUsername ?: clusterAdminCredentials.clusterAdminUsername), description: 'OpenShift cluster admin username', name: 'clusterAdminUsername'),
-                string(defaultValue: (installerOptions.clusterAdminPassword ?: clusterAdminCredentials.clusterAdminPassword), description: 'OpenShift cluster admin password', name: 'clusterAdminPassword'),
+                password(defaultValue: (installerOptions.clusterAdminPassword ?: clusterAdminCredentials.clusterAdminPassword), description: 'OpenShift cluster admin password', name: 'clusterAdminPassword'),
                 string(defaultValue: (installerOptions.installationGitUrl ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly installer Git URL', name: 'installationGitUrl'),
                 string(defaultValue: (installerOptions.installationGitBranch ?: 'master'), description: 'Integreatly installer Git branch', name: 'installationGitBranch'),
             ]
@@ -41,7 +41,7 @@ stage("Verify Installation Options") {
     installerOptions.clusterName = params.clusterName
     installerOptions.openshiftMasterUrl = params.openshiftMasterUrl
     installerOptions.clusterAdminUsername = params.clusterAdminUsername ?: clusterAdminCredentials.clusterAdminUsername // Defaults to the username stored in tower-openshift-cluster-credentials
-    installerOptions.clusterAdminPassword = params.clusterAdminPassword ?: clusterAdminCredentials.clusterAdminPassword // Defaults to the password stored in tower-openshift-cluster-credentials
+    installerOptions.clusterAdminPassword = "${params.clusterAdminPassword}".toString() ?: clusterAdminCredentials.clusterAdminPassword // Defaults to the password stored in tower-openshift-cluster-credentials
     installerOptions.installationGitUrl = params.installationGitUrl
     installerOptions.installationGitBranch = params.installationGitBranch
     installerOptions.userCount = params.userCount

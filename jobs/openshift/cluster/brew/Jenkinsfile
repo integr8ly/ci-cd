@@ -9,7 +9,7 @@ def verifyImageSyncOptions(options) {
         def userInput = input message: 'Image Sync Options', parameters: [
                 string(defaultValue: (options.openshiftMasterUrl ?: ''), description: 'OpenShift cluster public URL', name: 'openshiftMasterUrl'),
                 string(defaultValue: (options.clusterAdminUsername ?: clusterAdminCredentials.clusterAdminUsername), description: 'OpenShift cluster admin username', name: 'clusterAdminUsername'),
-                string(defaultValue: (options.clusterAdminPassword ?: clusterAdminCredentials.clusterAdminPassword), description: 'OpenShift cluster admin password', name: 'clusterAdminPassword'),
+                password(defaultValue: (options.clusterAdminPassword ?: clusterAdminCredentials.clusterAdminPassword), description: 'OpenShift cluster admin password', name: 'clusterAdminPassword'),
                 string(defaultValue: (options.installationGitUrl ?: 'https://github.com/integr8ly/installation.git'), description: 'Integreatly installer Git URL', name: 'installationGitUrl'),
                 string(defaultValue: (options.installationGitBranch ?: 'master'), description: 'Integreatly installer Git branch', name: 'installationGitBranch'),
         ]
@@ -44,7 +44,7 @@ stage('Image Sync Options') {
     imageSyncOptions.openshiftMasterUrl = params.openshiftMasterUrl
     imageSyncOptions.clusterAdminUsername = params.clusterAdminUsername ?: clusterAdminCredentials.clusterAdminUsername
     // Defaults to the username stored in tower-openshift-cluster-credentials
-    imageSyncOptions.clusterAdminPassword = params.clusterAdminPassword ?: clusterAdminCredentials.clusterAdminPassword
+    imageSyncOptions.clusterAdminPassword = "${params.clusterAdminPassword}".toString() ?: clusterAdminCredentials.clusterAdminPassword
     // Defaults to the password stored in tower-openshift-cluster-credentials
     imageSyncOptions.installationGitUrl = params.installationGitUrl
     imageSyncOptions.installationGitBranch = params.installationGitBranch
@@ -96,8 +96,12 @@ node('cirhos_rhel7') {
 
     stage('Authenticate to OpenShift') {
         when(syncImages) {
-            sh "oc login ${imageSyncOptions.openshiftMasterUrl} -u ${imageSyncOptions.clusterAdminUsername} -p ${imageSyncOptions.clusterAdminPassword} --insecure-skip-tls-verify"
-            imageSyncOptions.clusterAdminAuthToken = sh(returnStdout: true, script: "oc whoami -t").trim()
+            if (params.dryRun) {
+              println "Would authenticate to ${imageSyncOptions.openshiftMasterUrl}"
+            } else {
+              sh "oc login ${imageSyncOptions.openshiftMasterUrl} -u ${imageSyncOptions.clusterAdminUsername} -p ${imageSyncOptions.clusterAdminPassword} --insecure-skip-tls-verify"
+              imageSyncOptions.clusterAdminAuthToken = sh(returnStdout: true, script: "oc whoami -t").trim()
+            }
         }
     }
 
