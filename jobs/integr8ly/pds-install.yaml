@@ -38,6 +38,7 @@
             description: "User capable of SSH-ing to bastion server"
         - string:
             name: BASTION_PRIVATE_KEY_ID
+            default: pds-bastion-pem
             description: "ID of SSH Credentials (private key) used for SSH-ing to bastion"
         - string:
             name: ADDITIONAL_ANSIBLE_PARAMS
@@ -46,6 +47,10 @@
             name: PATCH_TO_MASTER
             default: false
             description: "Indicates whether the components should be patched to master during installation"
+        - bool:
+            name: INSTALL_BACKUPS
+            default: false
+            description: "Indicates whether backups namespace should be installed during Integr8ly installation"
         - string:
             name: NAMESPACE_PREFIX
             description: "This value will be prefixed to the names of the namespaces created during Integr8ly installation. Defaulting to empty string for RHPDS"
@@ -66,10 +71,11 @@
                                   "backup_version"]
         String MASTER_URL = "master1.${YOURCITY}.internal"
         String BASTION_URL = "bastion.${YOURCITY}.openshiftworkshop.com"    
-        String bastionLabel = "${BASTION_URL}-slave"                      
-        
+        String bastionLabel = "${BASTION_URL}-slave"   
+        String secretFileName = "QE-AWS-SECRET.yml"                   
+        def secretContent
         try {
-            timeout(60) { ansiColor('gnome-terminal') { timestamps {
+            timeout(75) { ansiColor('gnome-terminal') { timestamps {
                 node('cirhos_rhel7') {       
                     stage('Verify input') {
                         if (!YOURCITY) {
@@ -115,6 +121,12 @@
                             println "Slave ${bastionLabel} has been created successfully."
                         } // end if
                     } // stage
+
+                    stage('Obtain s3-credentials secret for backups namespace') {
+                        if (INSTALL_BACKUPS.toString() == 'true') {
+                            secretContent = sh (returnStdout: true, script: 'curl -k https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe/raw/development/resources/QE-AWS-SECRET.yml')
+                        }
+                    } // stage
                 } // node
 
                 node(bastionLabel) {
@@ -139,6 +151,7 @@
                     stage('Prepare environment') {
                         dir('installation') {
                             sh """
+                                sudo oc login -u system:admin
                                 cp ./evals/inventories/hosts.template ./evals/inventories/hosts
                                 sed -i 's/ansible_user=ec2-user/ansible_user=${ANSIBLE_USER}/g' ./evals/inventories/hosts
                             """
@@ -162,6 +175,27 @@
                                     """
                                 }
                             }
+                            if (INSTALL_BACKUPS.toString() == 'true') {
+                                String backupsNamespace = 'openshift-integreatly-backups';
+                                String secretName = 's3-credentials';
+                                String obtainSecretsCommand = 'sudo oc get secrets -n ' + backupsNamespace
+
+                                def projects = sh(script: 'sudo oc projects', returnStdout: true)
+                                if (!projects.contains(backupsNamespace)) {
+                                    sh """
+                                        sudo oc create ns ${backupsNamespace}
+                                    """
+                                }
+                                
+                                def secrets = sh(script: obtainSecretsCommand, returnStdout: true)
+                                if (!secrets.contains(secretName)) {
+                                    writeYaml file: secretFileName, data: secretContent
+                                    sh """
+                                        sudo oc create -f ${secretFileName}
+                                        rm ${secretFileName}
+                                    """
+                                }
+                            }
                         } // dir
                     } // stage
                     
@@ -175,16 +209,18 @@
                             if (ADDITIONAL_ANSIBLE_PARAMS.indexOf('eval_seed_users_count') == -1) {
                                 ansibleParams = ansibleParams + " -e eval_seed_users_count=15"
                             }
+                            if (INSTALL_BACKUPS.toString() == 'true') {
+                                ansibleParams = ansibleParams + " -e backup_restore_install=true"
+                            }
                             ansibleParams = ansibleParams + " ${ADDITIONAL_ANSIBLE_PARAMS}"
                             
                             sh """
-                                sudo oc login -u system:admin
                                 sudo ansible-playbook -i ./inventories/hosts ./playbooks/install.yml ${ansibleParams} -e eval_self_signed_certs=${SELF_SIGNED_CERTS} -e ns_prefix=${NAMESPACE_PREFIX}
                             """
                         } // dir
                     } // stage
 
-                     stage('Execute "After Installation" Workarounds') {
+                    stage('Execute "After Installation" Workarounds') {
                         if (BRANCH == 'master' && PATCH_TO_MASTER.toString() == 'true') {  
                             sleep time: 2, unit: 'MINUTES' // to make sure that everything is ready to be patched
                             sh """
