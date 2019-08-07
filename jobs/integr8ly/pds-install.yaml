@@ -211,6 +211,7 @@
                                 # patch user-sso keycloak-operator to use master tag
                                 sudo oc patch deployment keycloak-operator -n ${NAMESPACE_PREFIX}user-sso -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "keycloak-operator", "image": "quay.io/integreatly/keycloak-operator:master" }]}}}}'
                             """
+                            sleep time: 5, unit: 'MINUTES' // to make sure that webapp is up and running after patching is applied
                         }
                     } // stage
                 } // node
