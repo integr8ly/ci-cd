@@ -63,8 +63,12 @@
                                 sed -i 's/"start_process" : true,/"start_process" : false,/g' nightwatch.json
                                 rm -rf screenshots reports # so that any leftovers from past builds are not archived
                                 npm install
-                                npm test ${TEST_TO_RUN}
+                                npm test ${TEST_TO_RUN} | tee output.txt
                                 """   
+                                String output = readFile("output.txt");
+                                if (output.contains('TEST FAILURE')) {
+                                    currentBuild.result = 'UNSTABLE'
+                                }
                             } catch (Exception e) {
                                 String reportsDirEntriesCount = sh returnStdout: true, script: 'ls reports | wc -l'
                                 if (reportsDirEntriesCount.trim() == '0') {
