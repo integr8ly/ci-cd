@@ -102,6 +102,9 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/three-scale-re
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/w1-test-executor.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/w2-test-executor.yaml
 
+# OpenShit 4 related jobs
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/ocp4/pds-ocp4-install.yaml
+
 #Views
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/repos/
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/release/
