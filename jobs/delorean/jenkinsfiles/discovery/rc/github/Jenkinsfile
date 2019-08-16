@@ -41,7 +41,7 @@ String getThreescalePrerelease(projectOrg, projectRepo, githubCredentialsID) {
     def latestRelease = ""
     def ghUtils = new org.integr8ly.GitHubUtils()
     def tags = ghUtils.ghGetRepoTags(projectOrg, projectRepo, githubCredentialsID,"")
-    tags = tags.findAll { tag -> tag.ref.matches(/.*(-CR|-ER).*/) }
+    tags = tags.findAll { tag -> tag.ref.matches(/.*(-CR).*/) }
     if (tags) {
         latestRelease = tags.last().ref
         latestRelease = latestRelease.minus("refs/tags/")
