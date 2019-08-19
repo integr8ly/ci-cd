@@ -70,7 +70,7 @@
                                   "middleware_monitoring_operator_release_tag",
                                   "backup_version"]
         String MASTER_URL = "master1.${YOURCITY}.internal"
-        String BASTION_URL = "bastion.${YOURCITY}.openshiftworkshop.com"    
+        String BASTION_URL = "bastion.${YOURCITY}.open.redhat.com"    
         String bastionLabel = "${BASTION_URL}-slave"   
         String secretFileName = "QE-AWS-SECRET.yml"                   
         def secretContent
