@@ -76,7 +76,7 @@
             registryNamespace = params.REGISTRY_NAMESPACE
         }
 
-        String clusterAPI = "https://api.cluster-${RHPDS_CITY}.${RHPDS_CITY}.open.redhat.com:6443"
+        String clusterAPI = "https://api.cluster-${RHPDS_CITY}.${RHPDS_CITY}.openshiftworkshop.com:6443"
 
         // by default build number is used as namespacePrefix to prevent clashes with previous Integreatly Operator deployments
         String namespacePrefix = BUILD_NUMBER
@@ -189,8 +189,8 @@
                         sh(
                             returnStdout: false,
                             script: """
-                                sed -i "s@http://master.example.com@https://console-openshift-console.apps.cluster-${RHPDS_CITY}.${RHPDS_CITY}.open.redhat.com@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
-                                sed -i "s@example.com@apps.cluster-${RHPDS_CITY}.${RHPDS_CITY}.open.redhat.com@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
+                                sed -i "s@http://master.example.com@https://console-openshift-console.apps.cluster-${RHPDS_CITY}.${RHPDS_CITY}.openshiftworkshop.com@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
+                                sed -i "s@example.com@apps.cluster-${RHPDS_CITY}.${RHPDS_CITY}.openshiftworkshop.com@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
                                 sed -i "s@integreatly-@${namespacePrefix}-integreatly-@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
                                 sed -i "s@type: workshop@type: ${INSTALLATION_TYPE}@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
 
