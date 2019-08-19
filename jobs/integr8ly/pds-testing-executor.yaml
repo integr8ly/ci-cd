@@ -205,18 +205,18 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             parameters = [
                 string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
                 string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
-                string(name: 'CLUSTER_URL', value: "https://master.${YOURCITY}.openshiftworkshop.com"),
+                string(name: 'CLUSTER_URL', value: "https://master.${YOURCITY}.open.redhat.com"),
                 string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                 string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
                 string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                 string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),
                 string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
                 string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
-                string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-${NAMESPACE_PREFIX}webapp.apps.${YOURCITY}.openshiftworkshop.com"),
+                string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-${NAMESPACE_PREFIX}webapp.apps.${YOURCITY}.open.redhat.com"),
                 booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
                 string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
                 booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
-                string(name: 'SSO_URL', value: "https://sso-${NAMESPACE_PREFIX}sso.apps.${YOURCITY}.openshiftworkshop.com"),
+                string(name: 'SSO_URL', value: "https://sso-${NAMESPACE_PREFIX}sso.apps.${YOURCITY}.open.redhat.com"),
                 string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}")
             ]
 

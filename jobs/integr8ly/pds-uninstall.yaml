@@ -41,7 +41,7 @@
         import hudson.plugins.sshslaves.verifiers.*
 
         String MASTER_URL = "master1.${YOURCITY}.internal"
-        String BASTION_URL = "bastion.${YOURCITY}.openshiftworkshop.com"    
+        String BASTION_URL = "bastion.${YOURCITY}.open.redhat.com"    
         String bastionLabel = "${BASTION_URL}-slave"
 
         try {
