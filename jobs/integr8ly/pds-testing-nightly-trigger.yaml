@@ -14,6 +14,7 @@
       - inject:
           properties-content: |
             YOURCITY=yourcity-hash
+            CLUSTER_DOMAIN=open.redhat.com
             GH_CLIENT_ID=yourclientid
             GH_CLIENT_SECRET=yourclientsecret
             SELF_SIGNED_CERTS=false
@@ -40,6 +41,7 @@
                 stage ('Trigger PDS Pipeline') {
                     buildStatus = build(job: 'pds-testing-executor', propagate: false, parameters: [
                         string(name: 'YOURCITY', value: "${YOURCITY}"),
+                        string(name: 'CLUSTER_DOMAIN', value: "${CLUSTER_DOMAIN}"),
                         string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
                         string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
                         string(name: 'SELF_SIGNED_CERTS', value: "${SELF_SIGNED_CERTS}"),

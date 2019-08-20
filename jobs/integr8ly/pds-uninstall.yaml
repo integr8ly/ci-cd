@@ -19,6 +19,10 @@
             name: YOURCITY
             description: "City or Customer (5 char min.) plus the generated hash, e.g. qebrno-5d10 [required]"    
         - string:
+            name: CLUSTER_DOMAIN
+            default: 'open.redhat.com'
+            description: "Cluster domain - could be open.redhat.com or example.opentlc.com"
+        - string:
             name: ANSIBLE_USER
             default: ec2-user
             description: "User for Ansible to access the master node of target cluster"
@@ -41,7 +45,7 @@
         import hudson.plugins.sshslaves.verifiers.*
 
         String MASTER_URL = "master1.${YOURCITY}.internal"
-        String BASTION_URL = "bastion.${YOURCITY}.open.redhat.com"    
+        String BASTION_URL = "bastion.${YOURCITY}.${CLUSTER_DOMAIN}"    
         String bastionLabel = "${BASTION_URL}-slave"
 
         try {

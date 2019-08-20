@@ -14,6 +14,10 @@
             name: YOURCITY
             description: "City or Customer (5 char min.) plus the generated hash, e.g. qebrno-5d10 [required]"
         - string:
+            name: CLUSTER_DOMAIN
+            default: 'open.redhat.com'
+            description: "Cluster domain - could be open.redhat.com or example.opentlc.com"
+        - string:
             name: GH_CLIENT_ID
             description: "GitHub OAuth Client ID, required for some of the walkthroughs. Can be left empty"
         - string:
@@ -172,6 +176,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
                 string(name: 'ANSIBLE_USER', value: 'ec2-user'),
                 string(name: 'YOURCITY', value: "${YOURCITY}"),
+                string(name: 'CLUSTER_DOMAIN', value: "${CLUSTER_DOMAIN}"),
                 string(name: 'BASTION_USER', value: 'ec2-user'),
                 string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
                 string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')
@@ -191,6 +196,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
                 string(name: 'ANSIBLE_USER', value: 'ec2-user'),
                 string(name: 'YOURCITY', value: "${YOURCITY}"),
+                string(name: 'CLUSTER_DOMAIN', value: "${CLUSTER_DOMAIN}"),
                 string(name: 'BASTION_USER', value: 'ec2-user'),
                 string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
                 string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')
@@ -205,18 +211,18 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             parameters = [
                 string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
                 string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
-                string(name: 'CLUSTER_URL', value: "https://master.${YOURCITY}.open.redhat.com"),
+                string(name: 'CLUSTER_URL', value: "https://master.${YOURCITY}.${CLUSTER_DOMAIN}"),
                 string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                 string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
                 string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                 string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),
                 string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
                 string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
-                string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-${NAMESPACE_PREFIX}webapp.apps.${YOURCITY}.open.redhat.com"),
+                string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-${NAMESPACE_PREFIX}webapp.apps.${YOURCITY}.${CLUSTER_DOMAIN}"),
                 booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
                 string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
                 booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
-                string(name: 'SSO_URL', value: "https://sso-${NAMESPACE_PREFIX}sso.apps.${YOURCITY}.open.redhat.com"),
+                string(name: 'SSO_URL', value: "https://sso-${NAMESPACE_PREFIX}sso.apps.${YOURCITY}.${CLUSTER_DOMAIN}"),
                 string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}")
             ]
 
