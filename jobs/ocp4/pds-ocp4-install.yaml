@@ -134,7 +134,7 @@
                                     returnStdout: false,
                                     script: """
                                         wget https://raw.githubusercontent.com/integr8ly/manifests/master/operator-source.yml
-                                        set -i s@registryNamespace: integreatly@registryNamespace: ${registryNamespace}@ ./operator-source.yml
+                                        sed -i s@registryNamespace: integreatly@registryNamespace: ${registryNamespace}@ ./operator-source.yml
                                         ./oc create -f ./operator-source.yml
 
                                         ./oc create namespace ${namespaceName}
