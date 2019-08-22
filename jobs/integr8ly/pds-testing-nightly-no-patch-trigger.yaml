@@ -26,7 +26,7 @@
             EVALS_USERNAME=evals11@example.com
             ADMIN_USERNAME=admin@example.com
             ADMIN_PASSWORD=Password1
-            CUSTOMER_ADMIN_PASSWORD=customer-admin@example.com
+            CUSTOMER_ADMIN_USERNAME=customer-admin@example.com
             CUSTOMER_ADMIN_PASSWORD=Password1
             CLEAN_RESOURCES=true
             MANIFEST_VERSION=master
