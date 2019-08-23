@@ -102,9 +102,9 @@
                         runTests('installation-smoke-tests')
                     } // stage
 
-                    // stage ('Alerts test') { // uncomment when https://issues.jboss.org/browse/INTLY-2815 is resolved
-                        // runTests('alerts-test')
-                    // } // stage
+                    stage ('Alerts test') {
+                        runTests('alerts-test')
+                    }
 
                     stage ('Browser Based Tests') {
                         runTests('browser-based-testsuite-pipeline')
