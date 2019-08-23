@@ -51,12 +51,10 @@
                     dir('test-suites/backend-testsuite') {
                         sh '''
                             npm install
+                            ./node_modules/gulp/bin/gulp.js after-first-login 2>&1 | tee output.txt
                         '''
 
-                        String output = sh returnStdout: true, script: './node_modules/gulp/bin/gulp.js after-first-login || true'
-
-                        // To see the output in Jenkins build console log as well
-                        println output
+                        String output = readFile("output.txt");
                         
                         if(!output.contains('Integreatly After First Login Tests')) {
                             currentBuild.result = 'FAILURE'

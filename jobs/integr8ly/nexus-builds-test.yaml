@@ -47,7 +47,7 @@
                     dir('test-suites/backend-testsuite') {
                         sh '''
                             npm install
-                            ./node_modules/gulp/bin/gulp.js nexus-builds | tee output.txt
+                            ./node_modules/gulp/bin/gulp.js nexus-builds 2>&1 | tee output.txt
                         '''
                         String output = readFile("output.txt");
                         

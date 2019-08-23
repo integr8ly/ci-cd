@@ -54,7 +54,7 @@
                     dir('test-suites/backend-testsuite') {
                         sh '''
                             npm install
-                            ./node_modules/gulp/bin/gulp.js fuse-w1A | tee output.txt
+                            ./node_modules/gulp/bin/gulp.js fuse-w1A 2>&1 | tee output.txt
                         '''  
                         String output = readFile("output.txt");
                         

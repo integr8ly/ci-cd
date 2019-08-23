@@ -77,14 +77,14 @@
                                 dir('test-suites/backend-testsuite') {
                                     sh '''
                                         npm install
-                                        ./node_modules/gulp/bin/gulp.js 3scale | tee output.txt
+                                        ./node_modules/gulp/bin/gulp.js 3scale 2>&1 | tee output.txt
                                     '''  
                                     String output = readFile("output.txt");
                                     
-                                    if(!output.contains('3scale W2 API management tests')) {
+                                    if (!output.contains('3scale W2 API management tests')) {
                                         currentBuild.result = 'FAILURE'
                                         publishTestResults = false
-                                    } else if(output.contains('There were test failures')) {
+                                    } else if (output.contains('There were test failures')) {
                                         currentBuild.result = 'UNSTABLE'
                                     }
                                 }
