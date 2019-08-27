@@ -59,7 +59,7 @@
                                 sed -i 's/"start_process" : true,/"start_process" : false,/g' nightwatch.json
                                 rm -rf screenshots reports # so that any leftovers from past builds are not archived
                                 npm install
-                                npm test | tee output.txt
+                                npm test 2>&1 | tee output.txt
                                 """   
                                 String output = readFile("output.txt");
                                 if (output.contains('TEST FAILURE')) {
