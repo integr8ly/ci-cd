@@ -17,7 +17,7 @@
           name: 'clusterAdminUsername'
           default: ''
           description: '[OPTIONAL] Username of the cluster admin account. Defaults to the username stored in tower-openshift-cluster-credentials'
-      - string:
+      - password:
           name: 'clusterAdminPassword'
           default: ''
           description: '[OPTIONAL] Password of the cluster admin account. Defaults to the password stored in tower-openshift-cluster-credentials'
