@@ -48,3 +48,13 @@
   with_dict: "{{ jenkins_secret_text_credentials }}"
   loop_control:
     loop_var: secret_text_credential
+
+- name: Create aws credentials
+  include_tasks: _create_credentials.yaml
+  vars:
+    req_headers: "{{ headers }}"
+    credential: "{{ aws_credential }}"
+    type: "aws_creds"
+  with_dict: "{{ jenkins_aws_credentials }}"
+  loop_control:
+    loop_var: aws_credential

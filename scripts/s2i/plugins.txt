@@ -19,3 +19,4 @@ aws-sqs:2.0.1
 ansicolor:0.5.2
 ansible-tower:0.9.1
 ws-cleanup:0.37
+aws-credentials:1.26

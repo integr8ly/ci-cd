@@ -69,6 +69,9 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/op
 generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/openshift-cluster-integreatly-test.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/brew/openshift-cluster-brew-image-sync.yaml
 
+# OpenShit 4 Cluster jobs
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift4/cluster/create/openshift4-cluster-create.yaml
+
 #Delorean Folders
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/delorean/folders.yaml
 
