@@ -1,0 +1,144 @@
+#!groovy
+// by default build number is used as cluster to prevent clashes with possibly already existing clusters
+String clusterName = BUILD_NUMBER
+String awsRegion = params.AWS_REGION
+String baseDomain = "intlyqe.com"
+if (CLUSTER_NAME) {
+    clusterName = CLUSTER_NAME
+}
+String clusterInfoDirectory = "clusters/" + clusterName
+String installConfigDirectory = ""
+String rootWorkspaceDir = ""
+
+def err = null
+String adminPassword = ""
+
+node("cirhos_rhel7") {
+    timeout(120) { ansiColor("gnome-terminal") { timestamps {
+        try {
+            currentBuild.displayName = "${currentBuild.displayName} ${clusterName}"
+            currentBuild.description = "clusterName: ${clusterName}\nawsRegion: ${awsRegion}"
+            
+            stage("Configure aws cli") {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: params.CREDENTIALS_ID, accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    sh(
+                        returnStdout: false,
+                        script: """
+                            rm -rf ~/.aws
+                            mkdir ~/.aws
+                            touch ~/.aws/credentials
+                            # set +x # suppress output of the next shell command
+                            echo "[default]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}" > ~/.aws/credentials
+                            # set -x
+                        """
+                    )
+                }
+            } // stage
+            
+            stage("Prepare the repo to store created cluster information") {
+                dir("rhmi-jenkins") {
+                    git branch: "master", url: "https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git"
+                    def dirExists = fileExists(clusterInfoDirectory)
+                    if (dirExists) {
+                        error "[ERROR] Configuration files found for ${clusterName}! Make sure that the cluster name is unique"
+                    } 
+                    sh "mkdir -p ${clusterInfoDirectory}"
+                }
+            }
+            
+            stage("Update the cluster creation template information") {
+                dir("rhmi-jenkins") {
+                    sh(
+                        returnStdout: false,
+                        script: """
+                            cp templates/install-config.yaml ${clusterInfoDirectory}
+                            sed -i 's/CLUSTER_NAME/${clusterName}/g' ${clusterInfoDirectory}/install-config.yaml
+                            sed -i 's/COMPUTE_REPLICAS/${COMPUTE_REPLICAS}/g' ${clusterInfoDirectory}/install-config.yaml
+                            sed -i 's/CONTROL_PLANE_REPLICAS/${CONTROL_PLANE_REPLICAS}/g' ${clusterInfoDirectory}/install-config.yaml
+                            sed -i 's/AWS_REGION/${awsRegion}/g' ${clusterInfoDirectory}/install-config.yaml
+                            sed -i 's/BASE_DOMAIN/${baseDomain}/g' ${clusterInfoDirectory}/install-config.yaml
+                            echo 'Creating OpenShift 4 cluster with the following configuration:'
+                            cat ${clusterInfoDirectory}/install-config.yaml
+                        """
+                    )
+                }
+            } // stage
+            
+            stage("Create OpenShift 4 cluster") {
+                rootWorkspaceDir = sh (
+                    script: "pwd",
+                    returnStdout: true
+                ).trim()
+                installConfigDirectory = rootWorkspaceDir + "/rhmi-jenkins/" + clusterInfoDirectory + "/"
+                sh "openshift-install create cluster --dir=${installConfigDirectory} --log-level=${LOG_LEVEL} 2>&1 | tee log.file"
+                sh "mv log.file ${installConfigDirectory}"
+            } // stage
+            
+            stage("Push config files to GitLab") {
+                withCredentials([string(credentialsId: "gitlab-access-token", variable: "GITLAB_ACCESS_TOKEN")]) {
+                    dir("rhmi-jenkins") {
+                        sh(
+                            returnStdout: false,
+                            script: """
+                                git remote add jenkins https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git
+                                git add -A
+                                git commit -m 'cluster created: ${clusterName}'
+                                git push jenkins master
+                            """
+                        )
+                    }
+                }
+            }
+            
+            stage("Install dedicated-admin operator") {
+                String installationLog = sh (
+                    script: "cat ${installConfigDirectory}log.file",
+                    returnStdout: true
+                ).trim()
+                if (installationLog.contains("Install complete")) {
+                    adminPassword = sh (
+                        script: "cat ${installConfigDirectory}auth/kubeadmin-password",
+                        returnStdout: true
+                    ).trim()
+                    sh "oc login https://api.${clusterName}.${baseDomain}:6443 --insecure-skip-tls-verify=true -u kubeadmin -p ${adminPassword}"
+                    dir("integreatly-operator") {
+                        git branch: "master", url: "https://github.com/integr8ly/integreatly-operator.git"
+                        sh "./scripts/dedicated-setup.sh"
+                    }
+                } else {
+                    currentBuild.result = 'FAILURE'
+                    // TODO trigger cluster destroy pipeline when such pipeline is available
+                }
+            } // stage
+            
+        } catch (caughtError){
+            currentBuild.result = "FAILURE"
+            err = caughtError
+            println caughtError
+        } finally {
+            notifyBuild(currentBuild.result, err)
+            cleanup()
+        }
+    }}} // timeout, ansiColor, timestamps
+} // node
+
+def notifyBuild(String buildStatus, err) {
+    if (params.RECIPIENTS.toString().length() > 0) {
+        buildStatus =  buildStatus ?: "SUCCESS"
+    
+        String mailRecipients = "${RECIPIENTS}"
+        String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+        String body = "${subject}\n\n(${env.BUILD_URL})"
+    
+        if (err != null) {
+            body = "${body}\n\n FAILURE was ${err}"
+        }
+    
+        mail body: body, subject: subject, to: mailRecipients   
+    }
+}
+
+def cleanup() {
+    cleanWs() // remove any files related to current build
+    sh (returnStdout: false, script: "rm -rf ~/.aws") // remove aws config folder
+}
