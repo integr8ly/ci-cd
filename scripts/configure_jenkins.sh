@@ -75,35 +75,49 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/delorean/folders.yaml
 #Generated jobs
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/generated/
 
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/after-first-login-tests.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/alerts-test.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/all-tests-executor.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/amq-online-address-creation-test.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/browser-based-single-test.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/browser-based-testsuite-pipeline.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/codeready-test.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/customer-admin-permissions-test.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/delorean-testing-nightly-trigger.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/fuse-test.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/installation-smoke-tests.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/launcher-test.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/msb-integration-test.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/nexus-builds-test.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/pds-install.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/pds-testing-executor.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/pds-uninstall.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/poc-install.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/poc-testing-executor.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/poc-uninstall.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/tower-clean-uninstall.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/recreate-pipelines.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/sso-user-create.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/three-scale-restoration.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/w1-test-executor.yaml
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/w2-test-executor.yaml
+#utils
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/utils/recreate-pipelines.yaml
 
-# OpenShit 4 related jobs
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/ocp4/pds-ocp4-install.yaml
+#Integreatly-QE jobs - OpenShift 3
+
+#Delorean nightly trigger
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/delorean-testing-nightly-trigger.yaml
+
+#PDS
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/pds/pds-install.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/pds/pds-testing-executor.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/pds/pds-uninstall.yaml
+
+#POC
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/poc/poc-install.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/poc/poc-testing-executor.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/poc/poc-uninstall.yaml
+
+#test-suites
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/after-first-login-tests.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/alerts-test.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/all-tests-executor.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/amq-online-address-creation-test.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/browser-based-single-test.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/browser-based-testsuite-pipeline.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/codeready-test.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/customer-admin-permissions-test.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/fuse-test.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/installation-smoke-tests.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/launcher-test.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/msb-integration-test.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/nexus-builds-test.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/sso-user-create.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/three-scale-restoration.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/w1-test-executor.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/test-suites/w2-test-executor.yaml
+
+#tower
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/tower/tower-clean-uninstall.yaml
+
+
+#Integreatly-QE jobs - OpenShift 4 
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp4/pds-ocp4-install.yaml
 
 #Views
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/repos/
