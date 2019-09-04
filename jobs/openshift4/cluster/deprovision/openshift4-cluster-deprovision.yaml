@@ -1,0 +1,35 @@
+---
+- job:
+    name: openshift4-cluster-deprovision
+    display-name: 'OpenShift 4 Cluster Deprovision'
+    project-type: pipeline
+    concurrent: true
+    parameters:
+      - string:
+          name: 'CLUSTER_NAME'
+          default: ''
+          description: 'Name of the cluster (e.g. your kerberos username). Defaults to build number'
+      - string:
+          name: 'RECIPIENTS'
+          default: ''
+          description: "Whitespace- or comma-separated list of email addresses to which the result of this pipeline execution will be sent"
+      - choice:
+          name: 'LOG_LEVEL'
+          choices:
+            - 'info'
+            - 'debug'
+          description: 'Log level of the cluster create command'
+          default: 'info'
+      - string:
+          name: 'CREDENTIALS_ID'
+          default: 'iam-openshift4-credentials'
+          description: 'AWS IAM credentials used to deprovision OpenShift cluster'
+    pipeline-scm:
+      script-path: jobs/openshift4/cluster/deprovision/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

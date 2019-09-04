@@ -106,8 +106,13 @@ node("cirhos_rhel7") {
                         sh "./scripts/dedicated-setup.sh"
                     }
                 } else {
+                    build (job: 'openshift4-cluster-deprovision', parameters:[
+                        [$class: 'StringParameterValue', name: 'CLUSTER_NAME', value: CLUSTER_NAME],
+                        [$class: 'StringParameterValue', name: 'RECIPIENTS', value: RECIPIENTS],
+                        [$class: 'StringParameterValue', name: 'LOG_LEVEL', value: LOG_LEVEL],
+                        [$class: 'StringParameterValue', name: 'CREDENTIALS_ID', value: CREDENTIALS_ID]
+                    ])
                     currentBuild.result = 'FAILURE'
-                    // TODO trigger cluster destroy pipeline when such pipeline is available
                 }
             } // stage
             

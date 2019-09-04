@@ -1,0 +1,98 @@
+#!groovy
+if (params.CLUSTER_NAME.toString() == "") {
+    error "CLUSTER_NAME is required to run this pipeline!"
+}
+String clusterInfoDirectory = "clusters/" + params.CLUSTER_NAME
+String installConfigDirectory = ""
+String rootWorkspaceDir = ""
+
+def err = null
+
+node("cirhos_rhel7") {
+    timeout(60) { ansiColor("gnome-terminal") { timestamps {
+        try {
+            currentBuild.displayName = "${currentBuild.displayName} ${CLUSTER_NAME}"
+            
+            stage("Configure aws cli") {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: params.CREDENTIALS_ID, accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    sh(
+                        returnStdout: false,
+                        script: """
+                            rm -rf ~/.aws
+                            mkdir ~/.aws
+                            touch ~/.aws/credentials
+                            set +x # suppress output of the next shell command
+                            echo "[default]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}" > ~/.aws/credentials
+                            set -x
+                        """
+                    )
+                }
+            } // stage
+            
+            stage("Remove OpenShift 4 cluster") {
+                Boolean clusterConfigExists
+                dir("rhmi-jenkins") {
+                    git branch: "master", url: "https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git"
+                    clusterConfigExists = fileExists(clusterInfoDirectory)
+                }
+                if (clusterConfigExists) {
+                    rootWorkspaceDir = sh (
+                        script: "pwd",
+                        returnStdout: true
+                    ).trim()
+                    installConfigDirectory = rootWorkspaceDir + "/rhmi-jenkins/" + clusterInfoDirectory + "/"
+                    sh "openshift-install destroy cluster --dir=${installConfigDirectory} --log-level=${LOG_LEVEL} 2>&1 | tee log.file"
+                    String clusterDestroyOutput = readFile("log.file")
+                    if (clusterDestroyOutput.contains("FATAL")) {
+                        currentBuild.result = 'FAILURE'
+                    } else {
+                        withCredentials([string(credentialsId: "gitlab-access-token", variable: "GITLAB_ACCESS_TOKEN")]) {
+                            dir("rhmi-jenkins") {
+                                sh(
+                                    returnStdout: false,
+                                    script: """
+                                        rm -rf ${clusterInfoDirectory}
+                                        git remote add jenkins https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git
+                                        git add -A
+                                        git commit -m 'cluster destroyed: ${CLUSTER_NAME}'
+                                        git push jenkins master
+                                    """
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    error "No cluster terraform config files available for cluster with name: ${CLUSTER_NAME}!"
+                }
+            } // stage
+        } catch (caughtError){
+            currentBuild.result = "FAILURE"
+            err = caughtError
+            println caughtError
+        } finally {
+            notifyBuild(currentBuild.result, err)
+            cleanup()
+        }
+    }}} // timeout, ansiColor, timestamps
+} // node
+
+def notifyBuild(String buildStatus, err) {
+    if (params.RECIPIENTS.toString().length() > 0) {
+        buildStatus =  buildStatus ?: "SUCCESS"
+    
+        String mailRecipients = "${RECIPIENTS}"
+        String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+        String body = "${subject}\n\n(${env.BUILD_URL})"
+
+        if (err != null) {
+            body = "${body}\n\n FAILURE was ${err}"
+        }
+
+        mail body: body, subject: subject, to: mailRecipients
+    }
+}
+
+def cleanup() {
+    cleanWs() // remove any files related to current build
+    sh (returnStdout: false, script: "rm -rf ~/.aws") // remove aws config folder
+}
