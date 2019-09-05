@@ -1,15 +1,23 @@
 ---
 
 - job:
-    name: pds-ocp4-install
+    name: ocp4-install
     project-type: pipeline
-    description: "Installs Integreatly on RHPDS OCP4 cluster using Integreatly Operator"
+    description: "Installs RHMI on your OpenShift 4 RHPDS or openshift-install cluster (with configuration stored here: https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins/tree/master/clusters"
     sandbox: false
     concurrent: true
     parameters:
         - string:
-            name: RHPDS_CITY
-            description: "City or customer for RHPDS cluster, for example qe-ocp4-[hash]"
+            name: CLUSTER_NAME
+            description: "City or customer for RHPDS cluster, for example qe-ocp4-[hash] or cluster name specified when creating it using openshift-install"
+        - string:
+            name: CLUSTER_DOMAIN
+            default: 'open.redhat.com'
+            description: "Cluster domain - open.redhat.com or example.opentlc.com for RHPDS clusters and intlyqe.com for clusters created using openshift-install"
+        - bool:
+            name: PDS_CLUSTER
+            default: true
+            description: "Indicates whether cluster was provisioned using RHPDS or openshift-install"
         - bool:
             name: SELF_SIGNED_CERTS
             default: true
@@ -17,7 +25,7 @@
         - string:
             name: ADMIN
             default: 'opentlc-mgr'
-            description: "Admin username for the OCP4 cluster"
+            description: "Admin username for the OCP4 RHPDS cluster. For openshift-install clusters kubeadmin will be used by default"
         - string:
             name: ADMIN_PASSWORD_CREDENTIALS
             default: 'pds-opentlc-mgr-password'
@@ -44,16 +52,22 @@
             name: NAMESPACE_PREFIX
             description: "Prefix of Integreatly Operator namespace, defauls to `BUILD_NUMBER`"
         - bool:
-            name: CLEANUP_AFTERWARD
-            default: true
-            description: "Indicates whether to cleanup after execution"
-        - bool:
             name: CLEANUP_BEFOREHAND
             default: true
             description: "Indicates whether to cleanup before execution"
+        - bool:
+            name: CLEANUP_AFTERWARD
+            default: true
+            description: "Indicates whether to cleanup after execution"
         - string:
             name: NAMESPACE_CLEANUP_BEFOREHAND
             description: "Namespace to be removed before the Integreatly Operator deploy. Can be left empty"
+        - string:
+            name: GH_CLIENT_ID
+            description: "GitHub Client ID for OAuth Apps, required for some of the walkthroughs"
+        - string:
+            name: GH_CLIENT_SECRET
+            description: "GitHub Client Secret for OAuth Apps, required for some of the walkthroughs"
         - string:
             name: TEST_SUITES_REPOSITORY
             default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
@@ -67,16 +81,23 @@
             default: 'integreatly-qe@redhat.com'
             description: "Whitespace- or comma-separated list of recipient addresses"
     dsl: |
-        Boolean cleanupAfterward = params.CLEANUP_AFTERWARD
+        #!groovy
         Boolean cleanupBeforehand = params.CLEANUP_BEFOREHAND
+        Boolean cleanupAfterward = params.CLEANUP_AFTERWARD
         Boolean selfSignedCerts = params.SELF_SIGNED_CERTS
+        Boolean isPds = params.PDS_CLUSTER
 
         String registryNamespace = 'integreatly'
         if (params.REGISTRY_NAMESPACE) {
             registryNamespace = params.REGISTRY_NAMESPACE
         }
 
-        String clusterAPI = "https://api.cluster-${RHPDS_CITY}.${RHPDS_CITY}.openshiftworkshop.com:6443"
+        String clusterSuffix = isPds ? "cluster-${CLUSTER_NAME}.${CLUSTER_NAME}.${CLUSTER_DOMAIN}" : "${CLUSTER_NAME}.${CLUSTER_DOMAIN}"
+        
+        String clusterAPI = "https://api.${clusterSuffix}:6443"
+
+        String adminUsername = isPds ? params.ADMIN : "kubeadmin"
+        String githubSecretId = "77b67c9d10dbc6b65c76" // secretId of a new Oauth app created in fh-automatron GH account
 
         // by default build number is used as namespacePrefix to prevent clashes with previous Integreatly Operator deployments
         String namespacePrefix = BUILD_NUMBER
@@ -85,25 +106,34 @@
         }
         String namespaceName = namespacePrefix + '-integreatly-operator'
 
+        String noConfigFilesError = "[ERROR] No configuration files found for ${CLUSTER_NAME}"
         def err = null
 
         node('cirhos_rhel7') {
-            timeout(30) { ansiColor('gnome-terminal') { timestamps {
+            timeout(35) { ansiColor('gnome-terminal') { timestamps {
                 try {
+                    currentBuild.displayName = "${currentBuild.displayName} ${CLUSTER_NAME}"
 
-                    stage('Install oc cli version 4') {
+                    stage('Login to OpenShift 4 cluster') {
                         withCredentials([string(credentialsId: "${ADMIN_PASSWORD_CREDENTIALS}", variable: 'ADMIN_PASSWORD')]) {
-                            sh(
-                                returnStdout: false,
-                                script: """
-                                    wget -q https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.1.8/openshift-client-linux-4.1.8.tar.gz
-
-                                    tar xvzf openshift-client-linux-4.1.8.tar.gz
-
-                                    ./oc login ${clusterAPI} --insecure-skip-tls-verify=true -u ${ADMIN} -p ${ADMIN_PASSWORD}
-                                    ./oc version
-                                """
-                            )
+                            String adminPassword = ""
+                            if (!isPds) {
+                                String loginCredentialDirectory = "clusters/${CLUSTER_NAME}/auth/kubeadmin-password"
+                                dir("rhmi-jenkins") {
+                                    git branch: "master", url: "https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git"
+                                    def dirExists = fileExists(loginCredentialDirectory)
+                                    if (!dirExists) {
+                                        error noConfigFilesError
+                                    }
+                                    adminPassword = sh (
+                                        script: "cat ${loginCredentialDirectory}",
+                                        returnStdout: true
+                                    ).trim()
+                                }
+                            } else {
+                                adminPassword = "${ADMIN_PASSWORD}"
+                            }
+                            sh "oc login ${clusterAPI} --insecure-skip-tls-verify=true -u ${adminUsername} -p ${adminPassword}"
                         } // withCredentials
                     } // stage
                     
@@ -111,7 +141,7 @@
                         if (cleanupBeforehand) {
                             cleanup(clusterAPI, NAMESPACE_CLEANUP_BEFOREHAND)
                         }
-                    }
+                    } // stage
 
                     stage('Clone the Integreatly Operator Repo') {
                         dir('integreatly-operator') {
@@ -135,11 +165,11 @@
                                     script: """
                                         wget https://raw.githubusercontent.com/integr8ly/manifests/master/operator-source.yml
                                         sed -i 's@registryNamespace: integreatly@registryNamespace: ${registryNamespace}@' ./operator-source.yml
-                                        ./oc create -f ./operator-source.yml
+                                        oc create -f ./operator-source.yml
 
-                                        ./oc create namespace ${namespaceName}
+                                        oc create namespace ${namespaceName}
 
-                                        ./oc process -f ./integreatly-operator/deploy/s3-secrets.yaml -p INSTALLATION_NAMESPACE=${namespaceName} -p AWS_ACCESS_KEY_ID=${AWS_S3_KEY_ID} -p AWS_SECRET_ACCESS_KEY=${AWS_S3_SECRET} -p AWS_BUCKET=qe-ocp4-integreatly-operator -p AWS_REGION=eu-west-1 | oc apply -f -
+                                        oc process -f ./integreatly-operator/deploy/s3-secrets.yaml -p INSTALLATION_NAMESPACE=${namespaceName} -p AWS_ACCESS_KEY_ID=${AWS_S3_KEY_ID} -p AWS_SECRET_ACCESS_KEY=${AWS_S3_SECRET} -p AWS_BUCKET=qe-ocp4-integreatly-operator -p AWS_REGION=eu-west-1 | oc apply -f -
                                     """
                                 )
                             } //withCredentials
@@ -168,11 +198,15 @@
                                 sed -i s@INTEGREATLY-OPERATOR_NAMESPACE@${namespaceName}@g ./integreatly-qe/resources/integreatly-operator/operatorgroup-cr.yaml
                                 sed -i s@INTEGREATLY-OPERATOR_NAMESPACE@${namespaceName}@g ./integreatly-qe/resources/integreatly-operator/subscription-cr.yaml
 
-                                ./oc create -f ./integreatly-qe/resources/integreatly-operator/catalogsourceconfig-cr.yaml -n openshift-marketplace
-                                ./oc create -f ./integreatly-qe/resources/integreatly-operator/operatorgroup-cr.yaml -n ${namespaceName}
-                                ./oc create -f ./integreatly-qe/resources/integreatly-operator/subscription-cr.yaml -n ${namespaceName}
+                                oc create -f ./integreatly-qe/resources/integreatly-operator/catalogsourceconfig-cr.yaml -n openshift-marketplace
+                                oc create -f ./integreatly-qe/resources/integreatly-operator/operatorgroup-cr.yaml -n ${namespaceName}
+                                oc create -f ./integreatly-qe/resources/integreatly-operator/subscription-cr.yaml -n ${namespaceName}
                             """
                         )
+                    } // stage
+
+                    stage ('Create GitHub secret') {
+                        sh "oc create secret generic github-oauth-secret --from-literal=clientId=${GH_CLIENT_ID} --from-literal=secret=${GH_CLIENT_SECRET} -n ${namespaceName}"
                     } // stage
 
                     stage ('Create Installation CR') {
@@ -189,13 +223,13 @@
                         sh(
                             returnStdout: false,
                             script: """
-                                sed -i "s@http://master.example.com@https://console-openshift-console.apps.cluster-${RHPDS_CITY}.${RHPDS_CITY}.openshiftworkshop.com@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
-                                sed -i "s@example.com@apps.cluster-${RHPDS_CITY}.${RHPDS_CITY}.openshiftworkshop.com@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
+                                sed -i "s@http://master.example.com@https://console-openshift-console.apps.${clusterSuffix}@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
+                                sed -i "s@example.com@apps.${clusterSuffix}@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
                                 sed -i "s@integreatly-@${namespacePrefix}-integreatly-@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
                                 sed -i "s@type: workshop@type: ${INSTALLATION_TYPE}@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
 
-                                until ./oc get deployments integreatly-operator -n ${namespaceName} --output=json -o jsonpath='{.status.availableReplicas}' | grep -m 1 "1"; do echo "Operator not ready yet. Sleeping for 5 seconds";sleep 5 ; done
-                                ./oc create -f ./integreatly-operator/deploy/crds/examples/installation.cr.yaml -n ${namespaceName}
+                                until oc get deployments integreatly-operator -n ${namespaceName} --output=json -o jsonpath='{.status.availableReplicas}' | grep -m 1 "1"; do echo "Operator not ready yet. Sleeping for 5 seconds";sleep 5 ; done
+                                oc create -f ./integreatly-operator/deploy/crds/examples/installation.cr.yaml -n ${namespaceName}
                             """
                         )
                     } // stage
@@ -204,9 +238,9 @@
                         sh(
                             returnStdout: false,
                             script: """
-                                until ./oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.authentication.phase}' | grep -m 1 "completed"; do echo "Authentication stage not completed yet. Sleeping for 20 seconds";sleep 20 ; done
+                                until oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.authentication.phase}' | grep -m 1 "completed"; do echo "Authentication stage not completed yet. Sleeping for 20 seconds";sleep 20 ; done
 
-                                until ./oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.products.phase}' | grep -m 1 "completed"; do echo "Products stage not completed yet. Sleeping for 20 seconds";sleep 20 ; done
+                                until oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.products.phase}' | grep -m 1 "completed"; do echo "Products stage not completed yet. Sleeping for 20 seconds";sleep 20 ; done
                             """
                         )
                     } // stage
@@ -217,7 +251,8 @@
                 } finally {
                     notifyBuild(currentBuild.result, err)
                     
-                    if (cleanupAfterward) {
+                    // it is possible that oc login will not work on openshift-install cluster - we don't want to do cleanup if that is the case
+                    if (cleanupAfterward && !err.toString().contains(noConfigFilesError)) {
                         cleanup(clusterAPI, namespaceName)
                     }
                 }
@@ -245,13 +280,13 @@
             String cleanupOutput = sh(
                 returnStdout: true,
                 script: """
-                    ./oc delete namespace ${namespaceName} | true
+                    oc delete namespace ${namespaceName} | true
 
-                    ./oc delete operatorsource integreatly-operators -n openshift-marketplace | true
+                    oc delete operatorsource integreatly-operators -n openshift-marketplace | true
 
-                    ./oc delete catalogsourceconfig installed-custom-${namespaceName} -n openshift-marketplace | true
+                    oc delete catalogsourceconfig installed-custom-${namespaceName} -n openshift-marketplace | true
 
-                    ./oc get crds | grep -v openshift.io | grep -v opentlc.com | grep -v k8s | grep -v coreos | grep -v automationbroker | grep -v NAME | awk '{print \$1}' | xargs ./oc delete crds | true
+                    oc get crds | grep -v openshift.io | grep -v opentlc.com | grep -v k8s | grep -v coreos | grep -v automationbroker | grep -v NAME | awk '{print \$1}' | xargs oc delete crds | true
                 """
             )
             println cleanupOutput
