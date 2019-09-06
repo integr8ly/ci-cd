@@ -58,6 +58,7 @@
                                 # Disable starting Selenium, Docker is used instead
                                 sed -i 's/"start_process" : true,/"start_process" : false,/g' nightwatch.json
                                 rm -rf screenshots reports # so that any leftovers from past builds are not archived
+                                npm config set strict-ssl false
                                 npm install
                                 npm test 2>&1 | tee output.txt
                                 """   
