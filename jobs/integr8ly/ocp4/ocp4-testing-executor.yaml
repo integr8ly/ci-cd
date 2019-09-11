@@ -1,0 +1,226 @@
+---
+
+- job:
+    name: ocp4-testing-executor
+    project-type: pipeline
+    description: "General pipeline for ocp4 testing."
+    sandbox: false
+    concurrent: true
+    properties:
+      - build-discarder:
+          num-to-keep: 56
+    parameters:
+      - string:
+          name: CLUSTER_NAME
+          description: "City or customer for RHPDS cluster, for example qe-ocp4-[hash] or cluster name specified when creating it using openshift-install"
+      - string:
+          name: CLUSTER_DOMAIN
+          default: 'open.redhat.com'
+          description: "Cluster domain - open.redhat.com or example.opentlc.com for RHPDS clusters and intlyqe.com for clusters created using openshift-install"
+      - bool:
+          name: PDS_CLUSTER
+          default: true
+          description: "Indicates whether cluster was provisioned using RHPDS or openshift-install"
+      - bool:
+          name: SELF_SIGNED_CERTS
+          default: true
+          description: "Indicates whether cluster uses self signed certificates or not"
+      - string:
+          name: ADMIN_USERNAME
+          default: 'opentlc-mgr'
+          description: "Admin username for the OCP4 RHPDS cluster. For openshift-install clusters kubeadmin will be used by default"
+      - string:
+          name: ADMIN_PASSWORD
+          default: ''
+          description: "Jenkins Credentials for RHPDS admin user"
+      - string:
+          name: INTEGREATLY_OPERATOR_REPOSITORY
+          default: 'https://github.com/integr8ly/integreatly-operator.git'
+          description: "Repository of the Integreatly Operator"
+      - string:
+          name: INTEGREATLY_OPERATOR_BRANCH
+          default: 'master'
+          description: "Branch of the Integreatly Operator repository"
+      - string:
+          name: REGISTRY_NAMESPACE
+          default: 'integreatly'
+          description: "Registry name in quay.io"
+      - choice:
+          name: INSTALLATION_TYPE
+          description: "Installation type (workshop for PDS clusters, managed otherwise"
+          choices:
+            - workshop
+            - managed
+      - string:
+          name: NAMESPACE_PREFIX
+          description: "Prefix of Integreatly Operator namespace, defauls to `BUILD_NUMBER`"
+      - bool:
+          name: CLEANUP_BEFOREHAND
+          default: true
+          description: "Indicates whether to cleanup before execution"
+      - bool:
+          name: CLEANUP_AFTERWARD
+          default: true
+          description: "Indicates whether to cleanup after execution"
+      - string:
+          name: NAMESPACE_CLEANUP_BEFOREHAND
+          description: "Namespace to be removed before the Integreatly Operator deploy. Can be left empty"
+      - string:
+          name: GH_CLIENT_ID
+          description: "GitHub Client ID for OAuth Apps, required for some of the walkthroughs"
+      - string:
+          name: GH_CLIENT_SECRET
+          description: "GitHub Client Secret for OAuth Apps, required for some of the walkthroughs"
+      - string:
+          name: TEST_SUITES_REPOSITORY
+          default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
+          description: "Repository of Integreatly test suites, YAML templates are stored there"
+      - string:
+          name: TEST_SUITES_BRANCH
+          default: 'master'
+          description: "Branch of Integreatly test suites repository"
+      - string:
+          name: RECIPIENTS
+          default: 'integreatly-qe@redhat.com'
+          description: "Whitespace- or comma-separated list of recipient addresses"
+      - choice:
+          name: 'AWS_REGION'
+          choices:
+            - 'eu-west-1'
+            - 'eu-west-2'
+            - 'us-east-1'
+          description: 'The AWS Region the cluster will be created in (openshift-install specific, e.g. non-pds)'
+          default: 'eu-west-1'
+      - string:
+          name: 'CREDENTIALS_ID'
+          default: 'iam-openshift4-credentials'
+          description: 'AWS IAM credentials used to create OpenShift cluster (openshift-install specific, e.g. non-pds)'
+      - choice:
+          name: 'COMPUTE_REPLICAS'
+          choices:
+            - '2'
+            - '3'
+          description: 'Number of compute replicas for the Openshift 4 cluster (openshift-install specific, e.g. non-pds)'
+          default: '2'
+      - choice:
+          name: 'CONTROL_PLANE_REPLICAS'
+          choices:
+            - '1'
+            - '2'
+            - '3'
+          description: 'Number of control plane replicas for the Openshift 4 cluster (openshift-install specific, e.g. non-pds)'
+          default: '1'
+      - choice:
+          name: TO_DO
+          description: "It specifies what stages of the pipeline will be executed. Provision and deprovision are for non-pds clusters only"
+          choices:
+            - provision + install + deprovision
+            - provision + install
+            - install
+    dsl: |
+        def err = null
+        
+        try {
+            timeout(240) { ansiColor('gnome-terminal') { timestamps {
+                node('cirhos_rhel7') {
+                    
+                    stage ('Provision') {
+                        if (TO_DO.contains('provision')) {
+                            provisionCluster()
+                        } else {
+                            println 'Provision skipped'
+                        }
+                    } // stage
+                    
+                    stage ('Install') {
+                        install()
+                    } // stage
+                    
+                    stage ('Deprovision') {
+                        if (TO_DO.contains('deprovision')) {
+                            deprovisionCluster()
+                        }
+                    } // stage
+
+                } // node
+            }}} // timeout, ansiColor, timestamps
+        } catch (caughtError){
+            currentBuild.result = 'FAILURE'
+            err = caughtError 
+        } finally {
+            notifyBuild(currentBuild.result, err)
+        }
+
+        // Waiting for ${sleepTime} minutes so that resources scheduled for termination are actually terminated
+        def provisionCluster() {
+            build job: 'openshift4-cluster-create', parameters: [
+                string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
+                string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
+                string(name: 'COMPUTE_REPLICAS', value: "${COMPUTE_REPLICAS}"),
+                string(name: 'CONTROL_PLANE_REPLICAS', value: "${CONTROL_PLANE_REPLICAS}"),
+                string(name: 'AWS_REGION', value: "${AWS_REGION}"),
+                string(name: 'CREDENTIALS_ID', value: "${CREDENTIALS_ID}")
+            ]
+            sleep time: 5, unit: 'MINUTES'
+        }
+
+        def install() {
+            build job: 'ocp4-install', parameters: [
+                string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
+                string(name: 'CLUSTER_DOMAIN', value: "${CLUSTER_DOMAIN}"),
+                booleanParam(name: 'PDS_CLUSTER', value: Boolean.valueOf("${PDS_CLUSTER}")),
+                booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
+                string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+                string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+                string(name: 'INTEGREATLY_OPERATOR_REPOSITORY', value: "${INTEGREATLY_OPERATOR_REPOSITORY}"),
+                string(name: 'INTEGREATLY_OPERATOR_BRANCH', value: "${INTEGREATLY_OPERATOR_BRANCH}"),
+                string(name: 'REGISTRY_NAMESPACE', value: "${REGISTRY_NAMESPACE}"),
+                string(name: 'INSTALLATION_TYPE', value: "${INSTALLATION_TYPE}"),
+                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
+                booleanParam(name: 'CLEANUP_BEFOREHAND', value: Boolean.valueOf("${CLEANUP_BEFOREHAND}")),
+                booleanParam(name: 'CLEANUP_AFTERWARD', value: Boolean.valueOf("${CLEANUP_AFTERWARD}")),
+                string(name: 'NAMESPACE_CLEANUP_BEFOREHAND', value: "${NAMESPACE_CLEANUP_BEFOREHAND}"),
+                string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
+                string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
+                string(name: 'TEST_SUITES_REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
+                string(name: 'TEST_SUITES_BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
+                string(name: 'COMPUTE_REPLICAS', value: "${COMPUTE_REPLICAS}"),
+                string(name: 'CONTROL_PLANE_REPLICAS', value: "${CONTROL_PLANE_REPLICAS}"),
+                string(name: 'AWS_REGION', value: "${AWS_REGION}"),
+                string(name: 'CREDENTIALS_ID', value: "${CREDENTIALS_ID}"),
+                string(name: 'TO_DO', value: "${TO_DO}")
+            ]
+        }
+
+        def deprovisionCluster() {
+            parameters = [
+                string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
+                string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
+                string(name: 'CREDENTIALS_ID', value: "${CREDENTIALS_ID}")
+            ]
+
+            buildStatus = build(job: 'openshift4-cluster-deprovision', propagate: false, parameters: parameters).result
+            println "Build finished with ${buildStatus}"
+                            
+            if (buildStatus != 'SUCCESS') {
+                currentBuild.result = 'UNSTABLE'
+            }
+        }
+
+        def notifyBuild(String buildStatus, err) {
+            
+            // In theory, null means success. In practise if there is an error thrown elsewhere than in the triggered jobs (eg. in wokraround scripts)
+            // the job fails but success will be stored in buildStatus anyway
+            buildStatus =  buildStatus ?: 'SUCCESS'
+            
+            String mailRecipients = "${RECIPIENTS}"
+            String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+            String body = "${subject}\n\n(${env.BUILD_URL})"
+
+            if (err != null){
+                body = "${body}\n\n FAILURE was ${err}"
+            }
+
+            mail body: body, subject: subject, to: mailRecipients
+        }

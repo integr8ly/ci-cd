@@ -23,13 +23,13 @@
             default: true
             description: "Indicates whether cluster uses self signed certificates or not"
         - string:
-            name: ADMIN
+            name: ADMIN_USERNAME
             default: 'opentlc-mgr'
-            description: "Admin username for the OCP4 RHPDS cluster. For openshift-install clusters kubeadmin will be used by default"
+            description: "Admin username for the OCP4 cluster"
         - string:
-            name: ADMIN_PASSWORD_CREDENTIALS
-            default: 'pds-opentlc-mgr-password'
-            description: "Jenkins Credentials for RHPDS admin user"
+            name: ADMIN_PASSWORD
+            default: ''
+            description: "Admin password for OS4 cluster"
         - string:
             name: INTEGREATLY_OPERATOR_REPOSITORY
             default: 'https://github.com/integr8ly/integreatly-operator.git'
@@ -96,8 +96,7 @@
         
         String clusterAPI = "https://api.${clusterSuffix}:6443"
 
-        String adminUsername = isPds ? params.ADMIN : "kubeadmin"
-        String githubSecretId = "77b67c9d10dbc6b65c76" // secretId of a new Oauth app created in fh-automatron GH account
+        String adminPassword = params.ADMIN_PASSWORD
 
         // by default build number is used as namespacePrefix to prevent clashes with previous Integreatly Operator deployments
         String namespacePrefix = BUILD_NUMBER
@@ -107,34 +106,30 @@
         String namespaceName = namespacePrefix + '-integreatly-operator'
 
         String noConfigFilesError = "[ERROR] No configuration files found for ${CLUSTER_NAME}"
+        String expectedOcCommandOutput = ""
         def err = null
 
         node('cirhos_rhel7') {
-            timeout(35) { ansiColor('gnome-terminal') { timestamps {
+            timeout(60) { ansiColor('gnome-terminal') { timestamps {
                 try {
                     currentBuild.displayName = "${currentBuild.displayName} ${CLUSTER_NAME}"
 
                     stage('Login to OpenShift 4 cluster') {
-                        withCredentials([string(credentialsId: "${ADMIN_PASSWORD_CREDENTIALS}", variable: 'ADMIN_PASSWORD')]) {
-                            String adminPassword = ""
-                            if (!isPds) {
-                                String loginCredentialDirectory = "clusters/${CLUSTER_NAME}/auth/kubeadmin-password"
-                                dir("rhmi-jenkins") {
-                                    git branch: "master", url: "https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git"
-                                    def dirExists = fileExists(loginCredentialDirectory)
-                                    if (!dirExists) {
-                                        error noConfigFilesError
-                                    }
-                                    adminPassword = sh (
-                                        script: "cat ${loginCredentialDirectory}",
-                                        returnStdout: true
-                                    ).trim()
+                        if (!isPds && adminPassword.toString().length() == 0) {
+                            String loginCredentialDirectory = "clusters/${CLUSTER_NAME}/auth/kubeadmin-password"
+                            dir("rhmi-jenkins") {
+                                git branch: "master", url: "https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git"
+                                def dirExists = fileExists(loginCredentialDirectory)
+                                if (!dirExists) {
+                                    error noConfigFilesError
                                 }
-                            } else {
-                                adminPassword = "${ADMIN_PASSWORD}"
+                                adminPassword = sh (
+                                    script: "cat ${loginCredentialDirectory}",
+                                    returnStdout: true
+                                ).trim()
                             }
-                            sh "oc login ${clusterAPI} --insecure-skip-tls-verify=true -u ${adminUsername} -p ${adminPassword}"
-                        } // withCredentials
+                        }
+                        sh "oc login ${clusterAPI} --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${adminPassword}"
                     } // stage
                     
                     stage('Cleanup Beforehand') {
@@ -227,22 +222,36 @@
                                 sed -i "s@example.com@apps.${clusterSuffix}@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
                                 sed -i "s@integreatly-@${namespacePrefix}-integreatly-@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
                                 sed -i "s@type: workshop@type: ${INSTALLATION_TYPE}@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
-
-                                until oc get deployments integreatly-operator -n ${namespaceName} --output=json -o jsonpath='{.status.availableReplicas}' | grep -m 1 "1"; do echo "Operator not ready yet. Sleeping for 5 seconds";sleep 5 ; done
-                                oc create -f ./integreatly-operator/deploy/crds/examples/installation.cr.yaml -n ${namespaceName}
                             """
                         )
+                        sleep time: 60, unit: 'SECONDS'
+                        String getOperatorReplicasCommand = "oc get deployments integreatly-operator -n ${namespaceName} --output=json -o jsonpath='{.status.availableReplicas}'"
+                        expectedOcCommandOutput = getInstallationStatus(getOperatorReplicasCommand)
+                        while (!expectedOcCommandOutput.contains("1")) {
+                            println "Operator not ready yet"
+                            sleep time: 5, unit: 'SECONDS'
+                            expectedOcCommandOutput = getInstallationStatus(getOperatorReplicasCommand)
+                        }       
+
+                        sh "oc create -f ./integreatly-operator/deploy/crds/examples/installation.cr.yaml -n ${namespaceName}"
                     } // stage
 
                     stage ('Verify Installation Has Finished') {
-                        sh(
-                            returnStdout: false,
-                            script: """
-                                until oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.authentication.phase}' | grep -m 1 "completed"; do echo "Authentication stage not completed yet. Sleeping for 20 seconds";sleep 20 ; done
+                        String getAuthStatusCommand = "oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.authentication.phase}'"
+                        expectedOcCommandOutput = getInstallationStatus(getAuthStatusCommand)
+                        while (!expectedOcCommandOutput.contains("completed")) {
+                            println "Authentication stage has not completed yet"
+                            sleep time: 20, unit: 'SECONDS'
+                            expectedOcCommandOutput = getInstallationStatus(getAuthStatusCommand)
+                        }  
 
-                                until oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.products.phase}' | grep -m 1 "completed"; do echo "Products stage not completed yet. Sleeping for 20 seconds";sleep 20 ; done
-                            """
-                        )
+                        String getInstallationStatusCommand = "oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.products.phase}'"
+                        expectedOcCommandOutput = getInstallationStatus(getInstallationStatusCommand)
+                        while (!expectedOcCommandOutput.contains("completed")) {
+                            println "Installation has not completed yet"
+                            sleep time: 20, unit: 'SECONDS'
+                            expectedOcCommandOutput = getInstallationStatus(getInstallationStatusCommand)
+                        }
                     } // stage
                 } catch (caughtError){
                     currentBuild.result = 'FAILURE'
@@ -258,6 +267,22 @@
                 }
             }}} // timeout, ansiColor, timestamps
         } // node
+
+        def getInstallationStatus(command) {
+            String ocStatus = sh (
+                script: "oc status",
+                returnStdout: true
+            ).trim()
+            if (!ocStatus.contains("${CLUSTER_NAME}") || !ocStatus.contains("${CLUSTER_DOMAIN}")) {
+                println "kubeconfig might have been changed. Trying to login again..."
+                sh "oc login ${clusterAPI} --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${adminPassword}"
+            }
+            String ocCommandOutput = sh (
+                script: "${command}",
+                returnStdout: true
+            ).trim()
+            return ocCommandOutput
+        }
 
         def notifyBuild(String buildStatus, err) {
 
