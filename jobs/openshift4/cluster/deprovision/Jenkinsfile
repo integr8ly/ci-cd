@@ -53,6 +53,8 @@ node("cirhos_rhel7") {
                                     script: """
                                         rm -rf ${clusterInfoDirectory}
                                         git remote add jenkins https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git
+                                        git config --global user.email "integreatly-qe@redhat.com"
+                                        git config --global user.name "rhmi-jenkins-bot"
                                         git add -A
                                         git commit -m 'cluster destroyed: ${CLUSTER_NAME}'
                                         git push jenkins master
