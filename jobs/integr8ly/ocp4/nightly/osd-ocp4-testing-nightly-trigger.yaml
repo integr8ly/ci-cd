@@ -1,0 +1,70 @@
+---
+
+- job:
+    name: osd-ocp4-testing-nightly-trigger
+    project-type: pipeline
+    description: "Nightly trigger for osd ocp4 testing"
+    sandbox: false
+    concurrent: false
+    triggers:
+      - timed: "H(0-10) H(3-4) * * *"
+    properties:
+      - build-discarder:
+          num-to-keep: 56
+      - inject:
+          properties-content: |
+            CLUSTER_NAME=clustername
+            CLUSTER_DOMAIN=domain.com
+            PDS_CLUSTER=false
+            SELF_SIGNED_CERTS=true
+            INTEGREATLY_OPERATOR_REPOSITORY=https://github.com/integr8ly/integreatly-operator.git
+            INTEGREATLY_OPERATOR_BRANCH=master
+            REGISTRY_NAMESPACE=integreatly
+            INSTALLATION_TYPE=managed
+            ADMIN_USERNAME=kubeadmin
+            GH_CLIENT_ID=yourclientsecret
+            GH_CLIENT_SECRET=yourclientsecret
+            TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
+            TEST_SUITES_BRANCH=master
+            RECIPIENTS=integreatly-qe@redhat.com
+            COMPUTE_REPLICAS=3
+            CONTROL_PLANE_REPLICAS=3
+            AWS_REGION=eu-west-1
+            CREDENTIALS_ID=iam-openshift4-credentials
+            TO_DO=provision + install + deprovision
+    dsl: |
+        timeout(240) { ansiColor('gnome-terminal') { timestamps {
+            node('cirhos_rhel7') {
+                stage ('Trigger OSD OCP4 Pipeline') {
+                    buildStatus = build(job: 'ocp4-testing-executor', propagate: false, parameters: [
+                        string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
+                        string(name: 'CLUSTER_DOMAIN', value: "${CLUSTER_DOMAIN}"),
+                        booleanParam(name: 'PDS_CLUSTER', value: Boolean.valueOf("${PDS_CLUSTER}")),
+                        booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
+                        string(name: 'INTEGREATLY_OPERATOR_REPOSITORY', value: "${INTEGREATLY_OPERATOR_REPOSITORY}"),
+                        string(name: 'INTEGREATLY_OPERATOR_BRANCH', value: "${INTEGREATLY_OPERATOR_BRANCH}"),
+                        string(name: 'REGISTRY_NAMESPACE', value: "${REGISTRY_NAMESPACE}"),
+                        string(name: 'INSTALLATION_TYPE', value: "${INSTALLATION_TYPE}"),
+                        string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+                        string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
+                        string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
+                        string(name: 'TEST_SUITES_REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
+                        string(name: 'TEST_SUITES_BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                        string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
+                        string(name: 'COMPUTE_REPLICAS', value: "${COMPUTE_REPLICAS}"),
+                        string(name: 'CONTROL_PLANE_REPLICAS', value: "${CONTROL_PLANE_REPLICAS}"),
+                        string(name: 'AWS_REGION', value: "${AWS_REGION}"),
+                        string(name: 'CREDENTIALS_ID', value: "${CREDENTIALS_ID}"),
+                        string(name: 'TO_DO', value: "${TO_DO}")
+                    ]).result
+
+                    if (buildStatus == 'UNSTABLE') {
+                        currentBuild.result = 'UNSTABLE'
+                    } else if (buildStatus == 'SUCCESS') {
+                        currentBuild.result = 'SUCCESS'
+                    } else {
+                        currentBuild.result = 'FAILURE'
+                    }
+                } // stage
+            }// node
+        }}} // timeout, ansiColor, timestamps
