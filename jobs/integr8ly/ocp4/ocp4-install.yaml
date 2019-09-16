@@ -253,18 +253,6 @@
                             expectedOcCommandOutput = getInstallationStatus(getInstallationStatusCommand)
                         }
                     } // stage
-
-                    stage ('Install dedicated-admin') {
-                        if (isPds) {
-                            dir("integreatly-operator") {
-                                git branch: "${INTEGREATLY_OPERATOR_BRANCH}", url: "${INTEGREATLY_OPERATOR_REPOSITORY}"
-                            }
-                            dir("integreatly-operator/scripts") {
-                                sh "oc login ${clusterAPI} --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${adminPassword}"
-                                sh "./dedicated-setup.sh"
-                            }
-                        }
-                    } // stage
                 } catch (caughtError){
                     currentBuild.result = 'FAILURE'
                     err = caughtError
