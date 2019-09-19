@@ -94,6 +94,7 @@
             string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}"),
         ]
         def err = null
+        def wtTestStatus;
         try {
             timeout(180) { ansiColor('gnome-terminal') { timestamps {
                 node('cirhos_rhel7') {
@@ -106,8 +107,8 @@
                         runTests('alerts-test')
                     }
 
-                    stage ('Browser Based Tests') {
-                        runTests('browser-based-testsuite-pipeline')
+                    stage ('Start Basic Walkthroughs Browser Test') {
+                       wtTestStatus = runSingleBrowserTest('tests/00_walkthroughs_start/start-walkthroughs.js')
                     } // stage
 
                     stage ('After First Login Tests') {
@@ -138,6 +139,23 @@
                         runTests('nexus-builds-test')
                     } // stage
 
+                    stage ('Start Dashboards Browser Tests') {
+                        runSingleBrowserTest('tests/10_fuse/fuse-console-login.js')
+                        runSingleBrowserTest('tests/20_apicurito/apicurito-console-login.js')
+                        runSingleBrowserTest('tests/30_three_scale/three_scale-login.js')
+                        runSingleBrowserTest('tests/40_che/che-console-login.js')
+                        runSingleBrowserTest('tests/50_enmasse/enmasse-console-login.js')
+                        runSingleBrowserTest('tests/60_launcher/launcher-console-login.js')
+                        runSingleBrowserTest('tests/70_sso_access/sso-console-access.js')
+                    } // stage
+
+                    stage ('Start Full Walkthroughs Browser Test') {
+                        if (wtTestStatus == 'SUCCESS') {
+                            runSingleBrowserTest('tests/80_walkthrough_wt1a/wt1a-walkthrough.js')
+                            runSingleBrowserTest('tests/90_walkthrough_wt2/wt2-walkthrough.js')
+                        }
+                    } // stage
+
                 } // node
             }}} // timeout, ansiColor, timestamps
         } catch (caughtError){
@@ -151,4 +169,15 @@
             if (buildStatus != 'SUCCESS') {
                 currentBuild.result = 'UNSTABLE'
             }
+        }
+
+        def runSingleBrowserTest(testName) {
+            jobParams.push(string(name: 'TEST_TO_RUN', value: "${testName}"))   
+            buildStatus = build(job: 'browser-based-single-test', propagate: false, parameters: jobParams).result
+            println "Build finished with ${buildStatus}"
+                            
+            if (buildStatus != 'SUCCESS') {
+                currentBuild.result = 'UNSTABLE'
+            }
+            return buildStatus
         }
