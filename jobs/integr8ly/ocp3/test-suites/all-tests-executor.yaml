@@ -112,6 +112,7 @@
                     } // stage
 
                     stage ('After First Login Tests') {
+                        sleep time: 2, unit: 'MINUTES'
                         runTests('after-first-login-tests')
                     } // stage
 

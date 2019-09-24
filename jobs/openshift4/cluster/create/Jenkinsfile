@@ -105,6 +105,7 @@ node("cirhos_rhel7") {
                     dir("integreatly-operator") {
                         git branch: "master", url: "https://github.com/integr8ly/integreatly-operator.git"
                     }
+                    currentBuild.description = currentBuild.description + "\nkubeadmin password:${adminPassword}"
                     dir("integreatly-operator/scripts") {
                         sh "oc login https://api.${clusterName}.${baseDomain}:6443 --insecure-skip-tls-verify=true -u kubeadmin -p ${adminPassword}"
                         sh "./dedicated-setup.sh"
