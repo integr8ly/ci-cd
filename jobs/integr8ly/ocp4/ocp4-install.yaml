@@ -31,6 +31,10 @@
             default: ''
             description: "Admin password for OS4 cluster"
         - string:
+            name: CUSTOMER_ADMIN_PASSWORD
+            default: 'Password1'
+            description: "Password used when adding dedicated-admin. If empty - random password will be generated"
+        - string:
             name: INTEGREATLY_OPERATOR_REPOSITORY
             default: 'https://github.com/integr8ly/integreatly-operator.git'
             description: "Repository of the Integreatly Operator"
@@ -255,14 +259,12 @@
                     } // stage
 
                     stage ('Install dedicated-admin') {
-                        if (isPds) {
-                            dir("integreatly-operator") {
-                                git branch: "${INTEGREATLY_OPERATOR_BRANCH}", url: "${INTEGREATLY_OPERATOR_REPOSITORY}"
-                            }
-                            dir("integreatly-operator/scripts") {
-                                sh "oc login ${clusterAPI} --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${adminPassword}"
-                                sh "./dedicated-setup.sh"
-                            }
+                        dir("integreatly-operator") {
+                            git branch: "${INTEGREATLY_OPERATOR_BRANCH}", url: "${INTEGREATLY_OPERATOR_REPOSITORY}"
+                        }
+                        dir("integreatly-operator/scripts") {
+                            sh "oc login ${clusterAPI} --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${adminPassword}"
+                            sh "export CUSTOM_PWD=${CUSTOMER_ADMIN_PASSWORD} && ./dedicated-setup.sh"
                         }
                     } // stage                    
                 } catch (caughtError){

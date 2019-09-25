@@ -97,19 +97,7 @@ node("cirhos_rhel7") {
                     script: "cat ${installConfigDirectory}log.file",
                     returnStdout: true
                 ).trim()
-                if (installationLog.contains("Install complete")) {
-                    adminPassword = sh (
-                        script: "cat ${installConfigDirectory}auth/kubeadmin-password",
-                        returnStdout: true
-                    ).trim()
-                    dir("integreatly-operator") {
-                        git branch: "master", url: "https://github.com/integr8ly/integreatly-operator.git"
-                    }
-                    dir("integreatly-operator/scripts") {
-                        sh "oc login https://api.${clusterName}.${baseDomain}:6443 --insecure-skip-tls-verify=true -u kubeadmin -p ${adminPassword}"
-                        sh "./dedicated-setup.sh"
-                    }
-                } else {
+                if (!installationLog.contains("Install complete")) {
                     build (job: 'openshift4-cluster-deprovision', parameters:[
                         [$class: 'StringParameterValue', name: 'CLUSTER_NAME', value: CLUSTER_NAME],
                         [$class: 'StringParameterValue', name: 'RECIPIENTS', value: RECIPIENTS],
