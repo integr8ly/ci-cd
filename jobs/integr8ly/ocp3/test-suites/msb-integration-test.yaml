@@ -155,15 +155,17 @@
         }
             
         def notifyBuild(String buildStatus, err) {
-          buildStatus =  buildStatus ?: 'SUCCESS'
-          
-          String mailRecipients = "${RECIPIENTS}"
-          String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
-          String body = "${subject}\n\n(${env.BUILD_URL})"
-
-          if(err != null){
-              body = "${body}\n\n FAILURE was ${err}"
+          if (params.RECIPIENTS.toString().length() > 0) {
+            buildStatus =  buildStatus ?: "SUCCESS"
+        
+            String mailRecipients = "${RECIPIENTS}"
+            String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+            String body = "${subject}\n\n(${env.BUILD_URL})"
+        
+            if (err != null) {
+                body = "${body}\n\n FAILURE was ${err}"
+            }
+        
+            mail body: body, subject: subject, to: mailRecipients   
           }
-
-          mail body: body, subject: subject, to: mailRecipients
         }
