@@ -66,6 +66,10 @@
           name: SSO_URL
           description: 'SSO URL for the cluster on which the tests will be executed (sso-user-create test)'
       - string:
+          name: USERNAME
+          default: "tester"
+          description: 'Name of newly created users in SSO.'   
+      - string:
           name: NUMBER_OF_USERS
           default: "5"
           description: 'Number of created users (sso-user-create test)'
@@ -92,6 +96,7 @@
             string(name: 'SSO_URL', value: "${SSO_URL}"),
             string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
             string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}"),
+            string(name: 'USERNAME', value: "${USERNAME}"),
         ]
         def err = null
         def wtTestStatus;

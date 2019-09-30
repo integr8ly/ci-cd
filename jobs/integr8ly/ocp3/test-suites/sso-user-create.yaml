@@ -29,6 +29,10 @@
           default: true
           description: 'Whether the users should be deleted after the successful execution or not.'
       - string:
+          name: USERNAME
+          default: "tester"
+          description: 'Name of newly created users. Each user is labeled with serial number (e.g tester01, tester02,...) which is related to the NUMBER_OF_USERS parameter.'    
+      - string:
           name: NUMBER_OF_USERS
           default: "5"
           description: 'Number of created users.'
