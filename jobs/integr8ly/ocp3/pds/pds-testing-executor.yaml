@@ -235,18 +235,17 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
         }
 
         def notifyBuild(String buildStatus, err) {
+            if (params.RECIPIENTS.toString().length() > 0) {
+                buildStatus =  buildStatus ?: "SUCCESS"
             
-            // In theory, null means success. In practise if there is an error thrown elsewhere than in the triggered jobs (eg. in wokraround scripts)
-            // the job fails but success will be stored in buildStatus anyway
-            buildStatus =  buildStatus ?: 'SUCCESS'
+                String mailRecipients = "${RECIPIENTS}"
+                String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+                String body = "${subject}\n\n(${env.BUILD_URL})"
             
-            String mailRecipients = "${RECIPIENTS}"
-            String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
-            String body = "${subject}\n\n(${env.BUILD_URL})"
-
-            if(err != null){
-                body = "${body}\n\n FAILURE was ${err}"
+                if (err != null) {
+                    body = "${body}\n\n FAILURE was ${err}"
+                }
+            
+                mail body: body, subject: subject, to: mailRecipients   
             }
-
-            mail body: body, subject: subject, to: mailRecipients
         }
