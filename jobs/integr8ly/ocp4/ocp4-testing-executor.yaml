@@ -34,8 +34,20 @@
           default: ''
           description: "Jenkins Credentials for RHPDS admin user"
       - string:
+          name: CUSTOMER_ADMIN_USERNAME
+          default: 'customer-admin'
+          description: "customer-admin username to login to Integreatly cluster"
+      - string:
+          name: CUSTOMER_ADMIN_PASSWORD
+          default: 'Password1'
+          description: "customer-adnim password to login to Integreatly cluster"
+      - string:
+          name: EVALS_USERNAME
+          default: 'evals11@example.com'
+          description: "evals account email address used in test suites"
+      - string:
           name: INTEGREATLY_OPERATOR_REPOSITORY
-          default: 'https://github.com/integr8ly/integreatly-operator.git'
+          default: "https://github.com/integr8ly/integreatly-operator.git"
           description: "Repository of the Integreatly Operator"
       - string:
           name: INTEGREATLY_OPERATOR_BRANCH
@@ -53,6 +65,7 @@
             - managed
       - string:
           name: NAMESPACE_PREFIX
+          default: 'openshift-'
           description: "Prefix of Integreatly Operator namespace, defauls to `BUILD_NUMBER`"
       - bool:
           name: CLEANUP_BEFOREHAND
@@ -77,12 +90,16 @@
           description: "Repository of Integreatly test suites, YAML templates are stored there"
       - string:
           name: TEST_SUITES_BRANCH
-          default: 'master'
+          default: 'v2-master'
           description: "Branch of Integreatly test suites repository"
       - string:
           name: RECIPIENTS
           default: 'integreatly-qe@redhat.com'
           description: "Whitespace- or comma-separated list of recipient addresses"
+      - string:
+          name: TIMEOUT_THRESHOLD
+          default: '1'
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
       - choice:
           name: 'AWS_REGION'
           choices:
@@ -114,12 +131,14 @@
           name: TO_DO
           description: "It specifies what stages of the pipeline will be executed. Provision and deprovision are for non-pds clusters only"
           choices:
-            - provision + install + deprovision
+            - provision + install + tests + deprovision
+            - provision + install + tests
             - provision + install
+            - install + tests
             - install
     dsl: |
         def err = null
-        
+
         try {
             timeout(240) { ansiColor('gnome-terminal') { timestamps {
                 node('cirhos_rhel7') {
@@ -135,10 +154,20 @@
                     stage ('Install') {
                         install()
                     } // stage
+
+                    stage ('Test') {
+                        if (TO_DO.contains('tests')) {
+                            test()
+                        } else {
+                            println 'Tests skipped'
+                        }
+                    } // stage
                     
                     stage ('Deprovision') {
                         if (TO_DO.contains('deprovision')) {
                             deprovisionCluster()
+                        } else {
+                            println 'Deprovision skipped'
                         }
                     } // stage
 
@@ -172,6 +201,7 @@
                 booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
                 string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
                 string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+                string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
                 string(name: 'INTEGREATLY_OPERATOR_REPOSITORY', value: "${INTEGREATLY_OPERATOR_REPOSITORY}"),
                 string(name: 'INTEGREATLY_OPERATOR_BRANCH', value: "${INTEGREATLY_OPERATOR_BRANCH}"),
                 string(name: 'REGISTRY_NAMESPACE', value: "${REGISTRY_NAMESPACE}"),
@@ -190,6 +220,25 @@
                 string(name: 'AWS_REGION', value: "${AWS_REGION}"),
                 string(name: 'CREDENTIALS_ID', value: "${CREDENTIALS_ID}"),
                 string(name: 'TO_DO', value: "${TO_DO}")
+            ]
+        }
+
+        def test() {
+            Boolean isPds = params.PDS_CLUSTER
+            String clusterSuffix = isPds ? "cluster-${CLUSTER_NAME}.${CLUSTER_NAME}.${CLUSTER_DOMAIN}" : "${CLUSTER_NAME}.${CLUSTER_DOMAIN}"
+            String clusterURL = "https://api.${clusterSuffix}:6443"
+            build job: 'ocp4-all-tests-executor', parameters: [
+                string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
+                string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                string(name: 'CLUSTER_URL', value: "${clusterURL}"),
+                string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
+                string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+                string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+                string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),
+                string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
+                string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
+                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
+                string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}")
             ]
         }
 
