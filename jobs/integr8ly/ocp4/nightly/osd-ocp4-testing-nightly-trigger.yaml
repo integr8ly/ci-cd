@@ -22,16 +22,19 @@
             REGISTRY_NAMESPACE=integreatly
             INSTALLATION_TYPE=managed
             ADMIN_USERNAME=kubeadmin
+            CUSTOMER_ADMIN_USERNAME=customer-admin
+            CUSTOMER_ADMIN_PASSWORD=Password1
             GH_CLIENT_ID=yourclientsecret
             GH_CLIENT_SECRET=yourclientsecret
             TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
-            TEST_SUITES_BRANCH=master
+            TEST_SUITES_BRANCH=v2-master
             RECIPIENTS=integreatly-qe@redhat.com
             COMPUTE_REPLICAS=3
             CONTROL_PLANE_REPLICAS=3
             AWS_REGION=eu-west-1
             CREDENTIALS_ID=iam-openshift4-credentials
-            TO_DO=provision + install + deprovision
+            NAMESPACE_PREFIX=openshift-
+            TO_DO=provision + install + tests + deprovision
     dsl: |
         timeout(240) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {
@@ -46,6 +49,8 @@
                         string(name: 'REGISTRY_NAMESPACE', value: "${REGISTRY_NAMESPACE}"),
                         string(name: 'INSTALLATION_TYPE', value: "${INSTALLATION_TYPE}"),
                         string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+                        string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),
+                        string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
                         string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
                         string(name: 'GH_CLIENT_SECRET', value: "${GH_CLIENT_SECRET}"),
                         string(name: 'TEST_SUITES_REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
@@ -55,6 +60,7 @@
                         string(name: 'CONTROL_PLANE_REPLICAS', value: "${CONTROL_PLANE_REPLICAS}"),
                         string(name: 'AWS_REGION', value: "${AWS_REGION}"),
                         string(name: 'CREDENTIALS_ID', value: "${CREDENTIALS_ID}"),
+                        string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
                         string(name: 'TO_DO', value: "${TO_DO}")
                     ]).result
 

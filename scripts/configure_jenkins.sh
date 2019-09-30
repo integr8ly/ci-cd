@@ -123,6 +123,7 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/tower/tow
 #Integreatly-QE jobs - OpenShift 4 
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp4/ocp4-install.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp4/ocp4-testing-executor.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp4/tests/ocp4-all-tests-executor.yaml
 
 #Views
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/repos/

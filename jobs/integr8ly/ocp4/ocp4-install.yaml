@@ -54,6 +54,7 @@
               - managed
         - string:
             name: NAMESPACE_PREFIX
+            default: 'openshift-'
             description: "Prefix of Integreatly Operator namespace, defauls to `BUILD_NUMBER`"
         - bool:
             name: CLEANUP_BEFOREHAND
@@ -78,14 +79,13 @@
             description: "Repository of Integreatly test suites, YAML templates are stored there"
         - string:
             name: TEST_SUITES_BRANCH
-            default: 'development'
+            default: 'v2-master'
             description: "Branch of Integreatly test suites repository"
         - string:
             name: RECIPIENTS
             default: 'integreatly-qe@redhat.com'
             description: "Whitespace- or comma-separated list of recipient addresses"
     dsl: |
-        #!groovy
         Boolean cleanupBeforehand = params.CLEANUP_BEFOREHAND
         Boolean cleanupAfterward = params.CLEANUP_AFTERWARD
         Boolean selfSignedCerts = params.SELF_SIGNED_CERTS
