@@ -27,7 +27,6 @@
           description: '[REQUIRED] All existing users containing this string in their username will be removed.'    
     dsl: |
         node('cirhos_rhel7') {
-          String description = "domain name: ${CLUSTER_DOMAIN}<br>uninstall branch: ${BRANCH}"
           if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']){
             currentBuild.description = "triggered by: " + currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']
           }
