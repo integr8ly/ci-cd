@@ -87,7 +87,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
         - string:
             name: NUMBER_OF_USERS
             default: "5"
-            description: 'Number of created users (sso-user-create test)'
+            description: 'Number of created users (sso-and-3scale-user-create-tests test)'
         - bool:
             name: PATCH_TO_MASTER
             default: false
