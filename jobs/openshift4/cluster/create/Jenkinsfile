@@ -105,6 +105,12 @@ node("cirhos_rhel7") {
                         [$class: 'StringParameterValue', name: 'CREDENTIALS_ID', value: CREDENTIALS_ID]
                     ])
                     currentBuild.result = 'FAILURE'
+                } else {
+                    String password = sh (
+                        script: "cat ${installConfigDirectory}auth/kubeadmin-password",
+                        returnStdout: true
+                    ).trim()
+                    currentBuild.description = "${currentBuild.description}<br>admin password: ${password}"
                 }
             } // stage
             
