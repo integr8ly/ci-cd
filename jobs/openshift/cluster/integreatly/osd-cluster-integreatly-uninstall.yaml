@@ -1,0 +1,57 @@
+---
+- job:
+    name: osd-cluster-integreatly-uninstall
+    display-name: 'OSD Cluster Integreatly Uninstall'
+    project-type: pipeline
+    concurrent: false
+    parameters:
+      - string:
+          name: 'clusterName'
+          default: ''
+          description: '[REQUIRED] The name of the target cluster to uninstall Integreatly against'
+      - string:
+          name: 'uninstallationGitBranch'
+          default: 'master'
+          description: '[REQUIRED] The name of the git branch to be used for the Integreatly uninstaller'
+      - string:
+          name: 'routerShard'
+          default: ''
+          description: '[REQUIRED] Router shard of the targeted cluster'
+      - string:
+          name: 'openShiftToken'
+          default: ''
+          description: '[REQUIRED] Openshift token for cluster-admin user'
+      - string:
+          name: 'userName'
+          default: 'tester'
+          description: '[REQUIRED] All existing users containing this string in their username will be removed.'    
+    dsl: |
+        node('cirhos_rhel7') {
+          stage('Uninstall Integreatly') {
+            wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
+                ansibleTower(
+                  towerServer: 'Dev Tower',
+                  jobTemplate: 'Integreatly_Bootstrap_and_Uninstall_[OSD]',
+                  templateType: 'workflow',
+                  importTowerLogs: true,
+                  removeColor: false,
+                  verbose: true,
+                  extraVars: """---
+                    tower_environment: dev
+                    rhsso_namespace: openshift-sso
+                    cluster_name: ${clusterName}
+                    integreatly_osd_uninstall_branch: ${uninstallationGitBranch}
+                    router_shard: ${routerShard}
+                    openshift_token: ${openShiftToken}"""
+                )
+            }  
+          }
+
+          stage("Delete existing ${userName} users") {
+            sh '''
+              oc login https://console.${clusterName}.openshift.com --token=${openShiftToken}
+              oc delete user customer-admin --ignore-not-found
+              oc delete user $(oc get user | grep ${userName} | awk '{print $1}') --ignore-not-found
+            '''
+          }
+        }
