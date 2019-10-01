@@ -108,7 +108,13 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
         try {
             timeout(270) { ansiColor('gnome-terminal') { timestamps {
                 node('cirhos_rhel7') {
-                    
+                    String description = "domain name: ${CLUSTER_DOMAIN}<br>install branch: ${BRANCH}<br>" + 
+                        "testing master: ${TESTING_MASTER}<br>patch to master: ${PATCH_TO_MASTER}<br>to do: ${TO_DO}"
+                    if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']){
+                        description += "<br>triggered by: " + currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']
+                    }
+                    currentBuild.displayName = "${currentBuild.displayName} ${YOURCITY}"
+                    currentBuild.description = description
                     stage ('Uninstall #1') {
                         if (TO_DO.contains('full') || TO_DO.contains('uninstall')) {
                             uninstall(5)

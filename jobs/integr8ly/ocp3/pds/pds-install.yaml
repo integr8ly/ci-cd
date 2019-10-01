@@ -85,7 +85,14 @@
                         if (!YOURCITY) {
                             throw new hudson.AbortException('YOURCITY parameter is required!')
                         }
-                    } 
+                    }
+                    String description = "domain name: ${CLUSTER_DOMAIN}<br>install branch: ${BRANCH}<br>" + 
+                        "self signed certs: ${SELF_SIGNED_CERTS}<br>patch to master: ${PATCH_TO_MASTER}"
+                    if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']){
+                        description += "<br>triggered by: " + currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']
+                    }
+                    currentBuild.displayName = "${currentBuild.displayName} ${YOURCITY}"
+                    currentBuild.description = description
 
                     stage('Configure bastion as jenkins slave') {
                         
