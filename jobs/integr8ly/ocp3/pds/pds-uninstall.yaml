@@ -56,6 +56,12 @@
                             throw new hudson.AbortException('YOURCITY parameter is required!')
                         }
                     }
+                    String description = "domain name: ${CLUSTER_DOMAIN}<br>uninstall branch: ${BRANCH}"
+                    if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']){
+                        description += "<br>triggered by: " + currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']
+                    }
+                    currentBuild.displayName = "${currentBuild.displayName} ${YOURCITY}"
+                    currentBuild.description = description
 
                     stage('Configure bastion as jenkins slave') {
                         

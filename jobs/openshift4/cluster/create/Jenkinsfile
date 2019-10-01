@@ -17,7 +17,7 @@ node("cirhos_rhel7") {
     timeout(120) { ansiColor("gnome-terminal") { timestamps {
         try {
             currentBuild.displayName = "${currentBuild.displayName} ${clusterName}"
-            currentBuild.description = "clusterName: ${clusterName}\nawsRegion: ${awsRegion}"
+            currentBuild.description = "clusterName: ${clusterName}<br>awsRegion: ${awsRegion}"
             
             stage("Configure aws cli") {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: params.CREDENTIALS_ID, accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
