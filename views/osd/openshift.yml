@@ -1,0 +1,11 @@
+- view:
+   name: OSD
+   regex: osd-.*(?<!generated)
+   columns:
+    - status
+    - weather
+    - job
+    - last-success
+    - last-failure
+    - last-duration
+    - build-button

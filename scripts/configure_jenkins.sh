@@ -133,3 +133,4 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/repos/
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/release/
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/delorean/
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/openshift/
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/osd/
