@@ -77,6 +77,29 @@ node('cirhos_rhel7') {
         if (params.dryRun) {
             println("Would call ansibleTower Integreatly Install Workflow template with the following installer options: ${installerOptions}")
         } else {
+            def additionalParams = ""
+            if(params.additionalParameters != null) {
+                additionalParams = params.additionalParameters.split('\n')
+            }
+
+            def extraVars = """---
+            tower_environment: dev 
+            cluster_name: ${installerOptions.clusterName}
+            openshift_master_public_url: ${installerOptions.openshiftMasterUrl}
+            openshift_username: ${installerOptions.clusterAdminUsername}
+            openshift_password: ${installerOptions.clusterAdminPassword}
+            integreatly_project_install_scm_url: ${installerOptions.installationGitUrl}
+            integreatly_project_install_scm_branch: ${installerOptions.installationGitBranch}
+            eval_seed_users_count: ${installerOptions.userCount}
+            eval_self_signed_certs: '${installerOptions.selfSignedCerts}'
+            integreatly_inventory_source_aws_credentials: ${installerOptions.awsCredentials}"""
+
+            // append additional parameters    
+            for(String param : additionalParams) {
+                extraVars = extraVars + "\n            " + param.trim()
+            }
+            println("Installation parameters are:")
+            println(extraVars)
             wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
                 ansibleTower(
                     towerServer: 'Dev Tower',
@@ -85,17 +108,7 @@ node('cirhos_rhel7') {
                     importTowerLogs: true,
                     removeColor: false,
                     verbose: true,
-                    extraVars: """---
-                    tower_environment: dev
-                    cluster_name: ${installerOptions.clusterName}
-                    openshift_master_public_url: ${installerOptions.openshiftMasterUrl}
-                    openshift_username: ${installerOptions.clusterAdminUsername}
-                    openshift_password: ${installerOptions.clusterAdminPassword}
-                    integreatly_project_install_scm_url: ${installerOptions.installationGitUrl}
-                    integreatly_project_install_scm_branch: ${installerOptions.installationGitBranch}
-                    eval_seed_users_count: ${installerOptions.userCount}
-                    eval_self_signed_certs: '${installerOptions.selfSignedCerts}'
-                    integreatly_inventory_source_aws_credentials: ${installerOptions.awsCredentials}"""
+                    extraVars: extraVars.trim()
                 )
             }
         }
