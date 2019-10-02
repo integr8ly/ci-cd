@@ -19,7 +19,7 @@
           read-only: true
       - string:
           name: 'projectRepo'
-          default: 'mobile-security-service-operator'
+          default: 'mobile-developer-console-operator'
           description: '[REQUIRED] github project repository'
           read-only: true
       - string:
