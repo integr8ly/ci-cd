@@ -103,12 +103,8 @@
         try {
             timeout(180) { ansiColor('gnome-terminal') { timestamps {
                 node('cirhos_rhel7') {
-                    String description = "cluster url: ${CLUSTER_URL}<br>testing branch: ${BRANCH}<br>" + 
-                        "evals username: ${EVALS_USERNAME}"
-                    if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']){
-                        description += "<br>triggered by: " + currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']
-                    }
-                    currentBuild.description = description
+                    currentBuild.displayName = "${currentBuild.displayName} ${CLUSTER_URL}"
+                    currentBuild.description = "testing branch: ${BRANCH}<br>evals username: ${EVALS_USERNAME}"
                     
                     stage ('Smoke Tests') {
                         runTests('installation-smoke-tests')
