@@ -69,11 +69,11 @@
           description: "Prefix of Integreatly Operator namespace, defauls to `BUILD_NUMBER`"
       - bool:
           name: CLEANUP_BEFOREHAND
-          default: true
+          default: false
           description: "Indicates whether to cleanup before execution"
       - bool:
           name: CLEANUP_AFTERWARD
-          default: true
+          default: false
           description: "Indicates whether to cleanup after execution"
       - string:
           name: NAMESPACE_CLEANUP_BEFOREHAND
