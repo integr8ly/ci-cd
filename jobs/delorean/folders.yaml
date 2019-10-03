@@ -137,6 +137,17 @@
     display-name: 'GA'
     project-type: folder
 
+# MDC Operator
+- job:
+    name: delorean-mdc-operator
+    display-name: 'MDC Operator'
+    project-type: folder
+
+- job:
+    name: delorean-mdc-operator/ga
+    display-name: 'GA'
+    project-type: folder
+
 # Suites
 - job:
     name: delorean-suites
