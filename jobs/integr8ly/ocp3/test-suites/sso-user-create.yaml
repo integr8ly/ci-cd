@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: sso-and-3scale-user-create-tests
+    name: sso-user-create-tests
     project-type: pipeline
     sandbox: true
     parameters:
@@ -13,20 +13,6 @@
           name: BRANCH
           default: 'master'
           description: 'Branch of the repository'
-      - string:
-          name: CLUSTER_URL
-          description: 'URL of cluster on which the test will be executed.'    
-      - string:
-          name: ADMIN_USERNAME
-          default: 'admin@example.com'
-          description: 'Admin sername to login to Integreatly cluster.'
-      - string:
-          name: ADMIN_PASSWORD
-          default: 'Password1'
-          description: 'Admin password to login to Integreatly cluster.'
-      - string:
-          name: NAMESPACE_PREFIX
-          description: "Value used to prefix the names of the namespaces created during Integr8ly installation"    
       - string:
           name: SSO_URL
           description: 'SSO URL for the cluster on which the tests will be executed.'
@@ -65,7 +51,7 @@
                         git branch: "${BRANCH}", url: "${REPOSITORY}"
                     }
                 }
-                stage('Run the SSO and 3scale user creation tests'){
+                stage('Run the SSO user creation tests'){
                     dir('test-suites/backend-testsuite') {
                         sh '''
                             npm install
