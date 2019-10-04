@@ -64,7 +64,7 @@
           description: 'Provide walkthroughs release version. Empty value means the master version is expected (smoke tests)'
       - string:
           name: SSO_URL
-          description: 'SSO URL for the cluster on which the tests will be executed (sso-and-3scale-user-create-tests test)'
+          description: 'SSO URL for the cluster on which the tests will be executed (sso-user-create test)'
       - string:
           name: USERNAME
           default: "tester"
@@ -72,7 +72,7 @@
       - string:
           name: NUMBER_OF_USERS
           default: "5"
-          description: 'Number of created users (sso-and-3scale-user-create test)'
+          description: 'Number of created users (sso-user-create test)'
       - string:
           name: TIMEOUT_THRESHOLD
           default: '1'
@@ -138,8 +138,8 @@
                         runTests('codeready-tests')
                     } // stage
 
-                    stage ('SSO user & 3scale user creation test') {
-                        runTests('sso-and-3scale-user-create-tests')
+                    stage ('SSO user creation test') {
+                        runTests('sso-user-create-tests')
                     } // stage
 
                     stage ('Nexus builds test') {
