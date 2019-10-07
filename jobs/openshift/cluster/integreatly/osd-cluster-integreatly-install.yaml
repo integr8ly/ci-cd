@@ -1,0 +1,95 @@
+---
+- job:
+    name: osd-cluster-integreatly-install
+    display-name: 'OSD Cluster Integreatly install'
+    project-type: pipeline
+    concurrent: false
+    parameters:
+      - string:
+          name: 'clusterName'
+          default: ''
+          description: '[REQUIRED] The name of the target cluster to install Integreatly against'
+      - string:
+          name: 'installationGitBranch'
+          default: 'master'
+          description: '[REQUIRED] The name of the git branch to be used for the Integreatly installer'
+      - string:
+          name: 'routerShard'
+          default: ''
+          description: '[REQUIRED] Router shard of the targeted cluster'
+      - string:
+          name: 'openShiftToken'
+          default: ''
+          description: '[REQUIRED] Openshift token for cluster-admin user'
+      - string:
+          name: 'githubClientId'
+          default: ''
+          description: '[REQUIRED] Github client id for launcher authentication'
+      - string:
+          name: 'githubClientSecret'
+          default: ''
+          description: '[REQUIRED] Github client secret for launcher authentication'
+      - string:
+          name: 'customerAdminPassword'
+          default: 'Password1'
+          description: '[REQUIRED] Customer Admin password'
+      - string:
+          name: 'threeScaleAwsAccessKey'
+          default: ''
+          description: '[REQUIRED] AWS access key for threescale s3 bucket access'
+      - string:
+          name: 'threeScaleAwsSecretKey'
+          default: ''
+          description: '[REQUIRED] AWS secret key for threescale s3 bucket access'
+      - string:
+          name: 'threeScaleBucketName'
+          default: 'integreatly-qe1-3scale'
+          description: '[REQUIRED] 3scale S3 bucket name'
+      - string:
+          name: 'threeScaleBucketRegion'
+          default: 'eu-west-1'
+          description: '[REQUIRED] 3scale S3 bucket region'
+      - string:
+          name: 'backupAwsKey'
+          default: ''
+          description: '[REQUIRED] AWS access key for backups s3 bucket access'
+      - string:
+          name: 'backupAwsSecret'
+          default: ''
+          description: '[REQUIRED] AWS secret key for backups s3 bucket access'
+      - string:
+          name: 'backupsBucketName'
+          default: 'rhmi-qe1-backups'
+          description: '[REQUIRED] Backups S3 bucket name'    
+    dsl: |
+        node('cirhos_rhel7') {
+          stage('Install Integreatly') {
+            wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
+                ansibleTower(
+                  towerServer: 'Dev Tower',
+                  jobTemplate: 'Integreatly_Bootstrap_and_Install_[OSD]',
+                  templateType: 'workflow',
+                  importTowerLogs: true,
+                  removeColor: false,
+                  verbose: true,
+                  extraVars: """---
+                    tower_environment: dev
+                    rhsso_namespace: openshift-sso
+                    cluster_name: ${clusterName}
+                    integreatly_osd_install_branch: ${installationGitBranch}
+                    router_shard: ${routerShard}
+                    openshift_token: ${openShiftToken}
+                    github_client_id: ${githubClientId}
+                    github_client_secret: ${githubClientSecret}
+                    rhsso_admin_pass: ${customerAdminPassword}
+                    threescale_s3_access_key: ${threeScaleAwsAccessKey}
+                    threescale_s3_secret_key: ${threeScaleAwsSecretKey}
+                    threescale_s3_bucket_name: ${threeScaleBucketName}
+                    threescale_s3_bucket_region: ${threeScaleBucketRegion}
+                    backup_s3_access_key: ${backupAwsKey}
+                    backup_s3_secret_key: ${backupAwsSecret}
+                    backup_s3_bucket_name: ${backupsBucketName}"""
+                )
+            }  
+          }
+        }
