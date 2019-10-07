@@ -46,6 +46,7 @@
             description: "ID of SSH Credentials (private key) used for SSH-ing to bastion"
         - string:
             name: ADDITIONAL_ANSIBLE_PARAMS
+            default: '-e amq_streams=true'
             description: "Additional parameters passed to install playbook, e.g.'-e eval_seed_users_count=0'. Can be left empty"
         - bool:
             name: PATCH_TO_MASTER

@@ -36,6 +36,10 @@
         - string:
             name: NAMESPACE_PREFIX
             description: "This value will be used to define the prefix of the names of the namespaces deleted during uninstallation. Defaulting to empty string for RHPDS."
+        - string:
+            name: ADDITIONAL_ANSIBLE_PARAMS
+            default: '-e amq_streams=true'
+            description: "Additional parameters passed to uninstall playbook, e.g.'-e eval_seed_users_count=0'. Can be left empty"
     dsl: |
         import hudson.model.*
         import jenkins.model.*
@@ -143,7 +147,7 @@
                         dir('installation/evals') {
                             sh """
                                 sudo oc login -u system:admin
-                                sudo ansible-playbook -i ./inventories/hosts ./playbooks/uninstall.yml -e ns_prefix=${NAMESPACE_PREFIX}
+                                sudo ansible-playbook -i ./inventories/hosts ./playbooks/uninstall.yml -e ns_prefix=${NAMESPACE_PREFIX} ${ADDITIONAL_ANSIBLE_PARAMS}
                             """
                         } // dir
                     } // stage
