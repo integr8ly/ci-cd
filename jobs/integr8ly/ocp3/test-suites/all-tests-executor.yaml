@@ -5,6 +5,7 @@
     project-type: pipeline
     description: "Pipeline to run all of the available integreatly tests"
     sandbox: true
+    concurrent: true
     properties:
       - build-discarder:
           num-to-keep: 20
