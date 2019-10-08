@@ -5,6 +5,7 @@
     project-type: pipeline
     description: 'Executes browser based testsuite against Integreatly Tutorial Web App.'
     sandbox: true
+    concurrent: true
     parameters:
       - string:
           name: REPOSITORY

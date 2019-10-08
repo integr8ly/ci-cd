@@ -5,6 +5,7 @@
     description: 'Executes backend-testsuite from integreatly qe repository on specified integreatly cluster'
     project-type: pipeline
     sandbox: true
+    concurrent: true
     parameters:
       - string:
           name: REPOSITORY
