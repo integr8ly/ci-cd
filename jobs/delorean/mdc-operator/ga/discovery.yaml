@@ -1,0 +1,38 @@
+---
+- job:
+    name: delorean-mdc-operator/ga/discovery
+    display-name: 'mdc-operator-ga-discovery'
+    project-type: pipeline
+    concurrent: false
+    triggers:
+      - timed: '@daily'
+    parameters:
+      - string:
+          name: 'productVersionVar'
+          default: 'mdc_operator_release_tag'
+          description: '[REQUIRED] The manifest variable to be used as the current component version'
+          read-only: true
+      - string:
+          name: 'projectOrg'
+          default: 'aerogear'
+          description: '[REQUIRED] github project organization'
+          read-only: true
+      - string:
+          name: 'projectRepo'
+          default: 'mobile-developer-console-operator'
+          description: '[REQUIRED] github project repository'
+          read-only: true
+      - string:
+          name: 'productName'
+          default: 'mdc-operator'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
+          read-only: true
+    pipeline-scm:
+      script-path: jobs/delorean/jenkinsfiles/discovery/ga/github/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - master
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false
