@@ -148,6 +148,28 @@
     display-name: 'GA'
     project-type: folder
 
+# MSS
+- job:
+    name: delorean-mss
+    display-name: 'MSS'
+    project-type: folder
+
+- job:
+    name: delorean-mss/ga
+    display-name: 'GA'
+    project-type: folder
+
+# MSS Operator
+- job:
+    name: delorean-mss-operator
+    display-name: 'MSS Operator'
+    project-type: folder
+
+- job:
+    name: delorean-mss-operator/ga
+    display-name: 'GA'
+    project-type: folder
+
 # Suites
 - job:
     name: delorean-suites
