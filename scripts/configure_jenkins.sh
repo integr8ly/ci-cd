@@ -76,6 +76,7 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift4/cluster/creat
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift4/cluster/deprovision/openshift4-cluster-deprovision.yaml
 
 # OSD cluster jobs
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/osd-cluster-integreatly-install.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/osd-cluster-integreatly-uninstall.yaml
 
 #Delorean Folders

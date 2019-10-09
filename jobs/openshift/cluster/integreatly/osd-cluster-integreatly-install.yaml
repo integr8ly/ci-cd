@@ -60,7 +60,10 @@
       - string:
           name: 'backupsBucketName'
           default: 'rhmi-qe1-backups'
-          description: '[REQUIRED] Backups S3 bucket name'    
+          description: '[REQUIRED] Backups S3 bucket name'
+      - string:
+          name: 'clientSecret'
+          description: '[REQUIRED] Desired client secret value for RHSSO'     
     dsl: |
         node('cirhos_rhel7') {
           stage('Install Integreatly') {
@@ -91,5 +94,23 @@
                     backup_s3_bucket_name: ${backupsBucketName}"""
                 )
             }  
+          }
+          
+          stage('Clone QE repository') {
+            dir('.') {
+              git branch: "master", url: "https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git"
+            }
+          }
+
+          stage('Update client secret in SSO') {
+            dir('test-suites/backend-testsuite') {
+              sh '''
+                export OPENSHIFT_TOKEN=${openShiftToken}
+                export CLUSTER_URL=https://console.${clusterName}.openshift.com
+                export SSO_URL=https://sso-openshift-sso.${routerShard}.${clusterName}.openshiftapps.com
+                npm install
+                node ssoClientUpdate.js ${clientSecret}
+              '''  
+            }
           }
         }
