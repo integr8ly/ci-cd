@@ -55,7 +55,10 @@
             sh '''
               oc login https://console.${clusterName}.openshift.com --token=${openShiftToken}
               oc delete user customer-admin --ignore-not-found
-              oc delete user $(oc get user | grep ${userName} | awk '{print $1}') --ignore-not-found
+              # check there are some users with given username
+              if [[ $(oc get user | grep ${userName}) ]]; then
+                oc delete user $(oc get user | grep ${userName} | awk '{print $1}') --ignore-not-found
+              fi  
             '''
           }
         }
