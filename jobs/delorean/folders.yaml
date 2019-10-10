@@ -148,6 +148,17 @@
     display-name: 'GA'
     project-type: folder
 
+# MDC Operator
+- job:
+    name: delorean-mobile-walkthrough
+    display-name: 'Mobile Walkthrough'
+    project-type: folder
+
+- job:
+    name: delorean-mobile-walkthrough/ga
+    display-name: 'GA'
+    project-type: folder
+
 # Suites
 - job:
     name: delorean-suites
