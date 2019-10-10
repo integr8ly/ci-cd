@@ -1,0 +1,71 @@
+---
+
+- job:
+    name: ocp4-automated-namespace-recreate
+    description: 'Tests the integreatly operator to ensure any integreatly namespaces are recreated after deletion.'
+    project-type: pipeline
+    sandbox: true
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
+          description: 'QE repository containing the test source code.'
+      - string:
+          name: BRANCH
+          default: 'v2-master'
+          description: 'Branch of the repository'
+      - string:
+          name: CLUSTER_URL
+          description: 'URL of cluster on which the test will be executed, including port number.'
+      - string:
+          name: ADMIN_USERNAME
+          description: 'Username to login to Openshift 4 cluster. Provided by the feedback from installation.'
+      - string:
+          name: ADMIN_PASSWORD
+          description: 'Password to login to Openshift 4 cluster. Provided by the feedback from installation.'
+      - string:
+          name: NAMESPACES
+          description: 'One or more namespaces. If more than one, separate with commas e.g.  NAMESPACES=openshift-launcher,openshift-nexus'
+      - string:
+          name: TIMEOUT_THRESHOLD
+          default: '1'
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
+    dsl: |
+        timeout(50) { ansiColor('gnome-terminal') { timestamps {
+            node('cirhos_rhel7'){
+
+                Boolean publishTestResults = true
+
+                stage('Clone QE repository') {
+                    dir('.') {
+                        git branch: "${BRANCH}", url: "${REPOSITORY}"
+                    }
+                }
+                stage('Run the automated-namespace-recreate tests'){
+                    dir('test-suites/backend-testsuite') {
+                        sh '''
+                            npm install
+                            ./node_modules/gulp/bin/gulp.js auto-ns-recreate 2>&1 | tee output.txt
+                        '''
+                        String output = readFile("output.txt");
+                        
+                        if(!output.contains('Integreatly automated namespace recreate')) {
+                            currentBuild.result = 'FAILURE'
+                            publishTestResults = false
+                        } else if(output.contains('There were test failures')) {
+                            currentBuild.result = 'UNSTABLE'
+                        }
+                    }
+                }
+                stage('Publish test results') {
+                    if(publishTestResults) {
+                        dir('test-suites/backend-testsuite/reports/') {
+                            archiveArtifacts 'auto-ns-recreate.xml'                  
+                            junit allowEmptyResults:true, testResults: 'auto-ns-recreate.xml'
+                        }
+                    } else {
+                        println 'Publishing the results skipped. Probably due to an error.'
+                    }
+                }
+            }
+        }}}
