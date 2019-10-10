@@ -23,7 +23,7 @@
           default: integreatly-qe@redhat.com
           description: 'Whitespace- or comma-separated list of recipient addresses'
     triggers:
-      - timed: 'H H(0-3) * * *'
+      - timed: '20-30 1 * * *'
     dsl: |
 
         def setClusterAdminCredentials() {
