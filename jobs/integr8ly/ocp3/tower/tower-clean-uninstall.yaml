@@ -75,8 +75,8 @@
                             def masterIP = sh(
                                 returnStdout: true,
                                 script: """
-                                    oc login https://${clusterName}.${clusterDomainName} -u ${clusterAdminCredentials.clusterAdminUsername} -p ${clusterAdminCredentials.clusterAdminPassword} > /dev/null
-                                    oc describe node `oc get nodes | grep master | head -n 1 | awk '{print \$1}'` | grep ExternalIP | awk '{print \$2}'
+                                    sudo oc login https://${clusterName}.${clusterDomainName} -u ${clusterAdminCredentials.clusterAdminUsername} -p ${clusterAdminCredentials.clusterAdminPassword} > /dev/null
+                                    sudo oc describe node `oc get nodes | grep master | head -n 1 | awk '{print \$1}'` | grep ExternalIP | awk '{print \$2}'
                                 """).trim()
 
                             sh """
@@ -92,7 +92,7 @@
                         dir('installation') {
                             withCredentials([sshUserPrivateKey(credentialsId: 'tower-provisioner-pem', keyFileVariable: 'private_key')]){
                               sh """
-                                  ansible-playbook -i ./inventories/hosts --private-key ${private_key} ./playbooks/uninstall.yml
+                                  sudo ansible-playbook -i ./inventories/hosts --private-key ${private_key} ./playbooks/uninstall.yml
                               """
                             } // withCredentials
                         } // dir
