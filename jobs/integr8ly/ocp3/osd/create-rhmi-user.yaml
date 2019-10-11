@@ -1,0 +1,123 @@
+---
+
+- job:
+    name: create-rhmi-user
+    project-type: pipeline
+    description: "Pipeline to create a new evalsXX-like user in RHSSO, OpenShift, and 3scale"
+    sandbox: true
+    concurrent: true
+    properties:
+      - build-discarder:
+          num-to-keep: 20
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
+          description: 'QE repository containing the tests.'
+      - string:
+          name: BRANCH
+          default: 'master'
+          description: 'Branch of the repository'
+      - string:
+          name: CLUSTER_URL
+          description: 'URL of cluster for which the user will be created.'
+      - string:
+          name: ADMIN_USERNAME
+          default: 'admin@example.com'
+          description: 'Admin username to login to Integreatly cluster.'
+      - string:
+          name: ADMIN_PASSWORD
+          default: 'Password1'
+          description: 'Admin password to login to Integreatly cluster.'
+      - string:
+          name: CUSTOMER_ADMIN_USERNAME
+          default: 'customer-admin@example.com'
+          description: 'customer-admin username to login to Integreatly cluster.'
+      - string:
+          name: CUSTOMER_ADMIN_PASSWORD
+          default: 'Password1'
+          description: 'Password to login to Integreatly cluster.'
+      - string:
+          name: NAMESPACE_PREFIX
+          description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
+      - string:
+          name: WEBAPP_URL
+          description: 'URL of Tutorial Web App'
+      - bool:
+          name: CLEAN_RESOURCES
+          default: false
+          description: 'Depending on whether the resources should be cleaned after the successful execution'
+      - string:
+          name: SSO_URL
+          description: 'SSO URL for the cluster (sso-user-create test)'
+      - string:
+          name: USERNAME
+          default: "osdtester"
+          description: 'Name of newly created user. "01" will be appended.'
+      - string:
+          name: TIMEOUT_THRESHOLD
+          default: '1'
+          description: 'Optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'
+    dsl: |
+        jobParams = [
+            string(name: 'REPOSITORY', value: "${REPOSITORY}"),
+            string(name: 'BRANCH', value: "${BRANCH}"),
+            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+            string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+            string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+            string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),
+            string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
+            string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
+            string(name: 'WEBAPP_URL', value: "${WEBAPP_URL}"),
+            booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
+            string(name: 'SSO_URL', value: "${SSO_URL}"),
+            string(name: 'USERNAME', value: "${USERNAME}"),
+            string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
+            string(name: 'NUMBER_OF_USERS', value: '1'),
+        ]
+
+        try {
+            timeout(40) { ansiColor('gnome-terminal') { timestamps {
+                node('cirhos_rhel7') {
+                    currentBuild.displayName = "${currentBuild.displayName} ${CLUSTER_URL}"
+                    currentBuild.description = "username: ${USERNAME}"
+
+                    stage ('SSO user creation') {
+                        runTests('sso-user-create-tests')
+                    } // stage
+
+                    stage ('Log in to SE and 3scale') {
+                        jobParams.push(string(name: 'EVALS_USERNAME', value: "${USERNAME}01"))
+                        runSingleBrowserTest('tests/30_three_scale/three_scale-login.js')
+                    } // stage
+
+                    stage ('Make user admin and activate them in 3scale') {
+                        jobParams.push(string(name: 'USERNAME', value: "${USERNAME}01"))
+                        runTests('grant-3scale-admin-permissions')
+                    } // stage
+
+                } // node
+            }}} // timeout, ansiColor, timestamps
+        } catch (caughtError){
+            currentBuild.result = 'FAILURE'
+        }
+
+        def runTests(testPipeline) {
+            buildStatus = build(job: testPipeline, propagate: false, parameters: jobParams).result
+            println "Build finished with ${buildStatus}"
+                            
+            if (buildStatus != 'SUCCESS') {
+                currentBuild.result = 'UNSTABLE'
+            }
+        }
+
+        def runSingleBrowserTest(testName) {
+            jobParams.push(string(name: 'TEST_TO_RUN', value: "${testName}"))   
+            buildStatus = build(job: 'browser-based-single-test', propagate: false, parameters: jobParams).result
+            println "Build finished with ${buildStatus}"
+                            
+            if (buildStatus != 'SUCCESS') {
+                currentBuild.result = 'UNSTABLE'
+            }
+            return buildStatus
+        }
