@@ -19,10 +19,10 @@
           description: 'URL of cluster on which the test will be executed, including port number.'
       - string:
           name: ADMIN_USERNAME
-          description: 'Username to login to Openshift 4 cluster. Provided by the feedback from installation.'
+          description: 'Username to login to Openshift 4 cluster. Provided by the feedback from installation. If PDS, details will be on email'
       - string:
           name: ADMIN_PASSWORD
-          description: 'Password to login to Openshift 4 cluster. Provided by the feedback from installation.'
+          description: 'Password to login to Openshift 4 cluster. Provided by the feedback from installation. If PDS, details will be on email'
       - string:
           name: NAMESPACES
           description: 'One or more namespaces. If more than one, separate with commas e.g.  NAMESPACES=openshift-launcher,openshift-nexus'
