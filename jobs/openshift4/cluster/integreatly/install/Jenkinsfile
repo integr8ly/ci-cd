@@ -1,0 +1,102 @@
+#!groovy
+@Library('delorean-pipeline-library')
+
+String cluserAPI = "https://api.${CLUSTER_DOMAIN}:6443"
+
+node('cirhos_rhel7') {
+    timeout(60) { ansiColor('gnome-terminal') { timestamps {
+    currentBuild.description = "cluster: ${CLUSTER_DOMAIN}\n"
+
+    stage('Login to OpenShift 4 cluster') {
+        sh "oc login ${cluserAPI} --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD}"
+    } 
+
+    stage('Clone Integreatly Operator') {
+        dir('integreatly-operator') {
+            checkout([
+                $class: 'GitSCM',
+                branches: [[name: "${INTEGREATLY_OPERATOR_BRANCH}"]],
+                doGenerateSubmoduleConfigurations: false,
+                extensions: [],
+                userRemoteConfigs: [[url: "${INTEGREATLY_OPERATOR_REPOSITORY}"]]
+            ])
+            sh "git clean -xdf"
+        } 
+    }
+
+    stage('Create Integreatly Operator') {
+// TODO We should be using a jenkins credential for these and use withCredentials 
+//     see https://github.com/integr8ly/ci-cd/blob/master/jobs/openshift4/cluster/deprovision/Jenkinsfile#L17-L29
+        // withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: params.CREDENTIALS_ID, accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+        //     sh(
+        //         returnStdout: false,
+        //         script: """
+        //             rm -rf ~/.aws
+        //             mkdir ~/.aws
+        //             touch ~/.aws/credentials
+        //             set +x # suppress output of the next shell command
+        //             echo "[default]\naws_access_key_id=${AWS_ACCESS_KEY_ID}\naws_secret_access_key=${AWS_SECRET_ACCESS_KEY}" > ~/.aws/credentials
+        //             set -x
+        //         """
+        //     )
+        // }
+        sh "export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}"
+        sh "export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}"
+        sh "export AWS_BUCKET=${AWS_BUCKET}"
+
+// TODO Use a jenkins credential for these also, GH_CLIENT_ID and GH_CLIENT_SECRET
+        sh "export GH_CLIENT_ID=${GH_CLIENT_ID}"
+        sh "export GH_CLIENT_SECRET=${GH_CLIENT_SECRET}"
+
+        dir("integreatly-operator") {
+            sh "make cluster/prepare/olm"  
+        }
+    }
+
+    stage ('Create Installation CR') {
+        dir("integreatly-operator") {
+            sh "make deploy/integreatly-installation-cr.yml"
+            sh "oc create -f deploy/integreatly-installation-cr.yml"   
+        }
+    }
+
+// TODO
+// We should probably consider making the make file do the wait so we can make it consistent across all installations (jenkins vs prow vs local) 
+//     https://github.com/integr8ly/integreatly-operator/blob/master/Makefile#L116-L118
+//
+// We could separate that out into a different target that only does the deploy
+    stage ('Verify Installation Has Finished') {
+        String getAuthStatusCommand = "oc get Installation example-installation -n integreatly --output=json -o jsonpath='{.status.stages.authentication.phase}'"
+        expectedOcCommandOutput = getInstallationStatus(getAuthStatusCommand)
+        while (!expectedOcCommandOutput.contains("completed")) {
+            println "Authentication stage has not completed yet"
+            sleep time: 20, unit: 'SECONDS'
+            expectedOcCommandOutput = getInstallationStatus(getAuthStatusCommand)
+        }  
+
+        String getInstallationStatusCommand = "oc get Installation example-installation -n integreatly --output=json -o jsonpath='{.status.stages.products.phase}'"
+        expectedOcCommandOutput = getInstallationStatus(getInstallationStatusCommand)
+        while (!expectedOcCommandOutput.contains("completed")) {
+            println "Installation has not completed yet"
+            sleep time: 20, unit: 'SECONDS'
+            expectedOcCommandOutput = getInstallationStatus(getInstallationStatusCommand)
+        }
+    }
+    }}} // timeout, ansiColor, timestamps
+}    
+
+def getInstallationStatus(command) {
+    String ocStatus = sh (
+        script: "oc status",
+        returnStdout: true
+    ).trim()
+    if (/* !ocStatus.contains("${CLUSTER_NAME}") ||  */!ocStatus.contains("${CLUSTER_DOMAIN}")) {
+        println "kubeconfig might have been changed. Trying to login again..."
+        sh "oc login ${clusterAPI} --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD}"
+    }
+    String ocCommandOutput = sh (
+        script: "${command}",
+        returnStdout: true
+    ).trim()
+    return ocCommandOutput
+}
