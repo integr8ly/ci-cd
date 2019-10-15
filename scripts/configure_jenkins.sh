@@ -74,6 +74,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/brew/openshift
 # OpenShit 4 Cluster jobs
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift4/cluster/create/openshift4-cluster-create.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift4/cluster/deprovision/openshift4-cluster-deprovision.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift4/cluster/integreatly/openshift4-cluster-integreatly-install.yaml
 
 # OSD cluster jobs
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/osd-cluster-integreatly-install.yaml
