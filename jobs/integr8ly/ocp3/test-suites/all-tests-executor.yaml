@@ -143,9 +143,12 @@
                         runTests('sso-user-create-tests')
                     } // stage
 
-                    stage ('Nexus builds test') {
-                        runTests('nexus-builds-test')
-                    } // stage
+                    // run nexus-build test only on PDS
+                    if (CLUSTER_URL.contains("open.redhat.com")) {
+                        stage ('Nexus builds test') {
+                            runTests('nexus-builds-test')
+                        } // stage
+                    }
 
                     stage ('Start Dashboards Browser Tests') {
                         runSingleBrowserTest('tests/10_fuse/fuse-console-login.js')
