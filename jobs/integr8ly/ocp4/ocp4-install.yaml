@@ -252,7 +252,7 @@
                         String getProductsStatusCommand = "oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.products.phase}'"
                         expectedOcCommandOutput = getInstallationStatus(getProductsStatusCommand, clusterAPI, ADMIN_USERNAME, adminPassword)
                         while (!expectedOcCommandOutput.contains("completed")) {
-                            println "Products are not not installed yet"
+                            println "Products are not installed yet"
                             sleep time: 20, unit: 'SECONDS'
                             expectedOcCommandOutput = getInstallationStatus(getProductsStatusCommand, clusterAPI, ADMIN_USERNAME, adminPassword)
                         }
