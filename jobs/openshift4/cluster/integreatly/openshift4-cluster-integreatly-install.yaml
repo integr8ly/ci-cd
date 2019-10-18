@@ -1,0 +1,57 @@
+---
+- job:
+    name: openshift4-cluster-integreatly-install
+    display-name: 'Openshift 4 Cluster Integreatly Install'
+    project-type: pipeline
+    concurrent: true
+    parameters:
+        - string:
+            name: CLUSTER_DOMAIN
+            default: ''
+            description: ""
+        - string:
+            name: ADMIN_USERNAME
+            default: ''
+            description: "Admin username for the OCP4 cluster"
+        - string:
+            name: ADMIN_PASSWORD
+            default: ''
+            description: "Admin password for OS4 cluster"
+        - string:
+            name: INTEGREATLY_OPERATOR_REPOSITORY
+            default: 'https://github.com/integr8ly/integreatly-operator.git'
+            description: "Repository of the Integreatly Operator"
+        - string:
+            name: INTEGREATLY_OPERATOR_BRANCH
+            default: 'master'
+            description: "Branch of the Integreatly Operator repository"
+        - string:
+            name: GH_CLIENT_ID
+            default: ''
+            description: "Github client ID"        
+        - string:
+            name: GH_CLIENT_SECRET
+            default: ''
+            description: "Github client secret"
+        - string:
+            name: AWS_ACCESS_KEY_ID
+            default: ''
+            description: ""
+        - string:
+            name: AWS_SECRET_ACCESS_KEY
+            default: ''
+            description: ""
+        - string:
+            name: AWS_BUCKET
+            default: ''
+            description: ""
+
+    pipeline-scm:
+      script-path: jobs/openshift4/cluster/integreatly/install/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

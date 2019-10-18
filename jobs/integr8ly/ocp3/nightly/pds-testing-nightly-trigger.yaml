@@ -7,7 +7,7 @@
     sandbox: false
     concurrent: false
     triggers:
-      - timed: "H(0-10) H(0-1) * * *"
+      - timed: "H(0-10) 21 * * *"
     properties:
       - build-discarder:
           num-to-keep: 56
@@ -34,7 +34,7 @@
             TESTING_MASTER=true
             NUMBER_OF_USERS=5
             PATCH_TO_MASTER=true
-            TO_DO=full
+            TO_DO=uninstall + install + tests
     dsl: |
         timeout(270) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {

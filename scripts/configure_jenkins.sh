@@ -60,12 +60,22 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/suites/integration/ga/b
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/suites/integration/rc/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/keycloak/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/keycloak/ga/discovery.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mdc/ga/branch.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mdc/ga/discovery.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/datasync-template/ga/branch.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/datasync-template/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mdc-operator/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mdc-operator/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mss/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mss/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mss-operator/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mss-operator/ga/discovery.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/ups/ga/branch.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/ups/ga/discovery.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/ups-operator/ga/branch.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/ups-operator/ga/discovery.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mobile-walkthrough/ga/branch.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mobile-walkthrough/ga/discovery.yaml
 
 #OpenShift Cluster Jobs
 generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/create/openshift-cluster-create.yaml
@@ -78,8 +88,10 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/brew/openshift
 # OpenShit 4 Cluster jobs
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift4/cluster/create/openshift4-cluster-create.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift4/cluster/deprovision/openshift4-cluster-deprovision.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift4/cluster/integreatly/openshift4-cluster-integreatly-install.yaml
 
 # OSD cluster jobs
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/osd-cluster-integreatly-install.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/osd-cluster-integreatly-uninstall.yaml
 
 #Delorean Folders
@@ -95,6 +107,7 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/utils/rec
 
 #Delorean nightly trigger
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/delorean-testing-nightly-trigger.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/nightly/osd-testing-nightly-trigger.yaml
 
 #PDS
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/pds/pds-install.yaml

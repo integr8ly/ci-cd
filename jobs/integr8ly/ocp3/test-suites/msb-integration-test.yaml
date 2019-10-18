@@ -5,7 +5,7 @@
     project-type: pipeline
     concurrent: false
     triggers:
-      - timed: "15 01 * * *"
+      - timed: "H(0-10) 23 * * *"
     properties:
       - build-discarder:
           num-to-keep: 15
