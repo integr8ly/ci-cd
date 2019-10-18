@@ -1,0 +1,37 @@
+---
+- job:
+    name: delorean-mss/ga/branch
+    display-name: 'mss-ga-branch'
+    project-type: pipeline
+    concurrent: false
+    parameters:
+      - string:
+          name: 'installationGitUrl'
+          default: 'git@github.com:integr8ly/installation.git'
+          description: '[REQUIRED] The installation repo'
+      - string:
+          name: 'installationProductBranch'
+          default: 'mss-ga'
+          description: '[REQUIRED] The installation git branch to push new version changes'
+      - string:
+          name: 'productName'
+          default: 'mss'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
+      - string:
+          name: 'productVersionVar'
+          default: 'mss_version'
+          description: '[REQUIRED] The manifest variable to be used as the current component version'
+          read-only: true
+      - bool:
+          name: 'dryRun'
+          default: false
+          description: '[OPTIONAL][Test] Dry run only, only prints what it would do!'
+    pipeline-scm:
+      script-path: jobs/delorean/jenkinsfiles/branch/ga/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - master
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false
