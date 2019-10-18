@@ -170,6 +170,28 @@
     display-name: 'GA'
     project-type: folder
 
+# UPS
+- job:
+    name: delorean-ups
+    display-name: 'UPS'
+    project-type: folder
+
+- job:
+    name: delorean-ups/ga
+    display-name: 'GA'
+    project-type: folder
+
+# UPS Operator
+- job:
+    name: delorean-ups-operator
+    display-name: 'UPS Operator'
+    project-type: folder
+
+- job:
+    name: delorean-ups-operator/ga
+    display-name: 'GA'
+    project-type: folder
+
 # MDC Operator
 - job:
     name: delorean-mobile-walkthrough
