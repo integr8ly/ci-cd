@@ -114,7 +114,7 @@
         def err = null
 
         node('cirhos_rhel7') {
-            timeout(60) { ansiColor('gnome-terminal') { timestamps {
+            timeout(75) { ansiColor('gnome-terminal') { timestamps {
                 try {
                     currentBuild.displayName = "${currentBuild.displayName} ${CLUSTER_NAME}"
 
@@ -222,8 +222,8 @@
                         sh(
                             returnStdout: false,
                             script: """
-                                sed -i "s@http://master.example.com@https://console-openshift-console.apps.${clusterSuffix}@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
-                                sed -i "s@example.com@apps.${clusterSuffix}@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
+                                sed -i "s@http://console.apps.example.com@https://console-openshift-console.apps.${clusterSuffix}@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
+                                sed -i "s@example.com@${clusterSuffix}@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
                                 sed -i "s@integreatly-@${namespacePrefix}@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
                                 sed -i "s@type: workshop@type: ${INSTALLATION_TYPE}@" ./integreatly-operator/deploy/crds/examples/installation.cr.yaml
                             """
@@ -249,12 +249,20 @@
                             expectedOcCommandOutput = getInstallationStatus(getAuthStatusCommand, clusterAPI, ADMIN_USERNAME, adminPassword)
                         }  
 
-                        String getInstallationStatusCommand = "oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.products.phase}'"
-                        expectedOcCommandOutput = getInstallationStatus(getInstallationStatusCommand, clusterAPI, ADMIN_USERNAME, adminPassword)
+                        String getProductsStatusCommand = "oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.products.phase}'"
+                        expectedOcCommandOutput = getInstallationStatus(getProductsStatusCommand, clusterAPI, ADMIN_USERNAME, adminPassword)
                         while (!expectedOcCommandOutput.contains("completed")) {
-                            println "Installation has not completed yet"
+                            println "Products are not installed yet"
                             sleep time: 20, unit: 'SECONDS'
-                            expectedOcCommandOutput = getInstallationStatus(getInstallationStatusCommand, clusterAPI, ADMIN_USERNAME, adminPassword)
+                            expectedOcCommandOutput = getInstallationStatus(getProductsStatusCommand, clusterAPI, ADMIN_USERNAME, adminPassword)
+                        }
+
+                        String getSolutionExplorerStatusCommand = "oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.solution-explorer.phase}'"
+                        expectedOcCommandOutput = getInstallationStatus(getSolutionExplorerStatusCommand, clusterAPI, ADMIN_USERNAME, adminPassword)
+                        while (!expectedOcCommandOutput.contains("completed")) {
+                            println "Solution-explorer is not installed yet"
+                            sleep time: 20, unit: 'SECONDS'
+                            expectedOcCommandOutput = getInstallationStatus(getSolutionExplorerStatusCommand, clusterAPI, ADMIN_USERNAME, adminPassword)
                         }
                     } // stage
 

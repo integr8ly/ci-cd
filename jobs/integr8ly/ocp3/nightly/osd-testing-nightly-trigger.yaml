@@ -1,0 +1,217 @@
+---
+
+- job:
+    name: osd-testing-nightly-trigger
+    project-type: pipeline
+    description: "Nightly pipeline trigger for QE OSD cluster (rhmi-qe1) testing."
+    sandbox: false
+    concurrent: false
+    triggers:
+      - timed: "H(20) 3 * * *"
+    properties:
+      - build-discarder:
+          num-to-keep: 56
+      - inject:
+          properties-content: |
+            CLUSTER_NAME=rhmi-qe1
+            RECIPIENTS=integreatly-qe@redhat.com
+            INSTALLATION_BRANCH=master
+            ROUTER_SHARD=f2d1
+            USERNAME=osdtester
+            TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
+            TEST_SUITES_BRANCH=master
+            GH_CLIENT_ID=836affcd7fd1bcebf9ae
+            GH_CLIENT_SECRET=72e97db6f1a2a6d8d2be66686cf52ccf15b3588f
+            CUSTOMER_ADMIN_PASSWORD=Password1
+            CREDENTIALS_ID=osd-s3-access-key-and-secret
+            THREESCALE_BUCKET_NAME=integreatly-qe1-3scale
+            THREESCALE_BUCKET_REGION=eu-west-1
+            BACKUPS_BUCKET_NAME=rhmi-qe1-backups
+            ADMIN_USERNAME=admin01
+            ADMIN_PASSWORD=Password1
+            CLEAN_RESOURCES=false
+            MANIFEST_VERSION=master
+            TESTING_MASTER=false
+            TIMEOUT_THRESHOLD=1
+    dsl: |
+        def err = null
+        def loggedIn = false
+        def installationStatus 
+        def uninstallationStatus
+        try {
+            timeout(300) { ansiColor('gnome-terminal') { timestamps {
+                node('cirhos_rhel7') {
+                    currentBuild.displayName = "${currentBuild.displayName} ${CLUSTER_NAME}"
+                    currentBuild.description = "branch: ${INSTALLATION_BRANCH}"
+
+                    stage ('Run uninstallation pipeline') {
+                        withCredentials([
+                                [$class: 'StringBinding', credentialsId: "rhmi-qe1-token", variable: 'OPENSHIFT_TOKEN']
+                            ]) {
+                            uninstallationStatus = build(job: 'osd-cluster-integreatly-uninstall', propagate: false, parameters: [
+                                string(name: 'clusterName', value: "${CLUSTER_NAME}"),
+                                string(name: 'uninstallationGitBranch', value: "${INSTALLATION_BRANCH}"),
+                                string(name: 'routerShard', value: "${ROUTER_SHARD}"),
+                                string(name: 'openShiftToken', value: "${OPENSHIFT_TOKEN}"),
+                                string(name: 'userName', value: "${USERNAME}")
+                            ]).result
+                        }
+                    } // stage
+
+                     if (uninstallationStatus != 'SUCCESS') {
+                        println 'There were some errors in previous uninstallation pipeline!'
+                        currentBuild.result = 'FAILURE'
+                        return
+                    }
+
+                    stage ('Run installation pipeline') {
+                        withCredentials([
+                                [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${CREDENTIALS_ID}", accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
+                                [$class: 'StringBinding', credentialsId: "rhmi-qe1-sso-client-secret", variable: 'SSO_SECRET'],
+                                [$class: 'StringBinding', credentialsId: "rhmi-qe1-token", variable: 'OPENSHIFT_TOKEN']
+                            ]) {
+                            installationStatus = build(job: 'osd-cluster-integreatly-install', propagate: false, parameters: [
+                                string(name: 'clusterName', value: "${CLUSTER_NAME}"),
+                                string(name: 'installationGitBranch', value: "${INSTALLATION_BRANCH}"),
+                                string(name: 'routerShard', value: "${ROUTER_SHARD}"),
+                                string(name: 'openShiftToken', value: "${OPENSHIFT_TOKEN}"),
+                                string(name: 'githubClientId', value: "${GH_CLIENT_ID}"),
+                                string(name: 'githubClientSecret', value: "${GH_CLIENT_SECRET}"),
+                                string(name: 'customerAdminPassword', value: "${CUSTOMER_ADMIN_PASSWORD}"),
+                                string(name: 'threeScaleAwsAccessKey', value: "${AWS_ACCESS_KEY_ID}"),
+                                string(name: 'threeScaleAwsSecretKey', value: "${AWS_SECRET_ACCESS_KEY}"),
+                                string(name: 'threeScaleBucketName', value: "${THREESCALE_BUCKET_NAME}"),
+                                string(name: 'threeScaleBucketRegion', value: "${THREESCALE_BUCKET_REGION}"),
+                                string(name: 'backupAwsKey', value: "${AWS_ACCESS_KEY_ID}"),
+                                string(name: 'backupAwsSecret', value: "${AWS_SECRET_ACCESS_KEY}"),
+                                string(name: 'backupsBucketName', value: "${BACKUPS_BUCKET_NAME}"),
+                                string(name: 'clientSecret', value: "${SSO_SECRET}")
+                            ]).result
+                        }
+                    } // stage
+
+                    if (installationStatus != 'SUCCESS') {
+                        println 'There were some errors in previous installation pipeline!'
+                        currentBuild.result = 'FAILURE'
+                        return
+                    }
+
+                    // This relies on a cronjob to restart the OpenShift API so that we can successfully login afterwards
+                    stage ('Try to login to installed cluster') {
+                        println "Waiting for successful login to the ${CLUSTER_NAME} cluster"
+                        i = 0
+                        // Trying to log into the cluster 12 times and each 5 minutes which can take max 1 hour 
+                        while(!loggedIn && i < 12) {
+                            loggedIn = ocLoginAsCustomerAdmin()
+                            i += 1
+                            sleep time: 5, unit: 'MINUTES'
+                        }
+                    }
+
+                    // we want to run test only when there was a successful login to the cluster
+                    if (loggedIn) {
+
+                        stage ('Create admin user in SSO') {
+                            build(job: 'sso-user-create-tests', propagate: false, parameters: [
+                                string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
+                                string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                                string(name: 'CUSTOMER_ADMIN_USERNAME', value: "customer-admin"),
+                                string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
+                                string(name: 'SSO_URL', value: "https://sso-openshift-sso.${ROUTER_SHARD}.${CLUSTER_NAME}.openshiftapps.com"),
+                                string(name: 'USERNAME', value: "admin"),
+                                string(name: 'NAMESPACE_PREFIX', value: "openshift-"),
+                                string(name: 'NUMBER_OF_USERS', value: "1"),
+                                booleanParam(name: 'CLEAN_RESOURCES', value:  Boolean.valueOf("false"))
+                            ])
+                        } // stage
+
+                        stage ('Create test user in SSO') {
+                            build(job: 'create-rhmi-user', propagate: false, parameters: [
+                                string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
+                                string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                                string(name: 'CLUSTER_URL', value: "https://console.${CLUSTER_NAME}.openshift.com"),
+                                string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+                                string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+                                string(name: 'CUSTOMER_ADMIN_USERNAME', value: "customer-admin"),
+                                string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
+                                string(name: 'SSO_URL', value: "https://sso-openshift-sso.${ROUTER_SHARD}.${CLUSTER_NAME}.openshiftapps.com"),
+                                string(name: 'USERNAME', value: "${USERNAME}"),
+                                string(name: 'NAMESPACE_PREFIX', value: "openshift-"),
+                                string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-openshift-webapp.${ROUTER_SHARD}.${CLUSTER_NAME}.openshiftapps.com"),
+                                booleanParam(name: 'CLEAN_RESOURCES', value:  Boolean.valueOf("false"))
+                            ])
+                        } // stage
+
+                        stage ('Run tests') {
+                            buildStatus = build(job: 'all-tests-executor', propagate: false, parameters: [
+                                string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
+                                string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
+                                string(name: 'CLUSTER_URL', value: "https://console.${CLUSTER_NAME}.openshift.com"),
+                                string(name: 'EVALS_USERNAME', value: "${USERNAME}01"),
+                                string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+                                string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+                                string(name: 'CUSTOMER_ADMIN_USERNAME', value: "customer-admin"),
+                                string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
+                                string(name: 'NAMESPACE_PREFIX', value: "openshift-"),
+                                string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-openshift-webapp.${ROUTER_SHARD}.${CLUSTER_NAME}.openshiftapps.com"),
+                                booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
+                                string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
+                                booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
+                                string(name: 'SSO_URL', value: "https://sso-openshift-sso.${ROUTER_SHARD}.${CLUSTER_NAME}.openshiftapps.com"),
+                                string(name: 'USERNAME', value: "tester"),
+                                string(name: 'NUMBER_OF_USERS', value: "5"),
+                                string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}")
+                            ]).result
+
+                            if(buildStatus == 'UNSTABLE') {
+                                currentBuild.result = 'UNSTABLE'
+                            } else if(buildStatus == 'SUCCESS') {
+                                currentBuild.result = 'SUCCESS'
+                            } else {
+                                currentBuild.result = 'FAILURE'
+                            }
+                        } // stage
+                    } else {
+                         currentBuild.result = 'UNSTABLE'
+                         println "The test execution was skipped due to unsuccessful login to the cluster!!"
+                    }
+                }// node
+            }}} // timeout, ansiColor, timestamps
+        } catch (caughtError) {
+            currentBuild.result = 'FAILURE'
+            err = caughtError 
+        } finally {
+            notifyBuild(currentBuild.result, err)
+        }
+
+        def notifyBuild(String buildStatus, err) {
+            
+            // In theory, null means success. In practise if there is an error thrown elsewhere than in the triggered jobs (eg. in wokraround scripts)
+            // the job fails but success will be stored in buildStatus anyway
+            buildStatus =  buildStatus ?: 'SUCCESS'
+            
+            String mailRecipients = "${RECIPIENTS}"
+            String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+            String body = "${subject}\n\n(${env.BUILD_URL})"
+
+            if(err != null) {
+                body = "${body}\n\n FAILURE was ${err}"
+            }
+
+            mail body: body, subject: subject, to: mailRecipients
+        }
+
+        def ocLoginAsCustomerAdmin() {
+            try {
+                String loginOutput = sh (
+                    script: "oc login https://api.${CLUSTER_NAME}.openshift.com -u customer-admin -p ${CUSTOMER_ADMIN_PASSWORD}",
+                    returnStdout: true
+                ).trim()
+    
+                println loginOutput
+                return loginOutput.contains("Login successful")
+            } catch (error) {
+                println "Login was not successful - ${error}"
+                return false
+            }
+        }

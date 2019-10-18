@@ -1,0 +1,38 @@
+---
+- job:
+    name: delorean-datasync-template/ga/discovery
+    display-name: 'datasync-template-ga-discovery'
+    project-type: pipeline
+    concurrent: false
+    triggers:
+      - timed: '@daily'
+    parameters:
+      - string:
+          name: 'productVersionVar'
+          default: 'datasync_template_tag'
+          description: '[REQUIRED] The manifest variable to be used as the current component version'
+          read-only: true
+      - string:
+          name: 'projectOrg'
+          default: 'aerogear'
+          description: '[REQUIRED] github project organization'
+          read-only: true
+      - string:
+          name: 'projectRepo'
+          default: 'datasync-deployment'
+          description: '[REQUIRED] github project repository'
+          read-only: true
+      - string:
+          name: 'productName'
+          default: 'datasync-template'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
+          read-only: true
+    pipeline-scm:
+      script-path: jobs/delorean/jenkinsfiles/discovery/ga/github/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - master
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false
