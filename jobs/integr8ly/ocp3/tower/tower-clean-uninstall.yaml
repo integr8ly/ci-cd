@@ -23,7 +23,7 @@
           default: integreatly-qe@redhat.com
           description: 'Whitespace- or comma-separated list of recipient addresses'
     triggers:
-      - timed: 'H H(0-3) * * *'
+      - timed: 'H(20-30) 1 * * *'
     dsl: |
 
         def setClusterAdminCredentials() {
@@ -75,8 +75,8 @@
                             def masterIP = sh(
                                 returnStdout: true,
                                 script: """
-                                    oc login https://${clusterName}.${clusterDomainName} -u ${clusterAdminCredentials.clusterAdminUsername} -p ${clusterAdminCredentials.clusterAdminPassword} > /dev/null
-                                    oc describe node `oc get nodes | grep master | head -n 1 | awk '{print \$1}'` | grep ExternalIP | awk '{print \$2}'
+                                    sudo oc login https://${clusterName}.${clusterDomainName} -u ${clusterAdminCredentials.clusterAdminUsername} -p ${clusterAdminCredentials.clusterAdminPassword} > /dev/null
+                                    sudo oc describe node `oc get nodes | grep master | head -n 1 | awk '{print \$1}'` | grep ExternalIP | awk '{print \$2}'
                                 """).trim()
 
                             sh """
@@ -92,7 +92,7 @@
                         dir('installation') {
                             withCredentials([sshUserPrivateKey(credentialsId: 'tower-provisioner-pem', keyFileVariable: 'private_key')]){
                               sh """
-                                  ansible-playbook -i ./inventories/hosts --private-key ${private_key} ./playbooks/uninstall.yml
+                                  sudo ansible-playbook -i ./inventories/hosts --private-key ${private_key} ./playbooks/uninstall.yml
                               """
                             } // withCredentials
                         } // dir
