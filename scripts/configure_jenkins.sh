@@ -62,6 +62,8 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/keycloak/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/keycloak/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mdc-operator/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mdc-operator/ga/discovery.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mobile-walkthrough/ga/branch.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mobile-walkthrough/ga/discovery.yaml
 
 #OpenShift Cluster Jobs
 generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/create/openshift-cluster-create.yaml
