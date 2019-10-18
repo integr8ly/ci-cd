@@ -7,7 +7,7 @@
     sandbox: false
     concurrent: false
     triggers:
-      - timed: "H(20) 3 * * *"
+      - timed: "20 3 * * *"
     properties:
       - build-discarder:
           num-to-keep: 56
