@@ -58,14 +58,12 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/suites/integreatly/ga/b
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/suites/integreatly/rc/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/suites/integration/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/suites/integration/rc/branch.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/keycloak/ga/branch.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/keycloak/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mdc/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mdc/ga/discovery.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/datasync-template/ga/branch.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/datasync-template/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mdc-operator/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mdc-operator/ga/discovery.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/datasync-template/ga/branch.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/datasync-template/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mss/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mss/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mss-operator/ga/branch.yaml
