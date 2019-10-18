@@ -137,6 +137,17 @@
     display-name: 'GA'
     project-type: folder
 
+# MDC
+- job:
+    name: delorean-mdc
+    display-name: 'MDC'
+    project-type: folder
+
+- job:
+    name: delorean-mdc/ga
+    display-name: 'GA'
+    project-type: folder
+
 # DataSync Template
 - job:
     name: delorean-datasync-template
