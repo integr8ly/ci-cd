@@ -6,6 +6,7 @@
     description: "Nightly pipeline trigger for Delorean testing."
     sandbox: false
     concurrent: false
+    disabled: true
     triggers:
       - timed: "H(0-10) 18 * * *"
     properties:

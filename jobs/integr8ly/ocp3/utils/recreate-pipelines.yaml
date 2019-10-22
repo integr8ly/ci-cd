@@ -5,7 +5,7 @@
     project-type: pipeline
     sandbox: true
     triggers:
-      - timed: "H H(17-18) * * *"
+      - timed: "H(20-30) H(17-18) * * *"
     parameters:
       - string:
           name: REPOSITORY
