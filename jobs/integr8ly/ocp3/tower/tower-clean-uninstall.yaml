@@ -6,6 +6,7 @@
     project-type: pipeline
     sandbox: false
     concurrent: false
+    disabled: true
     properties:
       - build-discarder:
           num-to-keep: 20

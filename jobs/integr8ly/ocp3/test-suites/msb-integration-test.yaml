@@ -4,6 +4,7 @@
     display-name: 'Managed Service Broker Integration Test'
     project-type: pipeline
     concurrent: false
+    disabled: true
     triggers:
       - timed: "H(0-10) 23 * * *"
     properties:
