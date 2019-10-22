@@ -5,12 +5,16 @@
     project-type: pipeline
     sandbox: true
     triggers:
-      - timed: "H H(21-22) * * *"
+      - timed: "H H(17-18) * * *"
     parameters:
       - string:
           name: REPOSITORY
           default: 'https://github.com/integr8ly/ci-cd.git'
           description: 'CI/CD repository containing pipeline definitions.'
+      - string:
+          name: BRANCH
+          default: 'master'
+          description: 'Branch of repository to be used.'
     dsl: |
         timeout(60) { 
             ansiColor('gnome-terminal') { 
@@ -19,7 +23,7 @@
 
                         stage('Clone repository') {
                             dir('.') {
-                                git branch: "master", url: "${REPOSITORY}"
+                                git branch: "${BRANCH}", url: "${REPOSITORY}"
                             }
                         }
                         stage('Run the configuration script'){
