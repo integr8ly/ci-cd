@@ -53,7 +53,7 @@
                             } // stage
 
                             stage('Run Launcher test') {
-                                buildStatus = build(job: 'launcher-tests', parameters: [
+                                buildStatus = build(job: 'launcher-tests', propagate: false, parameters: [
                                     string(name: 'REPOSITORY', value: "${REPOSITORY}"),
                                     string(name: 'BRANCH', value: "${BRANCH}"),
                                     string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
@@ -72,7 +72,7 @@
                             }
 
                             stage('Run the 3scale test') {
-                                 buildStatus = build(job: '3scale-test', parameters: [
+                                 buildStatus = build(job: '3scale-test', propagate: false, parameters: [
                                     string(name: 'REPOSITORY', value: "${REPOSITORY}"),
                                     string(name: 'BRANCH', value: "${BRANCH}"),
                                     string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
