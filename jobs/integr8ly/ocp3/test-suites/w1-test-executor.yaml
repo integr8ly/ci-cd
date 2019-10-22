@@ -53,7 +53,7 @@
                             } // stage
 
                             stage('Run create AMQ Online address test') {
-                                buildStatus = build(job: 'amq-online-address-creation-test', parameters: [
+                                buildStatus = build(job: 'amq-online-address-creation-test', propagate: false, parameters: [
                                     string(name: 'REPOSITORY', value: "${REPOSITORY}"),
                                     string(name: 'BRANCH', value: "${BRANCH}"),
                                     string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
@@ -62,7 +62,7 @@
                                     string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
-                                    booleanParam(name: 'CLEAN_RESOURCES', value: false)
+                                    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("false"))
                                 ]).result;
 
                                 println "Build finished with ${buildStatus}"
@@ -72,7 +72,7 @@
                             }
 
                             stage('Run Fuse integration test') {
-                                buildStatus = build(job: 'fuse-tests', parameters: [
+                                buildStatus = build(job: 'fuse-tests', propagate: false, parameters: [
                                     string(name: 'REPOSITORY', value: "${REPOSITORY}"),
                                     string(name: 'BRANCH', value: "${BRANCH}"),
                                     string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
@@ -82,7 +82,7 @@
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
                                     booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
-                                    booleanParam(name: 'W1_FINAL_VERIFICATION', value: true)
+                                    booleanParam(name: 'W1_FINAL_VERIFICATION', value: Boolean.valueOf("true"))
                                 ]).result;
 
                                 println "Build finished with ${buildStatus}"
