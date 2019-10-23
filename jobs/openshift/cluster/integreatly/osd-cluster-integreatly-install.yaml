@@ -66,6 +66,10 @@
           description: '[REQUIRED] Desired client secret value for RHSSO'     
     dsl: |
         node('cirhos_rhel7') {
+          if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']){
+            currentBuild.description = "triggered by: " + currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']
+          }
+          currentBuild.displayName = "${currentBuild.displayName} ${clusterName}"
           stage('Install Integreatly') {
             wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
                 ansibleTower(
