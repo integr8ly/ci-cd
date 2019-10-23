@@ -1,0 +1,48 @@
+---
+- job:
+    name: osd-cluster-integreatly-upgrade
+    display-name: 'OSD Cluster Integreatly Upgrade'
+    project-type: pipeline
+    concurrent: false
+    parameters:
+      - string:
+          name: 'clusterName'
+          default: ''
+          description: '[REQUIRED] The name of the target cluster to upgrade Integreatly against'
+      - string:
+          name: 'upgradeGitBranch'
+          default: 'master'
+          description: '[REQUIRED] The name of the git branch to be used for the Integreatly upgrade'
+      - string:
+          name: 'routerShard'
+          default: ''
+          description: '[REQUIRED] Router shard of the targeted cluster'
+      - string:
+          name: 'openShiftToken'
+          default: ''
+          description: '[REQUIRED] Openshift token for cluster-admin user'
+    dsl: |
+        node('cirhos_rhel7') {
+          if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']){
+            currentBuild.description = "triggered by: " + currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']
+          }
+          currentBuild.displayName = "${currentBuild.displayName} ${clusterName}"
+          stage('Upgrade Integreatly') {
+            wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
+                ansibleTower(
+                  towerServer: 'Dev Tower',
+                  jobTemplate: 'Integreatly_Bootstrap_and_Upgrade_[OSD]',
+                  templateType: 'workflow',
+                  importTowerLogs: true,
+                  removeColor: false,
+                  verbose: true,
+                  extraVars: """---
+                    tower_environment: dev
+                    cluster_name: ${clusterName}
+                    integreatly_osd_update_branch: ${upgradeGitBranch}
+                    router_shard: ${routerShard}
+                    openshift_token: ${openShiftToken}"""
+                )
+            }  
+          }
+        }
