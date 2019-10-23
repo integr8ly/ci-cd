@@ -17,6 +17,7 @@
             CLUSTER_NAME=rhmi-qe1
             RECIPIENTS=integreatly-qe@redhat.com
             INSTALLATION_BRANCH=master
+            UNINSTALLATION_BRANCH=master
             ROUTER_SHARD=f2d1
             USERNAME=osdtester
             TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
@@ -46,12 +47,18 @@
                     currentBuild.description = "branch: ${INSTALLATION_BRANCH}"
 
                     stage ('Run uninstallation pipeline') {
+
+                        String uninstallationBranch = params.INSTALLATION_BRANCH
+                        if (params.UNINSTALLATION_BRANCH) {
+                            uninstallationBranch = params.UNINSTALLATION_BRANCH
+                        }
+
                         withCredentials([
                                 [$class: 'StringBinding', credentialsId: "rhmi-qe1-token", variable: 'OPENSHIFT_TOKEN']
                             ]) {
                             uninstallationStatus = build(job: 'osd-cluster-integreatly-uninstall', propagate: false, parameters: [
                                 string(name: 'clusterName', value: "${CLUSTER_NAME}"),
-                                string(name: 'uninstallationGitBranch', value: "${INSTALLATION_BRANCH}"),
+                                string(name: 'uninstallationGitBranch', value: "${uninstallationBranch}"),
                                 string(name: 'routerShard', value: "${ROUTER_SHARD}"),
                                 string(name: 'openShiftToken', value: "${OPENSHIFT_TOKEN}"),
                                 string(name: 'userName', value: "${USERNAME}")
