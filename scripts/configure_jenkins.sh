@@ -92,6 +92,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift4/cluster/integreatly/o
 
 # OSD cluster jobs
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/osd-cluster-integreatly-install.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/osd-cluster-integreatly-upgrade.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/osd-cluster-integreatly-uninstall.yaml
 
 # OSDv3

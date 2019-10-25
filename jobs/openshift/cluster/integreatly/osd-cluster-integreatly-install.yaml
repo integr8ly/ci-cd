@@ -1,7 +1,7 @@
 ---
 - job:
     name: osd-cluster-integreatly-install
-    display-name: 'OSD Cluster Integreatly install'
+    display-name: 'OSD Cluster Integreatly Install'
     project-type: pipeline
     concurrent: false
     parameters:
