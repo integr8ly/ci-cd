@@ -21,6 +21,10 @@
           name: 'openShiftToken'
           default: ''
           description: '[REQUIRED] Openshift token for cluster-admin user'
+      - string:
+          name: 'towerInstance'
+          default: 'Dev Tower'
+          description: '[REQUIRED] Name of a Tower instance from Ansible Tower plugin in Jenkins'     
     dsl: |
         node('cirhos_rhel7') {
           if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']){
@@ -30,7 +34,7 @@
           stage('Upgrade Integreatly') {
             wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
                 ansibleTower(
-                  towerServer: 'Dev Tower',
+                  towerServer: "${towerInstance}",
                   jobTemplate: 'Integreatly_Bootstrap_and_Upgrade_[OSD]',
                   templateType: 'workflow',
                   importTowerLogs: true,

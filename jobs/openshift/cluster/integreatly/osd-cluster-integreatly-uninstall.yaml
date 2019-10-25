@@ -24,7 +24,11 @@
       - string:
           name: 'userName'
           default: 'tester'
-          description: '[REQUIRED] All existing users containing this string in their username will be removed.'    
+          description: '[REQUIRED] All existing users containing this string in their username will be removed.'
+      - string:
+          name: 'towerInstance'
+          default: 'Dev Tower'
+          description: '[REQUIRED] Name of a Tower instance from Ansible Tower plugin in Jenkins'         
     dsl: |
         node('cirhos_rhel7') {
           if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']){
@@ -34,7 +38,7 @@
           stage('Uninstall Integreatly') {
             wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
                 ansibleTower(
-                  towerServer: 'Dev Tower',
+                  towerServer: "${towerInstance}",
                   jobTemplate: 'Integreatly_Bootstrap_and_Uninstall_[OSD]',
                   templateType: 'workflow',
                   importTowerLogs: true,

@@ -64,6 +64,10 @@
       - string:
           name: 'clientSecret'
           description: '[REQUIRED] Desired client secret value for RHSSO'     
+      - string:
+          name: 'towerInstance'
+          default: 'Dev Tower'
+          description: '[REQUIRED] Name of a Tower instance from Ansible Tower plugin in Jenkins'      
     dsl: |
         node('cirhos_rhel7') {
           if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']){
@@ -73,7 +77,7 @@
           stage('Install Integreatly') {
             wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
                 ansibleTower(
-                  towerServer: 'Dev Tower',
+                  towerServer: "${towerInstance}",
                   jobTemplate: 'Integreatly_Bootstrap_and_Install_[OSD]',
                   templateType: 'workflow',
                   importTowerLogs: true,
