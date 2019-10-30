@@ -6,7 +6,7 @@
     description: "Nightly pipeline trigger for QE OSD cluster (rhmi-qe1) testing."
     sandbox: false
     concurrent: false
-    disabled: true
+    disabled: false
     triggers:
       - timed: "20 3 * * *"
     properties:
@@ -14,10 +14,12 @@
           num-to-keep: 56
       - inject:
           properties-content: |
+            TOWER_INSTANCE=Temp Tower
             CLUSTER_NAME=rhmi-qe1
             RECIPIENTS=integreatly-qe@redhat.com
-            INSTALLATION_BRANCH=master
-            UNINSTALLATION_BRANCH=master
+            INSTALLATION_BRANCH=release-1.5.2-rc2
+            UNINSTALLATION_BRANCH=release-1.5.2-rc2
+            MANIFEST_VERSION=release-1.5.2-rc2
             ROUTER_SHARD=f2d1
             USERNAME=osdtester
             TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
@@ -32,7 +34,6 @@
             ADMIN_USERNAME=admin01
             ADMIN_PASSWORD=Password1
             CLEAN_RESOURCES=false
-            MANIFEST_VERSION=master
             TESTING_MASTER=false
             TIMEOUT_THRESHOLD=1
     dsl: |
@@ -48,9 +49,9 @@
 
                     stage ('Run uninstallation pipeline') {
 
-                        String uninstallationBranch = params.INSTALLATION_BRANCH
-                        if (params.UNINSTALLATION_BRANCH) {
-                            uninstallationBranch = params.UNINSTALLATION_BRANCH
+                        String uninstallationBranch = INSTALLATION_BRANCH
+                        if (UNINSTALLATION_BRANCH) {
+                            uninstallationBranch = UNINSTALLATION_BRANCH
                         }
 
                         withCredentials([
@@ -61,8 +62,10 @@
                                 string(name: 'uninstallationGitBranch', value: "${uninstallationBranch}"),
                                 string(name: 'routerShard', value: "${ROUTER_SHARD}"),
                                 string(name: 'openShiftToken', value: "${OPENSHIFT_TOKEN}"),
+                                string(name: 'towerInstance', value: "${TOWER_INSTANCE}"),
                                 string(name: 'userName', value: "${USERNAME}")
                             ]).result
+                            println "Build finished with ${uninstallationStatus}"
                         }
                     } // stage
 
@@ -80,6 +83,7 @@
                             ]) {
                             installationStatus = build(job: 'osd-cluster-integreatly-install', propagate: false, parameters: [
                                 string(name: 'clusterName', value: "${CLUSTER_NAME}"),
+                                string(name: 'towerInstance', value: "${TOWER_INSTANCE}"),
                                 string(name: 'installationGitBranch', value: "${INSTALLATION_BRANCH}"),
                                 string(name: 'routerShard', value: "${ROUTER_SHARD}"),
                                 string(name: 'openShiftToken', value: "${OPENSHIFT_TOKEN}"),
@@ -95,6 +99,7 @@
                                 string(name: 'backupsBucketName', value: "${BACKUPS_BUCKET_NAME}"),
                                 string(name: 'clientSecret', value: "${SSO_SECRET}")
                             ]).result
+                            println "Build finished with ${installationStatus}"
                         }
                     } // stage
 
@@ -114,13 +119,18 @@
                             i += 1
                             sleep time: 5, unit: 'MINUTES'
                         }
-                    }
+                        println "Login as customer-admin was successful: ${loggedIn}"
+                    } // stage
 
                     // we want to run test only when there was a successful login to the cluster
                     if (loggedIn) {
 
+                        // Despite successful login as customer-admin
+                        // it might take some time for api to be restarted on all master nodes
+                        sleep time: 15, unit: 'MINUTES'
+
                         stage ('Create admin user in SSO') {
-                            build(job: 'sso-user-create-tests', propagate: false, parameters: [
+                            def buildStatus = build(job: 'sso-user-create-tests', propagate: false, parameters: [
                                 string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
                                 string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
                                 string(name: 'CUSTOMER_ADMIN_USERNAME', value: "customer-admin"),
@@ -130,11 +140,12 @@
                                 string(name: 'NAMESPACE_PREFIX', value: "openshift-"),
                                 string(name: 'NUMBER_OF_USERS', value: "1"),
                                 booleanParam(name: 'CLEAN_RESOURCES', value:  Boolean.valueOf("false"))
-                            ])
+                            ]).result
+                            println "Build finished with ${buildStatus}"
                         } // stage
 
                         stage ('Create test user in SSO') {
-                            build(job: 'create-rhmi-user', propagate: false, parameters: [
+                            def buildStatus = build(job: 'create-rhmi-user', propagate: false, parameters: [
                                 string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
                                 string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
                                 string(name: 'CLUSTER_URL', value: "https://console.${CLUSTER_NAME}.openshift.com"),
@@ -147,11 +158,12 @@
                                 string(name: 'NAMESPACE_PREFIX', value: "openshift-"),
                                 string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-openshift-webapp.${ROUTER_SHARD}.${CLUSTER_NAME}.openshiftapps.com"),
                                 booleanParam(name: 'CLEAN_RESOURCES', value:  Boolean.valueOf("false"))
-                            ])
+                            ]).result
+                            println "Build finished with ${buildStatus}"
                         } // stage
 
                         stage ('Run tests') {
-                            buildStatus = build(job: 'all-tests-executor', propagate: false, parameters: [
+                            def buildStatus = build(job: 'all-tests-executor', propagate: false, parameters: [
                                 string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
                                 string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
                                 string(name: 'CLUSTER_URL', value: "https://console.${CLUSTER_NAME}.openshift.com"),
@@ -170,6 +182,7 @@
                                 string(name: 'NUMBER_OF_USERS', value: "5"),
                                 string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}")
                             ]).result
+                            println "Build finished with ${buildStatus}"
 
                             if(buildStatus == 'UNSTABLE') {
                                 currentBuild.result = 'UNSTABLE'
