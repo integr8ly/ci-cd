@@ -1,14 +1,10 @@
 #!groovy
 @Library('delorean-pipeline-library') _
 
-import org.integr8ly.RegistryImage
-
-def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
-def installationGitRef = params.installationGitRef ?: 'master'
+String installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
+String installationGitRef = params.installationGitRef ?: 'master'
 def githubCredentialsID = params.credentialId ?: 'githubjenkins'
 def githubSSHCredentialsID = params.sshCredentialId ?: 'jenkinsgithub'
-def releaseTagVar = params.manifestVar ?: params.releaseTagVar
-def productVersionVar = params.productVersionVar
 def projectOrg = params.projectOrg
 def projectRepo = params.projectRepo
 def productName = params.productName
@@ -17,91 +13,211 @@ def productVersionLocation = params.productVersionLocation
 def productVersionIdentifier = params.productVersionIdentifier
 def gaBranch = params.installationProductBranch ?: "${productName}-ga"
 def gaReleaseTagRef = params.gaReleaseTagRef ?: ''
-def installationManifestFile = './inventories/group_vars/all/manifest.yaml'
-def isProduct = params.isProduct ?: false
-
+boolean isProduct = params.isProduct ?: false
 def templatesDir = params.templatesDir
 def registryProjectIDs = params.registryProjectIDs
+
 String rhContainerRegistry = "registry.redhat.io"
 String rhContainerRegistry2 = "registry.access.redhat.com"
 def rhRegistries = [rhContainerRegistry, rhContainerRegistry2]
-def targetRegistrySecret = 'intly-redhat-registry-sa'
-Boolean verifyReleaseIsGA = (templatesDir && registryProjectIDs) ? true : false
+String targetRegistrySecret = 'intly-redhat-registry-sa'
+boolean verifyLatestIsGARelease = templatesDir && registryProjectIDs
+
+def latestRHMIRelease
+String latestRHMIBranch
+def latestReleaseGABranch
+String latestRelease
+String productVersion
+boolean isLatestGARelease = true
 
 currentBuild.displayName = "${currentBuild.displayName} ${productName}"
 
-node {
+static String getRHMIReleaseBranch(releaseTag) {
+    def versionParts = (releaseTag =~ /^release-([0-9]+).([0-9]+).([0-9]+)-?(.*)?$/)[0]
+    def majorVersion = versionParts[1]
+    def minorVersion = versionParts[2]
+    return "v${majorVersion}.${minorVersion}"
+}
+
+boolean doUpdateForLevels(product, current, latest, levels) {
+    def utils = new org.integr8ly.Utils()
+    String[] currentSemVer = utils.extractSemVer(current, product)
+    String[] latestSemVer = utils.extractSemVer(latest, product)
+
+    boolean isMajorUpdate = latestSemVer[0].toInteger() > currentSemVer[0].toInteger()
+    boolean isMinorUpdate = latestSemVer[1].toInteger() > currentSemVer[1].toInteger()
+    int latestPatch = 0
+    int currentPatch = 0
+    if(currentSemVer.size() > 2) {
+        currentPatch = currentSemVer[2].toInteger()
+    }
+    if(latestSemVer.size() > 2) {
+        latestPatch = latestSemVer[2].toInteger()
+    }
+    boolean isPatchUpdate = latestPatch > currentPatch
+
+    boolean doUpdate = false
+    if (isMajorUpdate) {
+        doUpdate = levels.contains('major')
+    } else {
+        if (isMinorUpdate) {
+            doUpdate = levels.contains('minor')
+        } else {
+            if (isPatchUpdate) {
+                doUpdate = levels.contains('patch')
+            }
+        }
+    }
+    println "[INFO] Update status - product:${product}, current:${current}, latest:${latest}, levels:${levels}, major:${isMajorUpdate}, minor:${isMinorUpdate}, patch:${isPatchUpdate}, doUpdate:${doUpdate}"
+    return doUpdate
+}
+
+def processInstallationBranch(body) {
+    def config = [:]
+    body.resolveStrategy = Closure.DELEGATE_FIRST
+    body.delegate = config
+    body()
+
+    String installationGitUrl = config.installationGitUrl ?: params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
+    String githubSSHCredentialsID = config.githubSSHCredentialsID ?: params.githubSSHCredentialsID ?: 'jenkinsgithub'
+    String installationManifestFile = config.installationManifestFile ?: params.installationManifestFile ?: './inventories/group_vars/all/manifest.yaml'
+    String installationUpgradeFile = config.installationUpgradeFile ?: params.installationUpgradeFile ?: 'playbooks/group_vars/all/upgrade.yml'
+    String releaseTagVar = config.releaseTagVar ?: params.manifestVar ?: params.releaseTagVar
+    String productVersionVar = config.productVersionVar ?: params.productVersionVar
+    String productVersionLocation = config.productVersionLocation ?: params.productVersionLocation
+
+    String baseBranch = config.baseBranch
+    String branch = config.branch
+    String product = config.product
+    String latestProductRelease = config.latestProductRelease
+    String latestProductVersion = config.latestProductVersion
+    boolean doRepoUpdates = config.doRepoUpdates
+    boolean isProduct = config.isProduct ?: false
+    def updateVersionLevels = config.updateVersionLevels ?: ['major', 'minor', 'patch']
+    String checkoutDir = "installation-${baseBranch}"
+    String currentProductRelease
+    boolean updateCurrentToLatest
+
+    println("processInstallationBranch - baseBranch:${baseBranch}, branch:${branch}, product:${product}, latestProductRelease:${latestProductRelease}, latestProductVersion:${latestProductVersion}, isProduct:${isProduct}, doRepoUpdates:${doRepoUpdates}")
+
+    stage("Fetch Base Branch ${baseBranch}") {
+        println "Fetch Base Branch ${baseBranch}"
+        gitCheckoutRepo(installationGitUrl, baseBranch, githubSSHCredentialsID, checkoutDir)
+    }
+
+    dir(checkoutDir) {
+        sshagent([githubSSHCredentialsID]) {
+            sh 'git config --global user.name "Automatron"'
+            sh 'git config --global user.email "github.eng@feedhenry.com"'
+
+            stage("Fetch ${product} release (${branch})") {
+                when(!isProduct) {
+                    def installationManifest = readYaml file: installationManifestFile
+                    if (releaseTagVar) {
+                        currentProductRelease = installationManifest[releaseTagVar]
+                    } else {
+                        currentProductRelease = installationManifest[productVersionVar]
+                    }
+                    if (!currentProductRelease) {
+                        error "[ERROR] Unable to retrieve current product release!"
+                    }
+                    println "[INFO] currentProductRelease = ${currentProductRelease}"
+                }
+            }
+
+            updateCurrentToLatest = doUpdateForLevels(product, currentProductRelease, latestProductRelease, updateVersionLevels)
+
+            stage("Ensure Branch (${branch})") {
+                println "[INFO] Ensure Branch (${branch})"
+                gitCreateAndCheckoutBranch(branch, true, false)
+                gitRebaseBranch(baseBranch, branch, false)
+            }
+
+            stage("Update Manifest File (${branch})") {
+                when(doRepoUpdates && updateCurrentToLatest) {
+                    println "[INFO] Product Version Update (${branch})"
+                    gitCommitWhenChanges("Updated ${product} product version to ${latestProductRelease}") { msgs ->
+                        def manifestFileTxt = readFile(installationManifestFile)
+                        manifestFileTxt = updateManifestVariable(manifestFileTxt, releaseTagVar, latestProductRelease)
+                        manifestFileTxt = updateManifestVariable(manifestFileTxt, productVersionVar, latestProductVersion)
+                        writeFile file: installationManifestFile, text: manifestFileTxt
+                    }
+
+                    gitCommitWhenChanges("Updated ${product} product version to ${latestProductVersion} in ${productVersionLocation}") { msgs ->
+                        if (product == 'redhat-sso-7-openshift-image') {
+                            sh "sed -i 's/${latestProductVersion}/${latestProductRelease}/' ${productVersionLocation}"
+                            sh 'mkdir -p /tmp/sso'
+                            sh "wget 'https://github.com/jboss-container-images/redhat-sso-7-openshift-image/archive/${latestProductVersion}.zip' -O /tmp/sso/sso.zip"
+                            unzip glob: '', zipFile: '/tmp/sso/sso.zip', dir: '/tmp/sso'
+                            sh 'ls -la /tmp/sso'
+                            def tmpl = sh(returnStdout: true, script: "find /tmp/sso -name 'sso*-x509-postgresql-persistent.json'")
+                            tmpl = tmpl.trim()
+                            fname = tmpl.split('/').last()
+                            sh "cp ${tmpl} deploy/template"
+                            sh "sed -ri 's/(\\s+SSO_TEMPLATE_NAME\\s+=\\s?)\"[a-zA-Z0-9\\-]+\\.json\"/\\1\"${fname}\"/' ${productVersionLocation}"
+                            sh 'rm -rf /tmp/sso'
+                        }
+                    }
+                }
+            }
+
+            stage("Update Upgrade File (${branch})") {
+                when(doRepoUpdates && updateCurrentToLatest) {
+                    println "[INFO] Product Upgrade Update (${branch})"
+                    def exists = fileExists installationUpgradeFile
+                    if (exists) {
+                        gitCommitWhenChanges("Add ${product} to update products list") { msgs ->
+                            def upgradeVariables = readYaml file: installationUpgradeFile
+                            def upgradeProductRoles = upgradeVariables['upgrade_product_roles']
+                            upgradeProductRoles << product
+                            upgradeProductRoles = upgradeProductRoles.unique()
+                            upgradeVariables['upgrade_product_roles'] = upgradeProductRoles
+                            sh "rm ${installationUpgradeFile}"
+                            writeYaml file: installationUpgradeFile, data: upgradeVariables
+                        }
+                    } else {
+                        println "No ${installationUpgradeFile} to load!!"
+                    }
+                }
+            }
+
+            stage("Push Branch (${branch})") {
+                println "[INFO] Push Branch (${branch})"
+                int commmitCount = sh(returnStdout: true, script: "git log origin/${baseBranch}..${branch} --pretty=o | wc -l").trim() as int
+                boolean doPush = (branch != 'master') && (commmitCount > 0)
+                if (doPush) {
+                    gitPushBranch(branch, true)
+                } else {
+                    println("[INFO] Branch push criteria not met for ${branch}")
+                }
+            }
+        }
+    }
+
+}
+
+node() {
     cleanWs()
-    stage('Fetch Installation Repo') {
-        println '[INFO] Fetch Installation Repo'
-        cleanWs()
-        gitCheckoutRepo(installationGitUrl, installationGitRef, githubSSHCredentialsID, 'installation')
+
+    stage('Fetch Latest RHMI Release') {
+        gitCheckoutRepo(installationGitUrl, 'master', githubSSHCredentialsID, 'installation')
         dir('installation') {
-            if (!isProduct) {
-                releaseConfig = readYaml file: installationManifestFile
-            }
+            latestRHMIRelease = sh(returnStdout: true, script: "git describe --tags `git rev-list --tags --max-count=1`")
+            latestRHMIBranch = getRHMIReleaseBranch(latestRHMIRelease)
+            latestReleaseGABranch = "${gaBranch}-${latestRHMIBranch}"
         }
+        println "[INFO] Latest RHMI Release latestRHMIRelease:${latestRHMIRelease}, latestRHMIBranch:${latestRHMIBranch}, latestReleaseGABranch:${latestReleaseGABranch}"
     }
 
-    stage('Fetch Current Integreatly Release') {
-        when(!isProduct) {
-            if (releaseTagVar) {
-                componentRelease = releaseConfig[releaseTagVar]
-            } else {
-                componentRelease = releaseConfig[productVersionVar]
-            }
-            if (!componentRelease) {
-                error "[ERROR] Unable to retrieve current release version!"
-            }
-            println "[INFO] componentRelease = ${componentRelease}"
-        }
-    }
-
-    stage('Fetch Latest GitHub Release') {
+    stage('Fetch Latest Product Release') {
         latestRelease = getLatestGaRelease(projectOrg, projectRepo, githubCredentialsID, releaseFetchMethod, gaReleaseTagRef)
         if (!latestRelease) {
             error "[ERROR] Unable to retrieve latest release version!"
         }
-        println "[INFO] latestRelease = ${latestRelease}"
+        println "[INFO] Latest Product Release = ${latestRelease}"
     }
 
-    stage('Verify GA Release') {
-        when(verifyReleaseIsGA) {
-            dir(productName) {
-                productGitUrl = "git@github.com:${projectOrg}/${projectRepo}.git"
-                gitCheckoutRepo(productGitUrl, latestRelease, githubSSHCredentialsID, '.')
-                registryProjectIDs = registryProjectIDs.replaceAll(" ", "").split(',')
-
-                def getProductImagesParams = [
-                    targetDir: templatesDir,
-                    excludeFiles: ['fuse-online-upgrade.yml'], // Ignore the file fuse-online-upgrade as it contains an image with a typo (registry.redhat.io/fuse7/fuse-ignite-uprade)
-                    registries: rhRegistries,
-                    registryIDs: registryProjectIDs
-                ]
-                def productImages = getProductImages(getProductImagesParams)
-
-                if (productImages.size() == 0) {
-                    println "${latestRelease} is not GA. There are no images available using public registries."
-                    latestRelease = componentRelease
-                }
-
-                def getPreReleaseImagesParams = [
-                    imageUrls: productImages,
-                    registryCredentials: targetRegistrySecret
-                ]
-                def preReleaseImages = getPreReleaseImages(getPreReleaseImagesParams)
-
-                if (preReleaseImages.size != 0) {
-                    println "${latestRelease} is not GA. The following images are not yet available: ${preReleaseImages}"
-                    latestRelease = componentRelease
-                } else {
-                    println "Found ${preReleaseImages.size()} prerelease images. Verified that the latest release ${latestRelease} is GA"
-                }
-            }
-        }
-    }
-
-    stage('Fetch Component Product Version') {
+    stage('Fetch Latest Product Version') {
         if (productVersionLocation && productVersionIdentifier) {
             def templateUrl = "https://raw.githubusercontent.com/${projectOrg}/${projectRepo}/${latestRelease}/${productVersionLocation}"
 
@@ -133,64 +249,66 @@ node {
         } else {
             productVersion = latestRelease
         }
-
-        if (isProduct) {
-            isGARelease = hasNewGaRelease(productVersion, latestRelease, productName)
-            componentRelease = productVersion
-        } else {
-            isGARelease = hasNewGaRelease(componentRelease, productVersion, productName)
-        }
-
-        println "[INFO] product version: ${productVersion}"
+        println "[INFO] Latest Product Version ${productVersion}"
     }
 
-    currentBuild.description = "current: ${componentRelease}\n latest: ${latestRelease}\n productVersion: ${productVersion}\n isGARelease: ${isGARelease}"
+    stage('Verify Latest Product Release is GA') {
+        when(verifyLatestIsGARelease) {
+            dir(productName) {
+                productGitUrl = "git@github.com:${projectOrg}/${projectRepo}.git"
+                gitCheckoutRepo(productGitUrl, latestRelease, githubSSHCredentialsID, '.')
+                registryProjectIDs = registryProjectIDs.replaceAll(" ", "").split(',')
 
-    dir('installation') {
-        sshagent([githubSSHCredentialsID]) {
-            sh 'git config --global user.name "Automatron"'
-            sh 'git config --global user.email "github.eng@feedhenry.com"'
+                def getProductImagesParams = [
+                        targetDir   : templatesDir,
+                        excludeFiles: ['fuse-online-upgrade.yml'], // Ignore the file fuse-online-upgrade as it contains an image with a typo (registry.redhat.io/fuse7/fuse-ignite-uprade)
+                        registries  : rhRegistries,
+                        registryIDs : registryProjectIDs
+                ]
+                def productImages = getProductImages(getProductImagesParams)
 
-            stage('Ensure Product GA Branch') {
-                gitCreateAndCheckoutBranch(gaBranch, true, true)
-                gitRebaseBranch(installationGitRef, gaBranch, false)
-            }
-
-            stage('Product Version Update') {
-                when(isGARelease && !isProduct) {
-                    gitCommitWhenChanges("Updated ${productName} product version to ${latestRelease}") { msgs ->
-                        manifestFileTxt = readFile(installationManifestFile)
-                        manifestFileTxt = updateManifestVariable(manifestFileTxt, releaseTagVar, latestRelease)
-                        manifestFileTxt = updateManifestVariable(manifestFileTxt, productVersionVar, productVersion)
-                        writeFile file: installationManifestFile, text: manifestFileTxt
-                    }
+                if (productImages.size() == 0) {
+                    println "${latestRelease} is not GA. There are no images available using public registries."
+                    isLatestGARelease = false
                 }
 
-                when(isGARelease && isProduct) {
-                    gitCommitWhenChanges("Updated ${productName} product version to ${productVersion} in ${productVersionLocation}") { msgs ->
-                        if (productName == 'redhat-sso-7-openshift-image') {
-                            sh "sed -i 's/${productVersion}/${latestRelease}/' ${productVersionLocation}"
-                            sh 'mkdir -p /tmp/sso'
-                            sh "wget 'https://github.com/jboss-container-images/redhat-sso-7-openshift-image/archive/${productVersion}.zip' -O /tmp/sso/sso.zip"
-                            unzip glob: '', zipFile: '/tmp/sso/sso.zip', dir: '/tmp/sso'
-                            sh 'ls -la /tmp/sso'
-                            def tmpl = sh(returnStdout: true, script: "find /tmp/sso -name 'sso*-x509-postgresql-persistent.json'")
-                            tmpl = tmpl.trim()
-                            fname = tmpl.split('/').last()
-                            sh "cp ${tmpl} deploy/template"
-                            sh "sed -ri 's/(\\s+SSO_TEMPLATE_NAME\\s+=\\s?)\"[a-zA-Z0-9\\-]+\\.json\"/\\1\"${fname}\"/' ${productVersionLocation}"
-                            sh 'rm -rf /tmp/sso'
-                        }
-                    }
-                }
-            }
+                def getPreReleaseImagesParams = [
+                        imageUrls          : productImages,
+                        registryCredentials: targetRegistrySecret
+                ]
+                def preReleaseImages = getPreReleaseImages(getPreReleaseImagesParams)
 
-            stage('Push Product GA Branch') {
-                boolean doPush = gaBranch != 'master'
-                if (doPush) {
-                  gitPushBranch(gaBranch, true)
+                if (preReleaseImages.size != 0) {
+                    println "${latestRelease} is not GA. The following images are not yet available: ${preReleaseImages}"
+                    isLatestGARelease = false
+                } else {
+                    println "Found ${preReleaseImages.size()} prerelease images. Verified that the latest release ${latestRelease} is GA"
                 }
             }
         }
+    }
+
+    currentBuild.description = "latest: ${latestRelease}\n productVersion: ${productVersion}\n isLatestGARelease: ${isLatestGARelease}"
+
+    println("Calling processInstallationBranch: isLatestGARelease: ${isLatestGARelease}, isProduct: ${isProduct}")
+
+    processInstallationBranch {
+        branch = gaBranch
+        baseBranch = installationGitRef
+        product = productName
+        latestProductRelease = latestRelease
+        latestProductVersion = productVersion
+        updateVersionLevels = ['major', 'minor', 'patch']
+        doRepoUpdates = isLatestGARelease && !isProduct
+    }
+
+    processInstallationBranch {
+        branch = latestReleaseGABranch
+        baseBranch = latestRHMIBranch
+        product = productName
+        latestProductRelease = latestRelease
+        latestProductVersion = productVersion
+        updateVersionLevels = ['patch']
+        doRepoUpdates = isLatestGARelease && !isProduct
     }
 }
