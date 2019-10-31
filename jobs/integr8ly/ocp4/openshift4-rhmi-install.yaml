@@ -37,7 +37,7 @@
             description: "Branch of the Integreatly Operator repository"
         - string:
             name: RECIPIENTS
-            default: '  '
+            default: ''
             description: "Whitespace- or comma-separated list of recipient addresses"
     dsl: |
         Boolean isPds = params.PDS_CLUSTER
