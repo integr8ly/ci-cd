@@ -39,13 +39,13 @@ node('cirhos_rhel7') {
   cleanWs()
   stage('Deprovision OpenShift Cluster') {
     if (params.dryRun) {
-      println("""Would trigger the job 'Deprovision Cluster' in ansibleTower with the following parameters:
+      println("""Would trigger the job 'Cluster Deprovision' in ansibleTower with the following parameters:
                 \naws_cluster_name: ${deprovisionOptions.clusterName}, aws_region: ${deprovisionOptions.awsRegion}, cluster_credential_bundle_aws_name: ${deprovisionOptions.awsAccountName}, aws_dns_zone: ${deprovisionOptions.clusterDomainName}""")
     } else {
       wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
         ansibleTower(
           towerServer: 'Dev Tower',
-          jobTemplate: 'Deprovision Cluster',
+          jobTemplate: 'Cluster Deprovision',
           templateType: 'workflow',
           importTowerLogs: true,
           removeColor: false,

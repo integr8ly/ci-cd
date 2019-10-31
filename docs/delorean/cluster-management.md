@@ -22,7 +22,7 @@ The Delorean cluster management sends requests to Ansible Tower to launch workfl
 ## Creating PoC Clusters
 PoC clusters can be provisioned by building the `Openshift Cluster Create` pipeline which is defined in the [jobs/openshift/cluster/create/](../../jobs/openshift/cluster/create/) directory.
 
-This pipeline launches the `Provision Cluster` workflow in Ansible Tower. For more information about this workflow, see the [cluster create](https://github.com/integr8ly/ansible-tower-configuration#46-cluster-create) documentation.
+This pipeline launches the `Cluster Provision` workflow in Ansible Tower. For more information about this workflow, see the [cluster create](https://github.com/integr8ly/ansible-tower-configuration#45-cluster-create) documentation.
 
 To run this pipeline on Jenkins:
 1. Go to the `OpenShift` tab
@@ -138,7 +138,7 @@ To run this pipeline on Jenkins:
 ## Deprovisioning PoC Clusters
 PoC clusters can be deprovisioned by building the `Openshift Cluster Deprovision` pipeline which is defined in the [jobs/openshift/cluster/deprovision/](../../jobs/openshift/cluster/deprovision/) directory.
 
-This pipeline launches the `Deprovision Cluster` workflow in Ansible Tower. For more information about this workflow, see the [cluster deprovision](https://github.com/integr8ly/ansible-tower-configuration#47-cluster-deprovision) documentation.
+This pipeline launches the `Cluster Deprovision` workflow in Ansible Tower. For more information about this workflow, see the [cluster deprovision](https://github.com/integr8ly/ansible-tower-configuration#46-cluster-deprovision) documentation.
 
 To run this pipeline on Jenkins:
 1. Go to the `OpenShift` tab
