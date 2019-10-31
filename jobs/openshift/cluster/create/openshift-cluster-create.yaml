@@ -20,7 +20,7 @@
       - choice:
           name: 'awsAccountName'
           choices:
-            - fheng
+            - fheng.AWS
           description: '[REQUIRED] The AWS Account to use'
       - bool:
           name: 'dryRun'
