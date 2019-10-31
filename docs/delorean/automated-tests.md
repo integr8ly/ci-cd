@@ -39,7 +39,7 @@ This pipeline is split into the following stages:
 
     Once all the tests has been executed, the pipeline `OpenShift Cluster Integreatly Uninstall` gets built. This uninstalls the Integreatly environment from the provisioned PoC cluster. For more information about this pipeline, see the [deprovisionig PoC clusters](./cluster-management#uninstalling-integreatly) documentation.
 
-5. **Deprovision Cluster**
+5. **Cluster Deprovision**
 
     This stage will always get called in order to cleanup any resources the previous stages has created. It calls the pipeline `OpenShift Cluster Deprovision` which tears down the PoC cluster created in stage 1. For more information about this pipeline, see the [](./cluster-management#deprovisioning-poc-clusters) documentation.
 
