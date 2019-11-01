@@ -41,7 +41,6 @@
                   removeColor: false,
                   verbose: true,
                   extraVars: """---
-                    tower_environment: dev
                     cluster_name: ${clusterName}
                     integreatly_osd_update_branch: ${upgradeGitBranch}
                     router_shard: ${routerShard}
