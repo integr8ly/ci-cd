@@ -244,9 +244,11 @@
                                 sudo oc patch deploymentconfig/tutorial-web-app -n ${NAMESPACE_PREFIX}webapp -p '{ "spec": { "template": { "spec": { "containers": [{ "name": "tutorial-web-app", "image": "quay.io/integreatly/tutorial-web-app:master" }]}}}}' || true
                                 
                                 # patch grafana-operator to use master tag
-                                sudo oc scale --replicas=0 deployment grafana-operator -n ${NAMESPACE_PREFIX}middleware-monitoring
-                                sudo oc patch deployment grafana-operator -n ${NAMESPACE_PREFIX}middleware-monitoring -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "grafana-operator", "image": "quay.io/integreatly/grafana-operator:master" }]}}}}'
-                                sudo oc scale --replicas=1 deployment grafana-operator -n ${NAMESPACE_PREFIX}middleware-monitoring
+                                # Commented out. The master branch of Grafana operator now contains modifications for OCPv4. We can't just use master anymore on OCPv3
+                                # 
+                                # sudo oc scale --replicas=0 deployment grafana-operator -n ${NAMESPACE_PREFIX}middleware-monitoring
+                                # sudo oc patch deployment grafana-operator -n ${NAMESPACE_PREFIX}middleware-monitoring -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "grafana-operator", "image": "quay.io/integreatly/grafana-operator:master" }]}}}}'
+                                # sudo oc scale --replicas=1 deployment grafana-operator -n ${NAMESPACE_PREFIX}middleware-monitoring
                                 
                                 # patch application-monitoring-operator to use master tag
                                 sudo oc scale --replicas=0 deployment application-monitoring-operator -n ${NAMESPACE_PREFIX}middleware-monitoring
