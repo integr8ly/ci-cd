@@ -204,7 +204,7 @@ node() {
         dir('installation') {
             latestRHMIRelease = sh(returnStdout: true, script: "git describe --tags `git rev-list --tags --max-count=1`")
             latestRHMIBranch = getRHMIReleaseBranch(latestRHMIRelease)
-            latestReleaseGABranch = "${gaBranch}-${latestRHMIBranch}"
+            latestReleaseGABranch = "${gaBranch}_${latestRHMIBranch}"
         }
         println "[INFO] Latest RHMI Release latestRHMIRelease:${latestRHMIRelease}, latestRHMIBranch:${latestRHMIBranch}, latestReleaseGABranch:${latestReleaseGABranch}"
     }

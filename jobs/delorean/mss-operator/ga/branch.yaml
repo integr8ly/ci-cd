@@ -14,6 +14,10 @@
           default: 'mss-operator-ga'
           description: '[REQUIRED] The installation git branch to push new version changes'
       - string:
+          name: 'installationTargetBranch'
+          default: 'master'
+          description: '[REQUIRED] The installation git branch to target'
+      - string:
           name: 'productName'
           default: 'mss-operator'
           description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'

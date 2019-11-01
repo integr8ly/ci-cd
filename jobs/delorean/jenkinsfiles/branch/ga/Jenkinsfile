@@ -18,7 +18,7 @@ def createJiraQuery(labels) {
   return query
 }
 
-def createJiraBody(summary, gitPrUrl, labels) {
+def createJiraBody(summary, description, gitPrUrl, labels) {
   return """{
       "fields": {
           "project": {
@@ -27,7 +27,7 @@ def createJiraBody(summary, gitPrUrl, labels) {
               "name": "Integreatly"
           },
           "summary": "${summary}",
-          "description": "${gitPrUrl}",
+          "description": "${description}",
           "labels": ${labels},
           "issuetype": {
               "name": "Task"
@@ -45,7 +45,7 @@ def ghOwner = "integr8ly"
 def ghRepo = "installation"
 def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
 def sourceBranch = params.installationProductBranch
-def targetBranch = 'master'
+def targetBranch = params.installationTargetBranch ?: 'master'
 def githubSSHCredentialsID = 'jenkinsgithub'
 def githubUserPassCredentialsID = 'githubjenkins'
 def productName = params.productName
@@ -61,6 +61,31 @@ def productVersion
 String[] defaultPRLabels = ["product update", productName]
 def installationManifestFile = './inventories/group_vars/all/manifest.yaml'
 String jiraRestApiUrl = "https://issues.jboss.org/rest/api/2"
+
+currentBuild.description = "sourceBranch: ${sourceBranch}\n targetBranch: ${targetBranch}"
+
+String[] jiraLabelsFor(String productName, String targetBranch, def labels = []) {
+    def defaultLabels = [
+            /"unplanned"/,
+            /"${productName}"/
+    ]
+    if('master' != targetBranch) {
+        labels << /"${targetBranch}"/
+    }
+    return labels + defaultLabels
+}
+
+String jiraSummaryFor(String productName, String targetBranch) {
+    String summary = "Update ${productName} "
+    if('master' != targetBranch) {
+        summary = summary + "(${targetBranch})"
+    }
+    return summary
+}
+
+String jiraDescriptionFor(String productName, String targetBranch, String prUrl) {
+    return "Update of ${productName} is availabe to go back to ${targetBranch}. PR: ${prUrl}"
+}
 
 node {
     cleanWs()
@@ -102,38 +127,13 @@ node {
         }
     }
 
-    stage('Create Jira Update Issue') {
+    stage('Create Product Update Jira') {
         when(sourceChanges) {
-            String[] labels = [
-              /"product-update"/,
-              /"${productName}"/
-            ]
-            String summary = "Update ${productName}"
-
+            String[] labels = jiraLabelsFor(productName, targetBranch, [/"product-update"/])
+            String summary = jiraSummaryFor(productName, targetBranch)
+            String description = jiraDescriptionFor(productName, targetBranch, prUrl)
             String query = createJiraQuery(labels)
-            def body = createJiraBody(summary, prUrl, labels)
-
-            def jiraID = jiraCreateIssue(jiraUserPass, jiraRestApiUrl, query, body)
-            println "[INFO] Issue created: https://issues.jboss.org/browse/${jiraID}"
-        }
-    }
-
-    stage('Create Jira Upgrade Issue') {
-        when(sourceChanges) {
-            dir('installation') {
-                sh "git checkout ${targetBranch}"
-                currentProductVersion = getProductVersionFromManifest(productVersionVar, installationManifestFile)
-            }
-
-            String[] labels = [
-              /"product-upgrade"/,
-              /"${productName}"/
-            ]
-            String summary = "Add upgrade sop or playbook for ${productName}"
-
-            String query = createJiraQuery(labels)
-            def body = createJiraBody(summary, prUrl, labels)
-            
+            def body = createJiraBody(summary, description, prUrl, labels)
             def jiraID = jiraCreateIssue(jiraUserPass, jiraRestApiUrl, query, body)
             println "[INFO] Issue created: https://issues.jboss.org/browse/${jiraID}"
         }
