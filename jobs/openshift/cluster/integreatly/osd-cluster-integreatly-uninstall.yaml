@@ -45,7 +45,6 @@
                   removeColor: false,
                   verbose: true,
                   extraVars: """---
-                    tower_environment: dev
                     rhsso_namespace: openshift-sso
                     cluster_name: ${clusterName}
                     integreatly_osd_uninstall_branch: ${uninstallationGitBranch}
