@@ -83,7 +83,6 @@ node('cirhos_rhel7') {
             }
 
             def extraVars = """---
-            tower_environment: dev 
             cluster_name: ${installerOptions.clusterName}
             openshift_master_public_url: ${installerOptions.openshiftMasterUrl}
             openshift_username: ${installerOptions.clusterAdminUsername}
