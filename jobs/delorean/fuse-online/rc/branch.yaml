@@ -13,6 +13,10 @@
           name: 'installationProductBranch'
           default: 'fuse-online-rc'
           description: '[REQUIRED] The installation git branch to push new version changes'
+      - string:
+          name: 'installationTargetBranch'
+          default: 'master'
+          description: '[REQUIRED] The installation git branch to target'
       - bool:
           name: 'dryRun'
           default: false

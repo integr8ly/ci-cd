@@ -1,19 +1,11 @@
 #!groovy
 @Library('delorean-pipeline-library') _
 
-import org.kohsuke.github.GHCommitState
-import org.kohsuke.github.GHPullRequest
-import org.kohsuke.github.GitHub
-import org.kohsuke.github.GitHubBuilder
-
-def ghUtils = new org.integr8ly.GitHubUtils()
-
 String githubEventStr = params.sqs_body
 String gitBranch = ""
 String prUrl = ""
-
-String githubUserPassCredentialsID = "githubjenkins"
-final String ghCommitStatusContext = 'delorean/integration-tests'
+def productAndType
+String targetBranch = ""
 
 currentBuild.description = "sqsMessageId: ${params.sqs_messageId}"
 
@@ -25,7 +17,7 @@ node {
         if (ghEvent.eventType == "push") {
             gitBranch = ghEvent['ref'].tokenize('/').last()
             currentBuild.description = "${currentBuild.description}\nevent: push\nbranch: ${gitBranch}"
-        } 
+        }
 
         if (ghEvent.eventType == "pull_request") {
             def pullRequest = ghEvent.pull_request
@@ -34,15 +26,25 @@ node {
 
             currentBuild.description = "${currentBuild.description}\nevent: pull_request\nbranch: ${gitBranch}\npr: ${prUrl}"
         }
+
+        def branchParts = gitBranch.split('_') as List
+        productAndType = branchParts[0]
+        targetBranch = branchParts[1] ?: 'master'
+        println "branch: $gitBranch, productAndType:$productAndType, targetBranch:$targetBranch"
     }
 
     stage('Trigger branch job') {
-        when(gitBranch.endsWith("-ga") || gitBranch.endsWith("-rc") || gitBranch.endsWith("-latest")) {
-            println "Run branch job for ${productName}/${branchType}"
-            def branchType = gitBranch.split("-").last()
-            def productName = gitBranch.minus("-${branchType}")
+        when(productAndType.endsWith("-ga") || productAndType.endsWith("-rc") || productAndType.endsWith("-latest")) {
+            def branchType = productAndType.split("-").last()
+            def productName = productAndType.minus("-${branchType}")
+            println "Delorean branch($branch), run branch job for ${productName}/${branchType}"
             def jobName = "delorean-${productName}/${branchType}/branch"
-            build job: jobName, wait: false
+            def jobParams = [
+                    [$class: 'StringParameterValue', name: 'installationProductBranch', value: gitBranch],
+                    [$class: 'StringParameterValue', name: 'installationTargetBranch', value: targetBranch]
+            ]
+            println "jobName:$jobName, jobParams:$jobParams"
+            build job: jobName, parameters: jobParams, wait: false
         }
     }
 }
