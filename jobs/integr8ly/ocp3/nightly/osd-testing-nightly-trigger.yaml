@@ -6,7 +6,7 @@
     description: "Nightly pipeline trigger for QE OSD cluster (rhmi-qe1) testing."
     sandbox: false
     concurrent: false
-    disabled: false
+    disabled: true
     triggers:
       - timed: "20 3 * * *"
     properties:
