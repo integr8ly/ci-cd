@@ -1,0 +1,30 @@
+---
+
+- job:
+    name: openshift4-osd-cluster-deprovision
+    display-name: 'OpenShift 4 OSD Cluster Deprovision'
+    project-type: pipeline
+    concurrent: true
+    parameters:
+      - string:
+          name: 'CLUSTER_NAME'
+          default: ''
+          description: 'Name of the cluster (e.g. <your kerberos username>-small)'
+      - choice:
+          name: 'OCM_TOKEN'
+          choices:
+            - 'ppaszki-ocm-token'
+          description: 'ocm token used to deprovision a cluster. Add your own one to Jenkins credentials and to the list of the choices for this parameter, if not already here (more info here: https://github.com/RHCloudServices/integreatly-help/blob/master/guides/ocp4/osd_dev_cluster.md)'
+      - string:
+          name: 'RECIPIENTS'
+          default: ''
+          description: "Whitespace- or comma-separated list of email addresses to which the result of this pipeline execution will be sent"
+    pipeline-scm:
+      script-path: jobs/integr8ly/ocp4/osd/cluster/deprovision/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

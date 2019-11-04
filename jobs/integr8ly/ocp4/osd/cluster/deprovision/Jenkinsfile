@@ -1,0 +1,109 @@
+#!groovy
+if (params.CLUSTER_NAME.toString().trim() == "") {
+    error "CLUSTER_NAME is required to run this pipeline!"
+}
+
+String clusterName = CLUSTER_NAME
+String clusterInfoDirectory = "osd_clusters/" + clusterName
+String credentialsDirectory = ""
+String rootWorkspaceDir = ""
+String clusterCredentialsFileName = "clusterCredentials.json"
+String apiPrefix = "/api/clusters_mgmt/v1/clusters"
+
+def err = null
+String clusterID = ""
+
+node("cirhos_rhel7") {
+    timeout(60) { ansiColor("gnome-terminal") { timestamps {
+        try {
+            currentBuild.displayName = "${currentBuild.displayName} ${clusterName}"
+
+            stage("login to ocm") {
+                withCredentials([string(credentialsId: "${OCM_TOKEN}", variable: "OCM_ACCESS_TOKEN")]) {
+                    sh "ocm login --url=https://api.stage.openshift.com/ --token=${OCM_ACCESS_TOKEN}"
+                }
+            } // stage
+            
+            stage("Remove OpenShift 4 OSD cluster") {
+                Boolean clusterConfigExists
+                dir("rhmi-jenkins") {
+                    git branch: "master", url: "https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git"
+                    clusterConfigExists = fileExists(clusterInfoDirectory)
+                }
+                if (clusterConfigExists) {
+                    rootWorkspaceDir = sh (
+                        script: "pwd",
+                        returnStdout: true
+                    ).trim()
+                    credentialsDirectory = rootWorkspaceDir + "/rhmi-jenkins/" + clusterInfoDirectory + "/"
+                    clusterID = sh (
+                        script: "cat ${credentialsDirectory}clusterCredentials.json | jq -r .id",
+                        returnStdout: true
+                    ).trim()
+                    
+                    sh "ocm delete ${apiPrefix}/${clusterID}"
+                    Boolean clusterDestroyed = isClusterDestroyed(clusterID, apiPrefix)
+                    while (!clusterDestroyed) {
+                        println "Cluster is still being deprovisioned"
+                        sleep time: 2, unit: 'MINUTES'
+                        clusterDestroyed = isClusterDestroyed(clusterID, apiPrefix)
+                    }
+                    withCredentials([string(credentialsId: "gitlab-access-token", variable: "GITLAB_ACCESS_TOKEN")]) {
+                        dir("rhmi-jenkins") {
+                            sh(
+                                returnStdout: false,
+                                script: """
+                                    git remote add jenkins https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git | true
+                                    git config --global user.email "integreatly-qe@redhat.com" | true
+                                    git config --global user.name "rhmi-jenkins-bot" | true
+                                    git pull jenkins master
+                                    rm -rf ${clusterInfoDirectory}
+                                    git add -A
+                                    git commit -m 'cluster destroyed: ${CLUSTER_NAME}'
+                                    git push jenkins master
+                                """
+                            )
+                        }
+                    }
+                } else {
+                    error "No cluster config files available for cluster with name: ${CLUSTER_NAME}!"
+                }
+            } // stage
+
+            stage("Logout from ocm") {
+                sh "ocm logout"
+            } // stage
+            
+        } catch (caughtError){
+            currentBuild.result = "FAILURE"
+            err = caughtError
+            println caughtError
+        } finally {
+            notifyBuild(currentBuild.result, err)
+        }
+    }}} // timeout, ansiColor, timestamps
+} // node
+
+def isClusterDestroyed(clusterID, apiPrefix) {
+    String clusterStatus = sh (
+        script: "ocm get ${apiPrefix}/${clusterID}/status | jq -r .state",
+        returnStdout: true
+    )
+    return !clusterStatus.contains("uninstalling")
+}
+
+def notifyBuild(String buildStatus, err) {
+    if (params.RECIPIENTS.toString().length() > 0) {
+        buildStatus =  buildStatus ?: "SUCCESS"
+    
+        String mailRecipients = "${RECIPIENTS}"
+        String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+        String body = "${subject}\n\n(${env.BUILD_URL})"
+    
+        if (err != null) {
+            body = "${body}\n\n FAILURE was ${err}"
+        }
+    
+        mail body: body, subject: subject, to: mailRecipients   
+    }
+}

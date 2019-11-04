@@ -85,6 +85,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/brew/openshift
 
 # OpenShit 4 Cluster jobs
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/osd/cluster/create/osd-cluster-create.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/osd/cluster/deprovision/osd-cluster-deprovision.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift4/cluster/integreatly/openshift4-cluster-integreatly-install.yaml
 
 # OSD cluster jobs
