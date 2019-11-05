@@ -3,7 +3,7 @@
     name: osd-cluster-integreatly-uninstall
     display-name: 'OSD Cluster Integreatly Uninstall'
     project-type: pipeline
-    concurrent: false
+    concurrent: true
     parameters:
       - string:
           name: 'clusterName'

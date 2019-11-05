@@ -3,7 +3,7 @@
     name: osd-cluster-integreatly-upgrade
     display-name: 'OSD Cluster Integreatly Upgrade'
     project-type: pipeline
-    concurrent: false
+    concurrent: true
     parameters:
       - string:
           name: 'clusterName'
