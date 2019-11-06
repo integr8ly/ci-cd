@@ -97,6 +97,7 @@ node("cirhos_rhel7") {
                     areCredentialsAvailable = credentialsAvailable(clusterID, apiPrefix)
                 }
                 sh "ocm get ${apiPrefix}/${clusterID}/credentials > ${installConfigDirectory}${clusterCredentialsFileName}"
+                sh "ocm get ${apiPrefix}/${clusterID} > ${installConfigDirectory}${clusterInfoFileName}"
                 withCredentials([string(credentialsId: "gitlab-access-token", variable: "GITLAB_ACCESS_TOKEN")]) {
                     dir("rhmi-jenkins") {
                         sh(
