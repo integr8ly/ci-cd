@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: osd-ocp4-testing-nightly-trigger
+    name: ocp4-testing-nightly-trigger
     project-type: pipeline
     description: "Nightly trigger for osd ocp4 testing"
     sandbox: false

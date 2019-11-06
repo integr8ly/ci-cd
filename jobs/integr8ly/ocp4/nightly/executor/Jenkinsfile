@@ -1,0 +1,132 @@
+#!groovy
+if (params.CLUSTER_NAME.toString().trim() == "") {
+    error "CLUSTER_NAME is required to run this pipeline!"
+}
+String clusterName = CLUSTER_NAME
+String clusterInfoDirectory = "osd_clusters/" + clusterName
+String installConfigDirectory = ""
+String rootWorkspaceDir = ""
+String clusterInfoFileName = "clusterInfo.json"
+String clusterCredentialsFileName = "clusterCredentials.json"
+
+def err = null
+String apiURL = ""
+String adminPassword = ""
+String domainName = ""
+
+try {
+    timeout(240) { ansiColor('gnome-terminal') { timestamps {
+        node('cirhos_rhel7') {
+            
+            stage ('Provision') {
+                if (TO_DO.contains('provision')) {
+                    provisionCluster()
+                } else {
+                    println 'Provision skipped'
+                }
+            } // stage
+            
+            stage ('Obtain cluster info') {
+                dir("rhmi-jenkins") {
+                    git branch: "master", url: "https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git"
+                    def dirExists = fileExists(clusterInfoDirectory)
+                    if (!dirExists) {
+                        error "[ERROR] no configuration files found for ${clusterName}! Make sure that the cluster exists!"
+                    } 
+                    rootWorkspaceDir = sh (
+                        script: "pwd",
+                        returnStdout: true
+                    ).trim()
+                    installConfigDirectory = rootWorkspaceDir + "/" + clusterInfoDirectory + "/"
+                    apiURL = sh (
+                        script: "cat ${installConfigDirectory}${clusterInfoFileName} | jq -r .api.url",
+                        returnStdout: true
+                    )
+                    domainName = apiURL.substring((apiURL.indexOf(clusterName) + clusterName.length() + 1), apiURL.lastIndexOf(":"))
+                    adminPassword = sh (
+                        script: "cat ${installConfigDirectory}${clusterCredentialsFileName} | jq -r .admin.password",
+                        returnStdout: true
+                    )
+                }
+            } // stage
+
+            stage ('Install') {
+                install(domainName, adminPassword)
+            } // stage
+
+            stage ('Test') {
+                if (TO_DO.contains('tests')) {
+                    test()
+                } else {
+                    println 'Tests skipped'
+                }
+            } // stage
+            
+            stage ('Deprovision') {
+                if (TO_DO.contains('destroy')) {
+                    deprovisionCluster()
+                } else {
+                    println 'Deprovision skipped'
+                }
+            } // stage
+
+        } // node
+    }}} // timeout, ansiColor, timestamps
+} catch (caughtError){
+    currentBuild.result = 'FAILURE'
+    err = caughtError 
+} finally {
+    notifyBuild(currentBuild.result, err)
+}
+
+// Waiting for ${sleepTime} minutes so that resources scheduled for termination are actually terminated
+def provisionCluster() {
+    build job: 'openshift4-osd-cluster-create', parameters: [
+        string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
+        string(name: 'RECIPIENTS', value: "${RECIPIENTS}")
+    ]
+    sleep time: 5, unit: 'MINUTES'
+}
+
+def install(clusterDomain, password) {
+    build job: 'openshift4-rhmi-install', parameters: [
+        string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
+        string(name: 'CLUSTER_DOMAIN', value: clusterDomain),
+        string(name: 'ADMIN_PASSWORD', value: password),
+        string(name: 'RECIPIENTS', value: "${RECIPIENTS}")
+    ]
+}
+
+def test() {
+    println "testing to be implemented later"
+}
+
+def deprovisionCluster() {
+    parameters = [
+        string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
+        string(name: 'RECIPIENTS', value: "${RECIPIENTS}")
+    ]
+
+    buildStatus = build(job: 'openshift4-osd-cluster-deprovision', propagate: false, parameters: parameters).result
+    println "Build finished with ${buildStatus}"
+                    
+    if (buildStatus != 'SUCCESS') {
+        currentBuild.result = 'UNSTABLE'
+    }
+}
+
+def notifyBuild(String buildStatus, err) {
+    if (params.RECIPIENTS.toString().length() > 0) {
+        buildStatus =  buildStatus ?: "SUCCESS"
+    
+        String mailRecipients = "${RECIPIENTS}"
+        String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+        String body = "${subject}\n\n(${env.BUILD_URL})"
+    
+        if (err != null) {
+            body = "${body}\n\n FAILURE was ${err}"
+        }
+    
+        mail body: body, subject: subject, to: mailRecipients   
+    }
+}

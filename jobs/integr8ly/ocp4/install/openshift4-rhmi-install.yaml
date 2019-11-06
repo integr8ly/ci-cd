@@ -1,0 +1,50 @@
+---
+
+- job:
+    name: openshift4-rhmi-install
+    display-name: OpenShift 4 RHMI install
+    project-type: pipeline
+    description: "Installs RHMI on OpenShift 4 cluster"
+    sandbox: false
+    concurrent: true
+    parameters:
+        - string:
+            name: CLUSTER_NAME
+            description: "City or customer for RHPDS cluster, for example qe-ocp4-[hash] or cluster name specified when creating it using openshift-install"
+        - string:
+            name: CLUSTER_DOMAIN
+            default: 'open.redhat.com'
+            description: "Cluster domain - open.redhat.com or example.opentlc.com for RHPDS clusters and intlyqe.com for clusters created using openshift-install"
+        - bool:
+            name: PDS_CLUSTER
+            default: false
+            description: "Indicates whether the cluster was provisioned using RHPDS"
+        - string:
+            name: ADMIN_USERNAME
+            default: 'kubeadmin'
+            description: "Admin username for the OpenShift 4 cluster"
+        - string:
+            name: ADMIN_PASSWORD
+            default: ''
+            description: "Admin password for OpenShift 4 cluster"
+        - string:
+            name: INTEGREATLY_OPERATOR_REPOSITORY
+            default: 'https://github.com/integr8ly/integreatly-operator.git'
+            description: "Repository of the Integreatly Operator"
+        - string:
+            name: INTEGREATLY_OPERATOR_BRANCH
+            default: 'master'
+            description: "Branch of the Integreatly Operator repository"
+        - string:
+            name: RECIPIENTS
+            default: ''
+            description: "Whitespace- or comma-separated list of recipient addresses"
+    pipeline-scm:
+      script-path: jobs/integr8ly/ocp4/install/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

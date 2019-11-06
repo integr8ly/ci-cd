@@ -1,0 +1,39 @@
+---
+
+- job:
+    name: osd-ocp4-testing-executor
+    display-name: OpenShift 4 OSD Nightly Testing Executor
+    project-type: pipeline
+    description: "Nightly testing executor for osd ocp4 testing"
+    sandbox: false
+    concurrent: true
+    properties:
+      - build-discarder:
+          num-to-keep: 56
+    parameters:
+      - string:
+          name: CLUSTER_NAME
+          description: "Name of the cluster (e.g. <your kerberos username>-small)"
+      - string:
+          name: RECIPIENTS
+          default: 'integreatly-qe@redhat.com'
+          description: "Whitespace- or comma-separated list of recipient addresses"
+      - choice:
+          name: TO_DO
+          description: "It specifies what stages of the pipeline will be executed"
+          choices:
+            - provision + install + tests + destroy
+            - provision + install + tests
+            - provision + install
+            - install + tests + destroy
+            - install + tests
+            - install
+    pipeline-scm:
+      script-path: jobs/integr8ly/ocp4/nightly/executor/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false
