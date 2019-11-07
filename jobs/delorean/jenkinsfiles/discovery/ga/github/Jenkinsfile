@@ -48,10 +48,10 @@ boolean doUpdateForLevels(product, current, latest, levels) {
     boolean isMinorUpdate = latestSemVer[1].toInteger() > currentSemVer[1].toInteger()
     int latestPatch = 0
     int currentPatch = 0
-    if(currentSemVer.size() > 2) {
+    if (currentSemVer.size() > 2) {
         currentPatch = currentSemVer[2].toInteger()
     }
-    if(latestSemVer.size() > 2) {
+    if (latestSemVer.size() > 2) {
         latestPatch = latestSemVer[2].toInteger()
     }
     boolean isPatchUpdate = latestPatch > currentPatch
@@ -70,6 +70,15 @@ boolean doUpdateForLevels(product, current, latest, levels) {
     }
     println "[INFO] Update status - product:${product}, current:${current}, latest:${latest}, levels:${levels}, major:${isMajorUpdate}, minor:${isMinorUpdate}, patch:${isPatchUpdate}, doUpdate:${doUpdate}"
     return doUpdate
+}
+
+String lookupProductAnsibleRole(String product) {
+    String role = product
+    switch (product) {
+        case "amq-online":
+            role = "enmasse"
+    }
+    return role
 }
 
 def processInstallationBranch(body) {
@@ -169,7 +178,8 @@ def processInstallationBranch(body) {
                         gitCommitWhenChanges("Add ${product} to update products list") { msgs ->
                             def upgradeVariables = readYaml file: installationUpgradeFile
                             def upgradeProductRoles = upgradeVariables['upgrade_product_roles']
-                            upgradeProductRoles << product
+                            upgradeProductRoles.remove(product)
+                            upgradeProductRoles << lookupProductAnsibleRole(product)
                             upgradeProductRoles = upgradeProductRoles.unique()
                             upgradeVariables['upgrade_product_roles'] = upgradeProductRoles
                             sh "rm ${installationUpgradeFile}"
