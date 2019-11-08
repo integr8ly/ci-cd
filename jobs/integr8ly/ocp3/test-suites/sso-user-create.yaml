@@ -45,6 +45,7 @@
             node('cirhos_rhel7'){
 
                 currentBuild.displayName = "${currentBuild.displayName} ${SSO_URL}"
+                currentBuild.description = "username: ${USERNAME}"
 
                 Boolean publishTestResults = true
 
