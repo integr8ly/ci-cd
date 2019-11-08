@@ -51,7 +51,6 @@ node('cirhos_rhel7') {
           removeColor: false,
           verbose: true,
           extraVars: """---
-            tower_environment: dev
             aws_cluster_name: ${deprovisionOptions.clusterName}
             aws_region: ${deprovisionOptions.awsRegion}
             cluster_credential_bundle_aws_name: ${deprovisionOptions.awsAccountName}
