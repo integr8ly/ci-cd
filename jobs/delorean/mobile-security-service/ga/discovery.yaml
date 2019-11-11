@@ -1,7 +1,7 @@
 ---
 - job:
-    name: delorean-mss-operator/ga/discovery
-    display-name: 'mss-operator-ga-discovery'
+    name: delorean-mobile-security-service/ga/discovery
+    display-name: 'mobile-security-service-ga-discovery'
     project-type: pipeline
     concurrent: false
     triggers:
@@ -24,7 +24,7 @@
           read-only: true
       - string:
           name: 'productName'
-          default: 'mss-operator'
+          default: 'mobile-security-service'
           description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
           read-only: true
     pipeline-scm:

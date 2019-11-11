@@ -159,14 +159,14 @@
     display-name: 'GA'
     project-type: folder
 
-# MSS Operator
+# Mobile Security Service
 - job:
-    name: delorean-mss-operator
-    display-name: 'MSS Operator'
+    name: delorean-mobile-security-service
+    display-name: 'Mobile Security Service'
     project-type: folder
 
 - job:
-    name: delorean-mss-operator/ga
+    name: delorean-mobile-security-service/ga
     display-name: 'GA'
     project-type: folder
 
