@@ -137,14 +137,14 @@
     display-name: 'GA'
     project-type: folder
 
-# DataSync Template
+# Mobile DataSync Template
 - job:
-    name: delorean-datasync-template
-    display-name: 'DataSync Template'
+    name: delorean-mobile-datasync-template
+    display-name: 'Mobile DataSync Template'
     project-type: folder
 
 - job:
-    name: delorean-datasync-template/ga
+    name: delorean-mobile-datasync-template/ga
     display-name: 'GA'
     project-type: folder
 

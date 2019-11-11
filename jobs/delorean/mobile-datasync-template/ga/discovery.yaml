@@ -1,7 +1,7 @@
 ---
 - job:
-    name: delorean-datasync-template/ga/discovery
-    display-name: 'datasync-template-ga-discovery'
+    name: delorean-mobile-datasync-template/ga/discovery
+    display-name: 'mobile-datasync-template-ga-discovery'
     project-type: pipeline
     concurrent: false
     triggers:
@@ -24,7 +24,7 @@
           read-only: true
       - string:
           name: 'productName'
-          default: 'datasync-template'
+          default: 'mobile-datasync-template'
           description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
           read-only: true
     pipeline-scm:

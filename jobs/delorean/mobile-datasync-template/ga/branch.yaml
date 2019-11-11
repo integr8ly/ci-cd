@@ -1,7 +1,7 @@
 ---
 - job:
-    name: delorean-datasync-template/ga/branch
-    display-name: 'datasync-template-ga-branch'
+    name: delorean-mobile-datasync-template/ga/branch
+    display-name: 'mobile-datasync-template-ga-branch'
     project-type: pipeline
     concurrent: false
     parameters:
@@ -11,7 +11,7 @@
           description: '[REQUIRED] The installation repo'
       - string:
           name: 'installationProductBranch'
-          default: 'datasync-template-ga'
+          default: 'mobile-datasync-template-ga'
           description: '[REQUIRED] The installation git branch to push new version changes'
       - string:
           name: 'installationTargetBranch'
@@ -19,7 +19,7 @@
           description: '[REQUIRED] The installation git branch to target'
       - string:
           name: 'productName'
-          default: 'datasync-template'
+          default: 'mobile-datasync-template'
           description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
       - string:
           name: 'productVersionVar'

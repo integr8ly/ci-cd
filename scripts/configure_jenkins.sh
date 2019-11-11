@@ -60,8 +60,8 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/suites/integration/ga/b
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/suites/integration/rc/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mdc-operator/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mdc-operator/ga/discovery.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/datasync-template/ga/branch.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/datasync-template/ga/discovery.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mobile-datasync-template/ga/branch.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mobile-datasync-template/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mss-operator/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mss-operator/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/ups-operator/ga/branch.yaml
