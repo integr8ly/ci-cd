@@ -1,7 +1,7 @@
 ---
 - job:
-    name: delorean-mdc-operator/ga/discovery
-    display-name: 'mdc-operator-ga-discovery'
+    name: delorean-mobile-developer-console/ga/discovery
+    display-name: 'mobile-developer-console-ga-discovery'
     project-type: pipeline
     concurrent: false
     triggers:
@@ -24,7 +24,7 @@
           read-only: true
       - string:
           name: 'productName'
-          default: 'mdc-operator'
+          default: 'mobile-developer-console'
           description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
           read-only: true
     pipeline-scm:
