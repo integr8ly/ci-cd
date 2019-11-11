@@ -1,7 +1,7 @@
 ---
 - job:
-    name: delorean-ups-operator/ga/branch
-    display-name: 'ups-operator-ga-branch'
+    name: delorean-mobile-unifiedpush/ga/branch
+    display-name: 'mobile-unifiedpush-ga-branch'
     project-type: pipeline
     concurrent: false
     parameters:
@@ -11,7 +11,7 @@
           description: '[REQUIRED] The installation repo'
       - string:
           name: 'installationProductBranch'
-          default: 'ups-operator-ga'
+          default: 'mobile-unifiedpush-ga'
           description: '[REQUIRED] The installation git branch to push new version changes'
       - string:
           name: 'installationTargetBranch'
@@ -19,7 +19,7 @@
           description: '[REQUIRED] The installation git branch to target'
       - string:
           name: 'productName'
-          default: 'ups-operator'
+          default: 'mobile-unifiedpush'
           description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
       - string:
           name: 'productVersionVar'

@@ -170,14 +170,14 @@
     display-name: 'GA'
     project-type: folder
 
-# UPS Operator
+# Mobile Unifiedpush
 - job:
-    name: delorean-ups-operator
-    display-name: 'UPS Operator'
+    name: delorean-mobile-unifiedpush
+    display-name: 'Mobile Unifiedpush'
     project-type: folder
 
 - job:
-    name: delorean-ups-operator/ga
+    name: delorean-mobile-unifiedpush/ga
     display-name: 'GA'
     project-type: folder
 
