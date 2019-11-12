@@ -40,7 +40,7 @@
 
         timeout(120) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7') {
-                String clusterName = 'qe-uninstall'
+                String clusterName = 'qe-uninstall-new'
                 String clusterDomainName = 'skunkhenry.com'
                 String awsRegion = 'eu-west-2'
 
