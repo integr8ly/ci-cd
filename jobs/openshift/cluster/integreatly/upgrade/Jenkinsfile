@@ -1,0 +1,231 @@
+
+def constants = [:]
+
+def prepareConstants(constants){
+  constants.TEST_SUITE_REPO = 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'  
+  constants.CUSTOMER_ADMIN_USERNAME = 'customer-admin' 
+  constants.CUSTOMER_ADMIN_PASSWORD = 'Password1'
+  constants.ADMIN_USERNAME = 'admin01'
+  constants.ADMIN_PASSWORD = 'Password1'
+}
+
+def ocLoginAsCustomerAdmin(constants) {
+    try {
+        String loginOutput = sh (
+            script: "oc login https://api.${params.clusterName}.openshift.com -u ${constants.CUSTOMER_ADMIN_USERNAME} -p ${constants.CUSTOMER_ADMIN_PASSWORD}",
+            returnStdout: true
+        ).trim()
+
+        println loginOutput
+        return loginOutput.contains("Login successful")
+    } catch (error) {
+        println "Login was not successful - ${error}"
+        return false
+    }
+}
+
+def prepareTestParams(constants) {
+  def jobParams = [
+    [$class: 'StringParameterValue', name: 'REPOSITORY', value: constants.TEST_SUITE_REPO],
+    [$class: 'StringParameterValue', name: 'BRANCH', value: params.testBranch],
+    [$class: 'StringParameterValue', name: 'CLUSTER_URL', value: "https://console.${params.clusterName}.openshift.com"], 
+    [$class: 'StringParameterValue', name: 'EVALS_USERNAME', value: "${params.userName}01"], 
+    [$class: 'StringParameterValue', name: 'ADMIN_USERNAME', value: constants.ADMIN_USERNAME],
+    [$class: 'StringParameterValue', name: 'ADMIN_PASSWORD', value: constants.ADMIN_PASSWORD], 
+    [$class: 'StringParameterValue', name: 'CUSTOMER_ADMIN_USERNAME', value: constants.CUSTOMER_ADMIN_USERNAME],
+    [$class: 'StringParameterValue', name: 'CUSTOMER_ADMIN_PASSWORD', value: constants.CUSTOMER_ADMIN_PASSWORD],
+    [$class: 'StringParameterValue', name: 'TIMEOUT_THRESHOLD', value: '2'],
+    [$class: 'StringParameterValue', name: 'NAMESPACE_PREFIX', value: 'openshift-'], 
+    [$class: 'StringParameterValue', name: 'WEBAPP_URL', value: "https://tutorial-web-app-openshift-webapp.${params.routerShard}.${params.clusterName}.openshiftapps.com"], 
+    [$class: 'BooleanParameterValue', name: 'CLEAN_RESOURCES', value: false],
+    [$class: 'StringParameterValue', name: 'MANIFEST_VERSION', value: params.installBranch],
+    [$class: 'BooleanParameterValue', name: 'TESTING_MASTER', value: false],
+    [$class: 'StringParameterValue', name: 'SSO_URL', value: "https://sso-openshift-sso.${params.routerShard}.${params.clusterName}.openshiftapps.com"], 
+    [$class: 'StringParameterValue', name: 'NUMBER_OF_USERS', value: '5'],
+    [$class: 'StringParameterValue', name: 'USERNAME', value: 'tester'] 
+  ]
+  return jobParams
+}
+
+pipeline {
+  agent {
+    node {
+      label 'cirhos_rhel7'
+    }
+  }
+
+  stages {
+    stage('Uninstall Integreatly') {
+      steps {
+        echo "[INFO] Uninstalling Integreatly from ${params.clusterName} cluster"
+        script {
+          prepareConstants(constants)
+          currentBuild.displayName = "${currentBuild.displayName} ${params.clusterName}"
+          currentBuild.description = "uninstall: ${params.uninstallBranch}<br>install: ${params.installBranch}<br>upgrade: ${params.upgradeBranch}<br>test: ${params.testBranch}"
+
+          jobName = 'osd-cluster-integreatly-uninstall'
+          jobParams = [
+            [$class: 'StringParameterValue', name: 'clusterName', value: params.clusterName],
+            [$class: 'StringParameterValue', name: 'uninstallationGitBranch', value: params.uninstallBranch],
+            [$class: 'StringParameterValue', name: 'routerShard', value: params.routerShard],
+            [$class: 'StringParameterValue', name: 'openShiftToken', value: params.openShiftToken],
+            [$class: 'StringParameterValue', name: 'towerInstance', value: params.towerInstance],
+            [$class: 'StringParameterValue', name: 'userName', value: params.userName]
+          ]
+          build job: jobName, parameters: jobParams
+        } 
+      }
+    }
+
+    stage('Install Integreatly') {
+      steps {
+        echo "[INFO] Installing Integreatly on ${params.clusterName} cluster"
+        script {
+          jobName = 'osd-cluster-integreatly-install'
+          jobParams = [
+            [$class: 'StringParameterValue', name: 'clusterName', value: params.clusterName],
+            [$class: 'StringParameterValue', name: 'installationGitBranch', value: params.installBranch],
+            [$class: 'StringParameterValue', name: 'routerShard', value: params.routerShard],
+            [$class: 'StringParameterValue', name: 'openShiftToken', value: params.openShiftToken],
+            [$class: 'StringParameterValue', name: 'towerInstance', value: params.towerInstance],
+            [$class: 'StringParameterValue', name: 'githubClientId', value: params.githubClientId],
+            [$class: 'StringParameterValue', name: 'githubClientSecret', value: params.githubClientSecret],
+            [$class: 'StringParameterValue', name: 'customerAdminPassword', value: constants.CUSTOMER_ADMIN_PASSWORD],
+            [$class: 'StringParameterValue', name: 'threeScaleAwsAccessKey', value: params.threeScaleAwsAccessKey],
+            [$class: 'StringParameterValue', name: 'threeScaleAwsSecretKey', value: params.threeScaleAwsSecretKey],
+            [$class: 'StringParameterValue', name: 'threeScaleBucketName', value: params.threeScaleBucketName],
+            [$class: 'StringParameterValue', name: 'threeScaleBucketRegion', value: params.threeScaleBucketRegion],
+            [$class: 'StringParameterValue', name: 'backupAwsKey', value: params.backupAwsKey],
+            [$class: 'StringParameterValue', name: 'backupAwsSecret', value: params.backupAwsSecret],
+            [$class: 'StringParameterValue', name: 'backupsBucketName', value: params.backupsBucketName],
+            [$class: 'StringParameterValue', name: 'clientSecret', value: params.clientSecret]
+          ]
+          build job: jobName, parameters: jobParams
+        } 
+      } 
+    }
+
+    stage('Create Users') {
+      steps {
+        script {
+          // doesn't need to create test users when no test will be executed
+          if (!params.testBefore && !params.testAfter) {
+            println "User creation skipped, since no test will be executed!"
+            return
+          }
+          // This relies on a cronjob to restart the OpenShift API so that we can successfully login afterwards
+          println "Waiting for successful login to the ${params.clusterName} cluster"
+          i = 0
+          loggedIn = false
+          // Trying to log into the cluster 12 times and each 5 minutes which can take max 1 hour 
+          while(!loggedIn && i < 12) {
+            loggedIn = ocLoginAsCustomerAdmin(constants)
+            i += 1
+            sleep time: 5, unit: 'MINUTES'
+          }
+          println "Login as customer-admin was successful: ${loggedIn}"
+            
+          // we want to run test only when there was a successful login to the cluster
+          if (loggedIn) {
+      
+            // Despite successful login as customer-admin
+            // it might take some time for api to be restarted on all master nodes
+            sleep time: 15, unit: 'MINUTES'
+
+            echo "[INFO] Creating admin user on ${params.clusterName} cluster"
+            def adminBuildStatus = build(job: 'sso-user-create-tests', propagate: false, parameters: [
+                string(name: 'REPOSITORY', value: "${constants.TEST_SUITE_REPO}"),
+                string(name: 'BRANCH', value: "${params.testBranch}"),
+                string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${constants.CUSTOMER_ADMIN_USERNAME}"),
+                string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${constants.CUSTOMER_ADMIN_PASSWORD}"),
+                string(name: 'SSO_URL', value: "https://sso-openshift-sso.${params.routerShard}.${params.clusterName}.openshiftapps.com"),
+                string(name: 'USERNAME', value: "admin"),
+                string(name: 'NAMESPACE_PREFIX', value: "openshift-"),
+                string(name: 'NUMBER_OF_USERS', value: "1"),
+                booleanParam(name: 'CLEAN_RESOURCES', value:  Boolean.valueOf("false"))
+            ]).result
+            println "Build finished with ${adminBuildStatus}"
+
+            echo "[INFO] Creating test user on ${params.clusterName} cluster"   
+            def userBuildStatus = build(job: 'create-rhmi-user', propagate: false, parameters: [
+                string(name: 'REPOSITORY', value: "${constants.TEST_SUITE_REPO}"),
+                string(name: 'BRANCH', value: "${params.testBranch}"),
+                string(name: 'CLUSTER_URL', value: "https://console.${params.clusterName}.openshift.com"),
+                string(name: 'ADMIN_USERNAME', value: "${constants.ADMIN_USERNAME}"),
+                string(name: 'ADMIN_PASSWORD', value: "${constants.ADMIN_PASSWORD}"),
+                string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${constants.CUSTOMER_ADMIN_USERNAME}"),
+                string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${constants.CUSTOMER_ADMIN_PASSWORD}"),
+                string(name: 'SSO_URL', value: "https://sso-openshift-sso.${params.routerShard}.${params.clusterName}.openshiftapps.com"),
+                string(name: 'USERNAME', value: "${params.userName}"),
+                string(name: 'NAMESPACE_PREFIX', value: "openshift-"),
+                string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-openshift-webapp.${params.routerShard}.${params.clusterName}.openshiftapps.com"),
+                booleanParam(name: 'CLEAN_RESOURCES', value:  Boolean.valueOf("false"))
+            ]).result
+            println "Build finished with ${userBuildStatus}"
+          }
+        } 
+      } 
+    }
+
+    stage('Test Integreatly') {
+      steps {
+        script {
+          if (params.testBefore) {
+            echo "[INFO] Running Tests on Integreatly before Upgrade"
+            script { 
+              jobName = 'all-tests-executor'
+              jobParams = prepareTestParams(constants)
+              buildStatus = build(job: jobName, propagate: false, parameters: jobParams).result
+              println "Build finished with ${buildStatus}"
+                                
+              if (buildStatus != 'SUCCESS') {
+                currentBuild.result = 'UNSTABLE'
+              }
+            }
+          } else {
+            echo "[INFO] Skipping Tests on Integreatly before Upgrade"
+          }
+        }
+      }
+    }
+
+    stage('Upgrade Integreatly') {
+      steps {
+        echo "[INFO] Upgrading Integreatly on ${params.clusterName} cluster"
+        script {
+          jobName = 'osd-cluster-integreatly-upgrade'
+          jobParams = [
+            [$class: 'StringParameterValue', name: 'clusterName', value: params.clusterName],
+            [$class: 'StringParameterValue', name: 'upgradeGitBranch', value: params.upgradeBranch],
+            [$class: 'StringParameterValue', name: 'routerShard', value: params.routerShard],
+            [$class: 'StringParameterValue', name: 'openShiftToken', value: params.openShiftToken],
+            [$class: 'StringParameterValue', name: 'towerInstance', value: params.towerInstance]
+          ]
+          build job: jobName, parameters: jobParams
+        } 
+      }
+    }
+
+    stage('Test Upgraded Integreatly') {
+      steps {
+        script {
+          if (params.testAfter) {
+            echo "[INFO] Running Tests on Upgraded Integreatly"
+            script { 
+              jobName = 'all-tests-executor'
+              jobParams = prepareTestParams(constants)
+              buildStatus = build(job: jobName, propagate: false, parameters: jobParams).result
+              println "Build finished with ${buildStatus}"
+                                
+              if (buildStatus != 'SUCCESS') {
+                currentBuild.result = 'UNSTABLE'
+              }
+            }
+          } else {
+            echo "[INFO] Skipping Tests on Upgraded Integreatly"
+          }
+        }
+      }
+    }
+  }
+}

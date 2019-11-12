@@ -1,0 +1,101 @@
+---
+- job:
+    name: osd-cluster-integreatly-test-upgrade
+    display-name: "OSD Cluster Integreatly Test Upgrade"
+    description: "Note: master-restart api must be executed after installation, before user creation"
+    project-type: pipeline
+    concurrent: true
+    parameters:
+      - string:
+          name: 'clusterName'
+          default: ''
+          description: '[REQUIRED] The name of the target cluster to install & upgrade Integreatly'
+      - string:
+          name: 'routerShard'
+          default: ''
+          description: '[REQUIRED] Router shard of the targeted cluster'
+      - string:
+          name: 'openShiftToken'
+          default: ''
+          description: '[REQUIRED] Openshift token for cluster-admin user'
+      - string:
+          name: 'towerInstance'
+          default: ''
+          description: '[REQUIRED] Name of a Tower instance from Ansible Tower plugin in Jenkins'    
+      - string:
+          name: 'uninstallBranch'
+          default: ''
+          description: '[REQUIRED] The name of the git branch to be used for the Integreatly uninstaller'
+      - string:
+          name: 'installBranch'
+          default: ''
+          description: '[REQUIRED] The name of the git branch to be used for the Integreatly installer'
+      - string:
+          name: 'upgradeBranch'
+          default: ''
+          description: '[REQUIRED] The name of the git branch to be used for the Integreatly upgrader'
+      - string:
+          name: 'testBranch'
+          default: ''
+          description: '[REQUIRED] The name of the git branch to be used for the Integreatly test suite'
+      - bool:
+          name: 'testBefore'
+          default: false
+          description: '[REQUIRED] Whether run tests before upgrade, e.i. after installation'
+      - bool:
+          name: 'testAfter'
+          default: false
+          description: '[REQUIRED] Whether run tests after upgrade'
+      - string:
+          name: 'userName'
+          default: 'osdtester'
+          description: '[REQUIRED][UNINSTALL][INSTALL] All existing users containing this string in their username will be removed.'
+      - string:
+          name: 'githubClientId'
+          default: ''
+          description: '[REQUIRED][INSTALL] Github client id for launcher authentication'
+      - string:
+          name: 'githubClientSecret'
+          default: ''
+          description: '[REQUIRED][INSTALL] Github client secret for launcher authentication'
+      - string:
+          name: 'threeScaleAwsAccessKey'
+          default: ''
+          description: '[REQUIRED][INSTALL] AWS access key for threescale s3 bucket access'
+      - string:
+          name: 'threeScaleAwsSecretKey'
+          default: ''
+          description: '[REQUIRED][INSTALL] AWS secret key for threescale s3 bucket access'
+      - string:
+          name: 'threeScaleBucketName'
+          default: 'integreatly-qe1-3scale'
+          description: '[REQUIRED][INSTALL] 3scale S3 bucket name'
+      - string:
+          name: 'threeScaleBucketRegion'
+          default: 'eu-west-1'
+          description: '[REQUIRED][INSTALL] 3scale S3 bucket region'
+      - string:
+          name: 'backupAwsKey'
+          default: ''
+          description: '[REQUIRED][INSTALL] AWS access key for backups s3 bucket access'
+      - string:
+          name: 'backupAwsSecret'
+          default: ''
+          description: '[REQUIRED][INSTALL] AWS secret key for backups s3 bucket access'
+      - string:
+          name: 'backupsBucketName'
+          default: 'rhmi-qe1-backups'
+          description: '[REQUIRED][INSTALL] Backups S3 bucket name'
+      - string:
+          name: 'clientSecret'
+          description: '[REQUIRED][INSTALL] Desired client secret value for RHSSO'   
+
+    pipeline-scm:
+      script-path: jobs/openshift/cluster/integreatly/upgrade/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - "master"
+            url: "https://github.com/integr8ly/ci-cd.git"
+            skip-tag: true
+            wipe-workspace: false

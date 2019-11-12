@@ -92,6 +92,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift4/cluster/integreatly/o
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/osd-cluster-integreatly-install.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/osd-cluster-integreatly-upgrade.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/osd-cluster-integreatly-uninstall.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/osd-cluster-integreatly-test-upgrade.yaml
 
 # OSDv3
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/osd/create-rhmi-user.yaml
