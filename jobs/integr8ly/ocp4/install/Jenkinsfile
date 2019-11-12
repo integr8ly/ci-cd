@@ -11,10 +11,6 @@ node('cirhos_rhel7') {
     timeout(75) { ansiColor('gnome-terminal') { timestamps {
         try {
             currentBuild.displayName = "${currentBuild.displayName} ${CLUSTER_NAME}"
-            stage('Login to OpenShift 4 cluster') {
-
-                sh "oc login ${clusterAPI} --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD}"
-            } // stage
 
             stage('Install RHMI') {
                 dir('integreatly-operator') {
@@ -26,6 +22,8 @@ node('cirhos_rhel7') {
                         userRemoteConfigs: [[url: INTEGREATLY_OPERATOR_REPOSITORY]]
                     ])
 
+                    sh "git clean -xdf"
+                    sh "oc login ${clusterAPI} --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD}"
                     sh "make test/e2e/olm"
                 } // dir
             } // stage                 
