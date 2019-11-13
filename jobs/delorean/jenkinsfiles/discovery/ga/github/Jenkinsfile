@@ -1,6 +1,8 @@
 #!groovy
 @Library('delorean-pipeline-library') _
 
+import org.integr8ly.GitHubUtils
+
 String installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
 String installationGitRef = params.installationGitRef ?: 'master'
 def githubCredentialsID = params.credentialId ?: 'githubjenkins'
@@ -9,26 +11,12 @@ def projectOrg = params.projectOrg
 def projectRepo = params.projectRepo
 def productName = params.productName
 def releaseFetchMethod = params.releaseFetchMethod
-def productVersionLocation = params.productVersionLocation
-def productVersionIdentifier = params.productVersionIdentifier
 def gaBranch = params.installationProductBranch ?: "${productName}-ga"
 def gaReleaseTagRef = params.gaReleaseTagRef ?: ''
-boolean isProduct = params.isProduct ?: false
-def templatesDir = params.templatesDir
-def registryProjectIDs = params.registryProjectIDs
-
-String rhContainerRegistry = "registry.redhat.io"
-String rhContainerRegistry2 = "registry.access.redhat.com"
-def rhRegistries = [rhContainerRegistry, rhContainerRegistry2]
-String targetRegistrySecret = 'intly-redhat-registry-sa'
-boolean verifyLatestIsGARelease = templatesDir && registryProjectIDs
 
 def latestRHMIRelease
 String latestRHMIBranch
 def latestReleaseGABranch
-String latestRelease
-String productVersion
-boolean isLatestGARelease = true
 
 currentBuild.displayName = "${currentBuild.displayName} ${productName}"
 
@@ -37,39 +25,6 @@ static String getRHMIReleaseBranch(releaseTag) {
     def majorVersion = versionParts[1]
     def minorVersion = versionParts[2]
     return "v${majorVersion}.${minorVersion}"
-}
-
-boolean doUpdateForLevels(product, current, latest, levels) {
-    def utils = new org.integr8ly.Utils()
-    String[] currentSemVer = utils.extractSemVer(current, product)
-    String[] latestSemVer = utils.extractSemVer(latest, product)
-
-    boolean isMajorUpdate = latestSemVer[0].toInteger() > currentSemVer[0].toInteger()
-    boolean isMinorUpdate = latestSemVer[1].toInteger() > currentSemVer[1].toInteger()
-    int latestPatch = 0
-    int currentPatch = 0
-    if (currentSemVer.size() > 2) {
-        currentPatch = currentSemVer[2].toInteger()
-    }
-    if (latestSemVer.size() > 2) {
-        latestPatch = latestSemVer[2].toInteger()
-    }
-    boolean isPatchUpdate = latestPatch > currentPatch
-
-    boolean doUpdate = false
-    if (isMajorUpdate) {
-        doUpdate = levels.contains('major')
-    } else {
-        if (isMinorUpdate) {
-            doUpdate = levels.contains('minor')
-        } else {
-            if (isPatchUpdate) {
-                doUpdate = levels.contains('patch')
-            }
-        }
-    }
-    println "[INFO] Update status - product:${product}, current:${current}, latest:${latest}, levels:${levels}, major:${isMajorUpdate}, minor:${isMinorUpdate}, patch:${isPatchUpdate}, doUpdate:${doUpdate}"
-    return doUpdate
 }
 
 String lookupProductAnsibleRole(String product) {
@@ -81,11 +36,96 @@ String lookupProductAnsibleRole(String product) {
     return role
 }
 
+String[] extractSemVer(String productVersion, String productName) {
+    if (productName == "fuse") {
+        List parts = productVersion.replaceAll("[^0-9/-]", "").tokenize("-")
+        return [parts[1].substring(0, 1), parts[1].substring(1, 2), parts[1].substring(2, 6), parts[2]]
+    } else {
+        return productVersion.replaceAll("[^0-9/.]", "").tokenize(".")
+    }
+}
+
+boolean verifyIsGA(String product, String version) {
+    if (product == "fuse-online") {
+        //ToDo Since fuse online have changed their installation we have currently have no way of knowing if it's GA or not.
+        return version < "1.8.0"
+    }
+    return true
+}
+
+String findLatestVersionFor(String product, String currentVersion, List allVersions, String type, List levels) {
+
+    String[] currentSemVer = extractSemVer(currentVersion, product)
+    String majorVersion = currentSemVer[0]
+    String minorVersion = currentSemVer[1]
+    String versionPattern
+    if (levels.contains('major')) {
+        versionPattern = product == "fuse" ? "application-templates-\\d+.\\d+.fuse-\\d+-redhat-\\d+" : "(v)?\\d+.\\d+.\\d+(.GA)?"
+    } else {
+        if (levels.contains('minor')) {
+            versionPattern = product == "fuse" ? "application-templates-\\d+.\\d+.fuse-${majorVersion}\\d+-redhat-\\d+" : "(v)?${majorVersion}.\\d+.\\d+(.GA)?"
+        } else {
+            if (levels.contains('patch')) {
+                versionPattern = product == "fuse" ? "application-templates-\\d+.\\d+.fuse-${majorVersion}${minorVersion}\\d+-redhat-\\d+" : "(v)?${majorVersion}.${minorVersion}.\\d+(.GA)?"
+            }
+        }
+    }
+
+    //Extact only version that match the expected pattern for this product
+    def matchingVersions = allVersions.findAll {
+        it ==~ ~/${versionPattern}/
+    }
+
+    //Sort the versions and reverse so the most current is first in the list
+    matchingVersions.sort { a, b ->
+        a = a.replace("v", "");
+        b = b.replace("v", "");
+        List verA = extractSemVer(a, product)
+        List verB = extractSemVer(b, product)
+        def commonIndices = Math.min(verA.size(), verB.size())
+        for (int i = 0; i < commonIndices; ++i) {
+            def numA = verA[i].toInteger()
+            def numB = verB[i].toInteger()
+            if (numA != numB) {
+                return numA <=> numB
+            }
+        }
+        verA.size() <=> verB.size()
+    }
+    matchingVersions = matchingVersions.reverse()
+
+    //Traverse the list, the first one matching the type we care about wins
+    String latestVersion = null
+    matchingVersions.find { version ->
+        if (type == 'all') {
+            latestVersion = version
+            return true
+        } else {
+            boolean isGA = verifyIsGA(product, version)
+            if (type == 'ga' && isGA) {
+                latestVersion = version
+                return true
+            }
+            if (type == 'rc' && !isGA) {
+                latestVersion = version
+                return true
+            }
+        }
+    }
+
+    println "[INFO] Found ${matchingVersions.size()} versions of ${product} for ${levels}, ${latestVersion} is the best match for type ${type} -- ${matchingVersions}"
+
+    return latestVersion ?: currentVersion
+}
+
 def processInstallationBranch(body) {
     def config = [:]
     body.resolveStrategy = Closure.DELEGATE_FIRST
     body.delegate = config
     body()
+
+    String projectOrg = config.projectOrg ?: params.projectOrg
+    String projectRepo = config.projectRepo ?: params.projectRepo
 
     String installationGitUrl = config.installationGitUrl ?: params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
     String githubSSHCredentialsID = config.githubSSHCredentialsID ?: params.githubSSHCredentialsID ?: 'jenkinsgithub'
@@ -94,20 +134,21 @@ def processInstallationBranch(body) {
     String releaseTagVar = config.releaseTagVar ?: params.manifestVar ?: params.releaseTagVar
     String productVersionVar = config.productVersionVar ?: params.productVersionVar
     String productVersionLocation = config.productVersionLocation ?: params.productVersionLocation
+    String productVersionIdentifier = config.productVersionIdentifier ?: params.productVersionIdentifier
 
     String baseBranch = config.baseBranch
     String branch = config.branch
     String product = config.product
+
     String latestProductRelease = config.latestProductRelease
     String latestProductVersion = config.latestProductVersion
-    boolean doRepoUpdates = config.doRepoUpdates
-    boolean isProduct = config.isProduct ?: false
+    def latestProductReleases = config.latestProductReleases
+
     def updateVersionLevels = config.updateVersionLevels ?: ['major', 'minor', 'patch']
+    String updateVersionType = config.updateVersionType
+
     String checkoutDir = "installation-${baseBranch}"
     String currentProductRelease
-    boolean updateCurrentToLatest
-
-    println("processInstallationBranch - baseBranch:${baseBranch}, branch:${branch}, product:${product}, latestProductRelease:${latestProductRelease}, latestProductVersion:${latestProductVersion}, isProduct:${isProduct}, doRepoUpdates:${doRepoUpdates}")
 
     stage("Fetch Base Branch ${baseBranch}") {
         println "Fetch Base Branch ${baseBranch}"
@@ -119,22 +160,57 @@ def processInstallationBranch(body) {
             sh 'git config --global user.name "Automatron"'
             sh 'git config --global user.email "github.eng@feedhenry.com"'
 
-            stage("Fetch ${product} release (${branch})") {
-                when(!isProduct) {
-                    def installationManifest = readYaml file: installationManifestFile
-                    if (releaseTagVar) {
-                        currentProductRelease = installationManifest[releaseTagVar]
-                    } else {
-                        currentProductRelease = installationManifest[productVersionVar]
-                    }
-                    if (!currentProductRelease) {
-                        error "[ERROR] Unable to retrieve current product release!"
-                    }
-                    println "[INFO] currentProductRelease = ${currentProductRelease}"
+            stage("Fetch current ${product} version (${branch})") {
+                def installationManifest = readYaml file: installationManifestFile
+                if (releaseTagVar) {
+                    currentProductRelease = installationManifest[releaseTagVar]
+                } else {
+                    currentProductRelease = installationManifest[productVersionVar]
                 }
+                if (!currentProductRelease) {
+                    error "[ERROR] Unable to retrieve current product release!"
+                }
+                println "[INFO] currentProductRelease = ${currentProductRelease}"
             }
 
-            updateCurrentToLatest = doUpdateForLevels(product, currentProductRelease, latestProductRelease, updateVersionLevels)
+            stage('Fetch Latest Product Release') {
+                latestProductRelease = findLatestVersionFor(product, currentProductRelease, latestProductReleases, updateVersionType, updateVersionLevels)
+                if (!latestProductRelease) {
+                    error "[ERROR] Unable to retrieve latest release version!"
+                }
+                println "[INFO] Latest Product Release = ${latestProductRelease}"
+            }
+
+            stage('Fetch Latest Product Version') {
+                if (productVersionLocation && productVersionIdentifier) {
+                    def templateUrl = "https://raw.githubusercontent.com/${projectOrg}/${projectRepo}/${latestProductRelease}/${productVersionLocation}"
+
+                    if (projectOrg == "integr8ly") {
+                        latestProductVersion = sh(returnStdout: true, script: "curl -i '${templateUrl}' | grep '${productVersionIdentifier}' | head -n 1 | awk '{print \$3}'")
+                        latestProductVersion = latestProductVersion.replaceAll("[\"\']v*", "")
+                    }
+
+                    // Current tags/releases does not have the right product version in the webapp handler.
+                    // This can be removed once this property has been updated with the correct information in the next release
+                    // https://github.com/integr8ly/tutorial-web-app-operator/blob/v0.0.4/pkg/handlers/webhandler.go#L23
+                    if (product == "webapp") {
+                        latestProductVersion = sh(returnStdout: true, script: "curl -i '${templateUrl}' | grep '${productVersionIdentifier}' | awk -F ':' '{print \$3}'")
+                        latestProductVersion = latestProductVersion.replaceAll("v", "")
+                    }
+
+                    latestProductVersion = latestProductVersion.trim()
+
+                    if (!latestProductVersion) {
+                        error "[ERROR] Product version for ${product} was not found. Product Version: ${latestProductVersion}"
+                    }
+                } else {
+                    latestProductVersion = latestProductRelease
+                }
+                println "[INFO] Latest Product Version ${latestProductVersion}"
+            }
+
+            currentBuild.description = (currentBuild.description ?: "") + "\nbranch: ${branch}\n latest: ${latestProductRelease}\n current: ${currentProductRelease}\n type: ${updateVersionType}"
+            println("processInstallationBranch - baseBranch:${baseBranch}, branch:${branch}, product:${product}, latestProductRelease:${latestProductRelease}, currentProductRelease:${currentProductRelease}, latestProductVersion:${latestProductVersion}, updateVersionType:${updateVersionType}")
 
             stage("Ensure Branch (${branch})") {
                 println "[INFO] Ensure Branch (${branch})"
@@ -143,51 +219,31 @@ def processInstallationBranch(body) {
             }
 
             stage("Update Manifest File (${branch})") {
-                when(doRepoUpdates && updateCurrentToLatest) {
-                    println "[INFO] Product Version Update (${branch})"
-                    gitCommitWhenChanges("Updated ${product} product version to ${latestProductRelease}") { msgs ->
-                        def manifestFileTxt = readFile(installationManifestFile)
-                        manifestFileTxt = updateManifestVariable(manifestFileTxt, releaseTagVar, latestProductRelease)
-                        manifestFileTxt = updateManifestVariable(manifestFileTxt, productVersionVar, latestProductVersion)
-                        writeFile file: installationManifestFile, text: manifestFileTxt
-                    }
-
-                    gitCommitWhenChanges("Updated ${product} product version to ${latestProductVersion} in ${productVersionLocation}") { msgs ->
-                        if (product == 'redhat-sso-7-openshift-image') {
-                            sh "sed -i 's/${latestProductVersion}/${latestProductRelease}/' ${productVersionLocation}"
-                            sh 'mkdir -p /tmp/sso'
-                            sh "wget 'https://github.com/jboss-container-images/redhat-sso-7-openshift-image/archive/${latestProductVersion}.zip' -O /tmp/sso/sso.zip"
-                            unzip glob: '', zipFile: '/tmp/sso/sso.zip', dir: '/tmp/sso'
-                            sh 'ls -la /tmp/sso'
-                            def tmpl = sh(returnStdout: true, script: "find /tmp/sso -name 'sso*-x509-postgresql-persistent.json'")
-                            tmpl = tmpl.trim()
-                            fname = tmpl.split('/').last()
-                            sh "cp ${tmpl} deploy/template"
-                            sh "sed -ri 's/(\\s+SSO_TEMPLATE_NAME\\s+=\\s?)\"[a-zA-Z0-9\\-]+\\.json\"/\\1\"${fname}\"/' ${productVersionLocation}"
-                            sh 'rm -rf /tmp/sso'
-                        }
-                    }
+                println "[INFO] Product Version Update (${branch})"
+                gitCommitWhenChanges("Updated ${product} product version to ${latestProductRelease}") { msgs ->
+                    def manifestFileTxt = readFile(installationManifestFile)
+                    manifestFileTxt = updateManifestVariable(manifestFileTxt, releaseTagVar, latestProductRelease)
+                    manifestFileTxt = updateManifestVariable(manifestFileTxt, productVersionVar, latestProductVersion)
+                    writeFile file: installationManifestFile, text: manifestFileTxt
                 }
             }
 
             stage("Update Upgrade File (${branch})") {
-                when(doRepoUpdates && updateCurrentToLatest) {
-                    println "[INFO] Product Upgrade Update (${branch})"
-                    def exists = fileExists installationUpgradeFile
-                    if (exists) {
-                        gitCommitWhenChanges("Add ${product} to update products list") { msgs ->
-                            def upgradeVariables = readYaml file: installationUpgradeFile
-                            def upgradeProductRoles = upgradeVariables['upgrade_product_roles']
-                            upgradeProductRoles.remove(product)
-                            upgradeProductRoles << lookupProductAnsibleRole(product)
-                            upgradeProductRoles = upgradeProductRoles.unique()
-                            upgradeVariables['upgrade_product_roles'] = upgradeProductRoles
-                            sh "rm ${installationUpgradeFile}"
-                            writeYaml file: installationUpgradeFile, data: upgradeVariables
-                        }
-                    } else {
-                        println "No ${installationUpgradeFile} to load!!"
+                println "[INFO] Product Upgrade Update (${branch})"
+                def exists = fileExists installationUpgradeFile
+                if (exists) {
+                    gitCommitWhenChanges("Add ${product} to update products list") { msgs ->
+                        def upgradeVariables = readYaml file: installationUpgradeFile
+                        def upgradeProductRoles = upgradeVariables['upgrade_product_roles']
+                        upgradeProductRoles.remove(product)
+                        upgradeProductRoles << lookupProductAnsibleRole(product)
+                        upgradeProductRoles = upgradeProductRoles.unique()
+                        upgradeVariables['upgrade_product_roles'] = upgradeProductRoles
+                        sh "rm ${installationUpgradeFile}"
+                        writeYaml file: installationUpgradeFile, data: upgradeVariables
                     }
+                } else {
+                    println "No ${installationUpgradeFile} to load!!"
                 }
             }
 
@@ -206,8 +262,29 @@ def processInstallationBranch(body) {
 
 }
 
+def getReleases(String gitOrg, String gitRepoName, String ghCredentialsID, String releaseFetchMethod, String gaReleaseTagRef) {
+    def ghUtils = new GitHubUtils()
+    if (releaseFetchMethod == "tag") {
+        def ghTags = ghUtils.ghGetRepoTags(gitOrg, gitRepoName, ghCredentialsID, gaReleaseTagRef)
+        def releaseTags = ghTags.collect() {
+            it.ref.minus("refs/tags/")
+        }
+        return releaseTags
+    } else {
+        return [ghUtils.ghGetLatestReleaseByRelease(gitOrg, gitRepoName, ghCredentialsID)]
+    }
+}
+
+def latestReleases
+
 node() {
+
     cleanWs()
+
+    stage('Fetch Latest Product Releases') {
+        latestReleases = getReleases(projectOrg, projectRepo, githubCredentialsID, releaseFetchMethod, gaReleaseTagRef)
+        println "[INFO] Latest Product Release = ${latestReleases}"
+    }
 
     stage('Fetch Latest RHMI Release') {
         gitCheckoutRepo(installationGitUrl, 'master', githubSSHCredentialsID, 'installation')
@@ -219,106 +296,21 @@ node() {
         println "[INFO] Latest RHMI Release latestRHMIRelease:${latestRHMIRelease}, latestRHMIBranch:${latestRHMIBranch}, latestReleaseGABranch:${latestReleaseGABranch}"
     }
 
-    stage('Fetch Latest Product Release') {
-        latestRelease = getLatestGaRelease(projectOrg, projectRepo, githubCredentialsID, releaseFetchMethod, gaReleaseTagRef)
-        if (!latestRelease) {
-            error "[ERROR] Unable to retrieve latest release version!"
-        }
-        println "[INFO] Latest Product Release = ${latestRelease}"
-    }
-
-    stage('Fetch Latest Product Version') {
-        if (productVersionLocation && productVersionIdentifier) {
-            def templateUrl = "https://raw.githubusercontent.com/${projectOrg}/${projectRepo}/${latestRelease}/${productVersionLocation}"
-
-            if (projectOrg == "integr8ly") {
-                productVersion = sh(returnStdout: true, script: "curl -i '${templateUrl}' | grep '${productVersionIdentifier}' | head -n 1 | awk '{print \$3}'")
-                productVersion = productVersion.replaceAll("[\"\']v*", "")
-            }
-
-            // Current tags/releases does not have the right product version in the webapp handler.
-            // This can be removed once this property has been updated with the correct information in the next release
-            // https://github.com/integr8ly/tutorial-web-app-operator/blob/v0.0.4/pkg/handlers/webhandler.go#L23
-            if (productName == "webapp") {
-                productVersion = sh(returnStdout: true, script: "curl -i '${templateUrl}' | grep '${productVersionIdentifier}' | awk -F ':' '{print \$3}'")
-                productVersion = productVersion.replaceAll("v", "")
-            }
-
-            if (productName == 'redhat-sso-7-openshift-image') {
-                dir('installation') {
-                    productVersion = sh(returnStdout: true, script: "cat '${productVersionLocation}' | grep '${productVersionIdentifier}' | awk -F '=' '{print \$2}'")
-                    productVersion = productVersion.replaceAll("\"", "")
-                }
-            }
-
-            productVersion = productVersion.trim()
-
-            if (!productVersion) {
-                error "[ERROR] Product version for ${productName} was not found. Product Version: ${productVersion}"
-            }
-        } else {
-            productVersion = latestRelease
-        }
-        println "[INFO] Latest Product Version ${productVersion}"
-    }
-
-    stage('Verify Latest Product Release is GA') {
-        when(verifyLatestIsGARelease) {
-            dir(productName) {
-                productGitUrl = "git@github.com:${projectOrg}/${projectRepo}.git"
-                gitCheckoutRepo(productGitUrl, latestRelease, githubSSHCredentialsID, '.')
-                registryProjectIDs = registryProjectIDs.replaceAll(" ", "").split(',')
-
-                def getProductImagesParams = [
-                        targetDir   : templatesDir,
-                        excludeFiles: ['fuse-online-upgrade.yml'], // Ignore the file fuse-online-upgrade as it contains an image with a typo (registry.redhat.io/fuse7/fuse-ignite-uprade)
-                        registries  : rhRegistries,
-                        registryIDs : registryProjectIDs
-                ]
-                def productImages = getProductImages(getProductImagesParams)
-
-                if (productImages.size() == 0) {
-                    println "${latestRelease} is not GA. There are no images available using public registries."
-                    isLatestGARelease = false
-                }
-
-                def getPreReleaseImagesParams = [
-                        imageUrls          : productImages,
-                        registryCredentials: targetRegistrySecret
-                ]
-                def preReleaseImages = getPreReleaseImages(getPreReleaseImagesParams)
-
-                if (preReleaseImages.size != 0) {
-                    println "${latestRelease} is not GA. The following images are not yet available: ${preReleaseImages}"
-                    isLatestGARelease = false
-                } else {
-                    println "Found ${preReleaseImages.size()} prerelease images. Verified that the latest release ${latestRelease} is GA"
-                }
-            }
-        }
-    }
-
-    currentBuild.description = "latest: ${latestRelease}\n productVersion: ${productVersion}\n isLatestGARelease: ${isLatestGARelease}"
-
-    println("Calling processInstallationBranch: isLatestGARelease: ${isLatestGARelease}, isProduct: ${isProduct}")
-
     processInstallationBranch {
         branch = gaBranch
         baseBranch = installationGitRef
         product = productName
-        latestProductRelease = latestRelease
-        latestProductVersion = productVersion
+        latestProductReleases = latestReleases
         updateVersionLevels = ['major', 'minor', 'patch']
-        doRepoUpdates = isLatestGARelease && !isProduct
+        updateVersionType = 'ga'
     }
 
     processInstallationBranch {
         branch = latestReleaseGABranch
         baseBranch = latestRHMIBranch
         product = productName
-        latestProductRelease = latestRelease
-        latestProductVersion = productVersion
+        latestProductReleases = latestReleases
         updateVersionLevels = ['patch']
-        doRepoUpdates = isLatestGARelease && !isProduct
+        updateVersionType = 'ga'
     }
 }
