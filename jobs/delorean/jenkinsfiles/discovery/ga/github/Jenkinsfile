@@ -220,30 +220,34 @@ def processInstallationBranch(body) {
 
             stage("Update Manifest File (${branch})") {
                 println "[INFO] Product Version Update (${branch})"
-                gitCommitWhenChanges("Updated ${product} product version to ${latestProductRelease}") { msgs ->
-                    def manifestFileTxt = readFile(installationManifestFile)
-                    manifestFileTxt = updateManifestVariable(manifestFileTxt, releaseTagVar, latestProductRelease)
-                    manifestFileTxt = updateManifestVariable(manifestFileTxt, productVersionVar, latestProductVersion)
-                    writeFile file: installationManifestFile, text: manifestFileTxt
+                if(latestProductRelease != currentProductRelease) {
+                    gitCommitWhenChanges("Updated ${product} product version to ${latestProductRelease}") { msgs ->
+                        def manifestFileTxt = readFile(installationManifestFile)
+                        manifestFileTxt = updateManifestVariable(manifestFileTxt, releaseTagVar, latestProductRelease)
+                        manifestFileTxt = updateManifestVariable(manifestFileTxt, productVersionVar, latestProductVersion)
+                        writeFile file: installationManifestFile, text: manifestFileTxt
+                    }
                 }
             }
 
             stage("Update Upgrade File (${branch})") {
                 println "[INFO] Product Upgrade Update (${branch})"
-                def exists = fileExists installationUpgradeFile
-                if (exists) {
-                    gitCommitWhenChanges("Add ${product} to update products list") { msgs ->
-                        def upgradeVariables = readYaml file: installationUpgradeFile
-                        def upgradeProductRoles = upgradeVariables['upgrade_product_roles']
-                        upgradeProductRoles.remove(product)
-                        upgradeProductRoles << lookupProductAnsibleRole(product)
-                        upgradeProductRoles = upgradeProductRoles.unique()
-                        upgradeVariables['upgrade_product_roles'] = upgradeProductRoles
-                        sh "rm ${installationUpgradeFile}"
-                        writeYaml file: installationUpgradeFile, data: upgradeVariables
+                if(latestProductRelease != currentProductRelease) {
+                    def exists = fileExists installationUpgradeFile
+                    if (exists) {
+                        gitCommitWhenChanges("Add ${product} to update products list") { msgs ->
+                            def upgradeVariables = readYaml file: installationUpgradeFile
+                            def upgradeProductRoles = upgradeVariables['upgrade_product_roles']
+                            upgradeProductRoles.remove(product)
+                            upgradeProductRoles << lookupProductAnsibleRole(product)
+                            upgradeProductRoles = upgradeProductRoles.unique()
+                            upgradeVariables['upgrade_product_roles'] = upgradeProductRoles
+                            sh "rm ${installationUpgradeFile}"
+                            writeYaml file: installationUpgradeFile, data: upgradeVariables
+                        }
+                    } else {
+                        println "No ${installationUpgradeFile} to load!!"
                     }
-                } else {
-                    println "No ${installationUpgradeFile} to load!!"
                 }
             }
 
