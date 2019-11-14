@@ -150,7 +150,7 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/tower/tow
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/install/openshift4-rhmi-install.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/nightly/executor/osd-ocp4-testing-executor.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/nightly/trigger/osd-ocp4-testing-nightly-trigger.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/utils/htpasswd/Jenkinsfile
+generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/utils/htpasswd/openshift4-htpasswd-setup.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp4/tests/ocp4-all-tests-executor.yaml
 
 #Views
