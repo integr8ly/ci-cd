@@ -1,0 +1,24 @@
+#!groovy
+String clusterAPI = "https://api.${CLUSTER_NAME}.${CLUSTER_DOMAIN}:6443"
+
+node('cirhos_rhel7') {
+    timeout(60) { ansiColor('gnome-terminal') { timestamps {
+        currentBuild.displayName = "${currentBuild.displayName} ${CLUSTER_NAME}"
+
+        stage('Add htpasswd IDP to OSD cluster') {
+            dir('integreatly-operator') {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: INTEGREATLY_OPERATOR_BRANCH]],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [],
+                    userRemoteConfigs: [[url: INTEGREATLY_OPERATOR_REPOSITORY]]
+                ])
+
+                sh "git clean -xdf"
+                sh "oc login ${clusterAPI} --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD}"
+                sh "./scripts/setup-htpass-idp.sh"
+            } // dir
+        } // stage                 
+    }}} // timeout, ansiColor, timestamps
+} // node
