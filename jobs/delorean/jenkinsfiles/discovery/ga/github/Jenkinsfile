@@ -13,6 +13,7 @@ def productName = params.productName
 def releaseFetchMethod = params.releaseFetchMethod
 def gaBranch = params.installationProductBranch ?: "${productName}-ga"
 def gaReleaseTagRef = params.gaReleaseTagRef ?: ''
+boolean updateLatestRHMIRelease = params.updateLatestRHMIRelease ?: false
 
 def latestRHMIRelease
 String latestRHMIBranch
@@ -220,7 +221,7 @@ def processInstallationBranch(body) {
 
             stage("Update Manifest File (${branch})") {
                 println "[INFO] Product Version Update (${branch})"
-                if(latestProductRelease != currentProductRelease) {
+                if (latestProductRelease != currentProductRelease) {
                     gitCommitWhenChanges("Updated ${product} product version to ${latestProductRelease}") { msgs ->
                         def manifestFileTxt = readFile(installationManifestFile)
                         manifestFileTxt = updateManifestVariable(manifestFileTxt, releaseTagVar, latestProductRelease)
@@ -232,7 +233,7 @@ def processInstallationBranch(body) {
 
             stage("Update Upgrade File (${branch})") {
                 println "[INFO] Product Upgrade Update (${branch})"
-                if(latestProductRelease != currentProductRelease) {
+                if (latestProductRelease != currentProductRelease) {
                     def exists = fileExists installationUpgradeFile
                     if (exists) {
                         gitCommitWhenChanges("Add ${product} to update products list") { msgs ->
@@ -290,16 +291,6 @@ node() {
         println "[INFO] Latest Product Release = ${latestReleases}"
     }
 
-    stage('Fetch Latest RHMI Release') {
-        gitCheckoutRepo(installationGitUrl, 'master', githubSSHCredentialsID, 'installation')
-        dir('installation') {
-            latestRHMIRelease = sh(returnStdout: true, script: "git describe --tags `git rev-list --tags --max-count=1`")
-            latestRHMIBranch = getRHMIReleaseBranch(latestRHMIRelease)
-            latestReleaseGABranch = "${gaBranch}_${latestRHMIBranch}"
-        }
-        println "[INFO] Latest RHMI Release latestRHMIRelease:${latestRHMIRelease}, latestRHMIBranch:${latestRHMIBranch}, latestReleaseGABranch:${latestReleaseGABranch}"
-    }
-
     processInstallationBranch {
         branch = gaBranch
         baseBranch = installationGitRef
@@ -309,12 +300,25 @@ node() {
         updateVersionType = 'ga'
     }
 
-    processInstallationBranch {
-        branch = latestReleaseGABranch
-        baseBranch = latestRHMIBranch
-        product = productName
-        latestProductReleases = latestReleases
-        updateVersionLevels = ['patch']
-        updateVersionType = 'ga'
+    if (updateLatestRHMIRelease) {
+
+        stage('Fetch Latest RHMI Release') {
+            gitCheckoutRepo(installationGitUrl, 'master', githubSSHCredentialsID, 'installation')
+            dir('installation') {
+                latestRHMIRelease = sh(returnStdout: true, script: "git describe --tags `git rev-list --tags --max-count=1`")
+                latestRHMIBranch = getRHMIReleaseBranch(latestRHMIRelease)
+                latestReleaseGABranch = "${gaBranch}_${latestRHMIBranch}"
+            }
+            println "[INFO] Latest RHMI Release latestRHMIRelease:${latestRHMIRelease}, latestRHMIBranch:${latestRHMIBranch}, latestReleaseGABranch:${latestReleaseGABranch}"
+        }
+
+        processInstallationBranch {
+            branch = latestReleaseGABranch
+            baseBranch = latestRHMIBranch
+            product = productName
+            latestProductReleases = latestReleases
+            updateVersionLevels = ['patch']
+            updateVersionType = 'ga'
+        }
     }
 }
