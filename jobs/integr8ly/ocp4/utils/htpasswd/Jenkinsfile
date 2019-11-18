@@ -18,6 +18,8 @@ node('cirhos_rhel7') {
                 sh "git clean -xdf"
                 sh "oc login ${clusterAPI} --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD}"
                 sh "./scripts/setup-htpass-idp.sh"
+
+                sleep time: 75, unit: 'SECONDS' // required to finish up setting up oauth config after installation.
             } // dir
         } // stage                 
     }}} // timeout, ansiColor, timestamps

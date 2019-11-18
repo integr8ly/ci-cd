@@ -1,0 +1,64 @@
+---
+
+- job:
+    name: ocp4-all-tests-executor
+    display-name: OpenShift 4 All Tests Executor
+    project-type: pipeline
+    description: "Pipeline to run all of the available OS4 RHMI tests"
+    sandbox: true
+    properties:
+      - build-discarder:
+          num-to-keep: 56
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
+          description: 'QE repository containing the smoke tests source code.'
+      - string:
+          name: BRANCH
+          default: 'v2-master'
+          description: 'Branch of the repository'
+      - string:
+          name: CLUSTER_DOMAIN
+          description: "Cluster domain of the OSD cluster"
+      - string:
+          name: CLUSTER_NAME
+          description: "Name of the cluster (e.g. <your kerberos username>-small)"
+      - string:
+          name: ADMIN_USERNAME
+          default: 'kubeadmin'
+          description: 'Admin sername to login to Integreatly cluster.'
+      - string:
+          name: ADMIN_PASSWORD
+          default: ''
+          description: 'Admin password to login to Integreatly cluster.'
+      - string:
+          name: CUSTOMER_ADMIN_USERNAME
+          default: 'customer-admin'
+          description: 'customer-admin username to login to Integreatly cluster.'
+      - string:
+          name: CUSTOMER_ADMIN_PASSWORD
+          default: 'Password1'
+          description: 'Password to login to Integreatly cluster.'
+      - string:
+          name: EVALS_USERNAME
+          default: 'evals11'
+          description: 'Evals account username for checking created namespaces.'
+      - string:
+          name: NAMESPACE_PREFIX
+          default: 'integreatly-'
+          description: 'Value used to prefix the names of the namespaces created during Integr8ly installation'
+      - string:
+          name: TIMEOUT_THRESHOLD
+          default: '1'
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'
+    pipeline-scm:
+      script-path: jobs/integr8ly/ocp4/tests/executor/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false
+

@@ -1,0 +1,66 @@
+#!groovy
+String clusterAPI = "https://api.${CLUSTER_NAME}.${CLUSTER_DOMAIN}"
+jobParams = [
+    string(name: 'REPOSITORY', value: "${REPOSITORY}"),
+    string(name: 'BRANCH', value: "${BRANCH}"),
+    string(name: 'CLUSTER_URL', value: "${clusterAPI}"),
+    string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+    string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+    string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
+    string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
+    string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
+    string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}")
+]
+def err = null
+def wtTestStatus;
+String adminPassword = params.ADMIN_PASSWORD
+try {
+    timeout(120) { ansiColor('gnome-terminal') { timestamps {
+        node('cirhos_rhel7') {
+
+            stage ("Dedicated admin permissions") {
+                String tempAdmin = "test-user"
+
+                sh "oc login ${clusterAPI}:6443 -u ${tempAdmin} -p ${CUSTOMER_ADMIN_PASSWORD} --insecure-skip-tls-verify # required to 'enable' ${tempAdmin}"
+
+                sleep time: 2, unit: 'SECONDS'
+
+                sh "oc login ${clusterAPI}:6443 -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD} --insecure-skip-tls-verify"
+                sh "oc adm groups add-users dedicated-admins ${tempAdmin}"
+
+                sh "oc login ${clusterAPI}:6443 -u ${CUSTOMER_ADMIN_USERNAME} -p ${CUSTOMER_ADMIN_PASSWORD} --insecure-skip-tls-verify # required to 'enable' ${CUSTOMER_ADMIN_USERNAME}"
+                // sleep is required to properly 'enable' new htpasswd usrs by the operator.
+                sleep time: 2, unit: 'MINUTES'
+                
+                parameters = jobParams
+                parameters.add(string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"))
+                runTest('customer-admin-permissions-test', parameters)
+
+                tempAdminParams = jobParams
+                tempAdminParams.add(string(name: 'CUSTOMER_ADMIN_USERNAME', value: tempAdmin))
+                runTest('customer-admin-permissions-test', tempAdminParams)
+
+                println "removing ${tempAdmin} from the dedicated admins group"
+                sh "oc login ${clusterAPI}:6443 -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD} --insecure-skip-tls-verify"
+                sh "oc adm groups remove-users dedicated-admins ${tempAdmin}"
+
+                // some time is needed for the test-user removal from dedicated-admins group propagation, hence the sleep time
+                sleep time: 2, unit: 'MINUTES'
+
+                runTest('customer-admin-permissions-test', tempAdminParams)
+            } // stage
+
+        } // node
+    }}} // timeout, ansiColor, timestamps
+} catch (caughtError){
+    currentBuild.result = 'FAILURE'
+}
+
+def runTest(testPipeline, parameters) {
+    buildStatus = build(job: testPipeline, propagate: false, parameters: parameters).result
+    println "Build finished with ${buildStatus}"
+                    
+    if (buildStatus != 'SUCCESS') {
+        currentBuild.result = 'UNSTABLE'
+    }
+}
