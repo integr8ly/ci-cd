@@ -21,14 +21,14 @@ try {
         node('cirhos_rhel7') {
 
             stage ("Dedicated admin permissions") {
-                sh "oc login ${clusterAPI}:6443 -u ${tempAdmin} -p ${CUSTOMER_ADMIN_PASSWORD} --insecure-skip-tls-verify # required to 'enable' ${tempAdmin}"
+                sh "oc login ${clusterAPI}:6443 --insecure-skip-tls-verify=true -u ${tempAdmin} -p ${CUSTOMER_ADMIN_PASSWORD}"
 
-                sleep time: 2, unit: 'SECONDS'
+                sleep time: 3, unit: 'SECONDS'
 
-                sh "oc login ${clusterAPI}:6443 -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD} --insecure-skip-tls-verify"
+                sh "oc login ${clusterAPI}:6443 --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD}"
                 sh "oc adm groups add-users dedicated-admins ${tempAdmin}"
 
-                sh "oc login ${clusterAPI}:6443 -u ${CUSTOMER_ADMIN_USERNAME} -p ${CUSTOMER_ADMIN_PASSWORD} --insecure-skip-tls-verify # required to 'enable' ${CUSTOMER_ADMIN_USERNAME}"
+                sh "oc login ${clusterAPI}:6443 --insecure-skip-tls-verify=true -u ${CUSTOMER_ADMIN_USERNAME} -p ${CUSTOMER_ADMIN_PASSWORD}"
                 // sleep is required to properly 'enable' new htpasswd usrs by the operator.
                 sleep time: 2, unit: 'MINUTES'
                 
@@ -44,7 +44,7 @@ try {
                 runTest('customer-admin-permissions-test', tempAdminParams)
 
                 println "removing ${tempAdmin} from the dedicated admins group"
-                sh "oc login ${clusterAPI}:6443 -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD} --insecure-skip-tls-verify"
+                sh "oc login ${clusterAPI}:6443 --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD}"
                 sh "oc adm groups remove-users dedicated-admins ${tempAdmin}"
 
                 // some time is needed for the test-user removal from dedicated-admins group propagation, hence the sleep time
