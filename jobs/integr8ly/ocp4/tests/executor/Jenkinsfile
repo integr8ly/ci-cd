@@ -1,26 +1,26 @@
 #!groovy
 String clusterAPI = "https://api.${CLUSTER_NAME}.${CLUSTER_DOMAIN}"
+String webappUrl = "https://tutorial-web-app-integreatly-solution-explorer.apps.${CLUSTER_NAME}.${CLUSTER_DOMAIN}"
 jobParams = [
     string(name: 'REPOSITORY', value: "${REPOSITORY}"),
     string(name: 'BRANCH', value: "${BRANCH}"),
-    string(name: 'CLUSTER_URL', value: "${clusterAPI}"),
+    string(name: 'CLUSTER_URL', value: clusterAPI),
     string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
     string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
     string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
-    string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
     string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
-    string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}")
+    string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
+    string(name: 'WEBAPP_URL', value: webappUrl)
 ]
 def err = null
 def wtTestStatus;
 String adminPassword = params.ADMIN_PASSWORD
+String tempAdmin = "test-user" // used as a temporary admin for customer-admin permissions test and for browser tests
 try {
     timeout(120) { ansiColor('gnome-terminal') { timestamps {
         node('cirhos_rhel7') {
 
             stage ("Dedicated admin permissions") {
-                String tempAdmin = "test-user"
-
                 sh "oc login ${clusterAPI}:6443 -u ${tempAdmin} -p ${CUSTOMER_ADMIN_PASSWORD} --insecure-skip-tls-verify # required to 'enable' ${tempAdmin}"
 
                 sleep time: 2, unit: 'SECONDS'
@@ -33,10 +33,13 @@ try {
                 sleep time: 2, unit: 'MINUTES'
                 
                 parameters = jobParams
+                parameters.add(string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"))
+
+                tempAdminParams = parameters
                 parameters.add(string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"))
+
                 runTest('customer-admin-permissions-test', parameters)
 
-                tempAdminParams = jobParams
                 tempAdminParams.add(string(name: 'CUSTOMER_ADMIN_USERNAME', value: tempAdmin))
                 runTest('customer-admin-permissions-test', tempAdminParams)
 
@@ -48,6 +51,20 @@ try {
                 sleep time: 2, unit: 'MINUTES'
 
                 runTest('customer-admin-permissions-test', tempAdminParams)
+            } // stage
+
+            stage ('Browser tests') {
+                String[] testsToRun = ["tests/00_walkthroughs_start/start-walkthroughs.js", 
+                                       "tests/10_fuse/fuse-console-login.js", 
+                                       "tests/50_enmasse/enmasse-console-login.js",
+                                       "tests/80_walkthrough_wt1a/wt1a-walkthrough.js"]
+
+                for (i = 0; i < testsToRun.size(); i++) {
+                    parameters = jobParams
+                    parameters.add(string(name: 'TEST_TO_RUN', value: testsToRun[i]))
+                    parameters.add(string(name: 'EVALS_USERNAME', value: tempAdmin))
+                    runTest('browser-based-single-test', parameters)
+                }
             } // stage
 
         } // node
