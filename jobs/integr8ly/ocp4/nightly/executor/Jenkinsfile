@@ -89,7 +89,7 @@ def provisionCluster() {
         string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
         string(name: 'RECIPIENTS', value: "${RECIPIENTS}")
     ]
-    sleep time: 5, unit: 'MINUTES'
+    sleep time: 15, unit: 'MINUTES'
 }
 
 def install(clusterDomain, password) {
