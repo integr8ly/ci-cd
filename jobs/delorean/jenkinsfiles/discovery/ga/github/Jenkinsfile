@@ -28,11 +28,25 @@ static String getRHMIReleaseBranch(releaseTag) {
     return "v${majorVersion}.${minorVersion}"
 }
 
+// ansible role name is the name of an integr8ly/installation/roles/ package
+// so the output should be the same as a package name there
 String lookupProductAnsibleRole(String product) {
     String role = product
     switch (product) {
         case "amq-online":
             role = "enmasse"
+        case "ups-operator":
+            role = "ups"
+        case "mdc-operator":
+            role = "mdc"
+        case "mss-operator":
+            role = "mobile_security_service"
+        case "backup-container":
+            role = "backup"
+        case "datasync-template":
+            role = "datasync"
+        case "fuse-online":
+            role = "fuse_managed"
     }
     return role
 }
