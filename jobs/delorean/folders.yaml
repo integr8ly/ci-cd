@@ -137,17 +137,6 @@
     display-name: 'GA'
     project-type: folder
 
-# MDC
-- job:
-    name: delorean-mdc
-    display-name: 'MDC'
-    project-type: folder
-
-- job:
-    name: delorean-mdc/ga
-    display-name: 'GA'
-    project-type: folder
-
 # DataSync Template
 - job:
     name: delorean-datasync-template
@@ -156,39 +145,6 @@
 
 - job:
     name: delorean-datasync-template/ga
-    display-name: 'GA'
-    project-type: folder
-
-# MDC Operator
-- job:
-    name: delorean-mdc-operator
-    display-name: 'MDC Operator'
-    project-type: folder
-
-- job:
-    name: delorean-mdc-operator/ga
-    display-name: 'GA'
-    project-type: folder
-
-# MSS
-- job:
-    name: delorean-mss
-    display-name: 'MSS'
-    project-type: folder
-
-- job:
-    name: delorean-mss/ga
-    display-name: 'GA'
-    project-type: folder
-
-# MSS Operator
-- job:
-    name: delorean-mss-operator
-    display-name: 'MSS Operator'
-    project-type: folder
-
-- job:
-    name: delorean-mss-operator/ga
     display-name: 'GA'
     project-type: folder
 
@@ -214,7 +170,7 @@
     display-name: 'GA'
     project-type: folder
 
-# MDC Operator
+# Mobile Walkthrough
 - job:
     name: delorean-mobile-walkthrough
     display-name: 'Mobile Walkthrough'
