@@ -62,8 +62,6 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/datasync-template/ga/br
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/datasync-template/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/ups/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/ups/ga/discovery.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/ups-operator/ga/branch.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/ups-operator/ga/discovery.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mobile-walkthrough/ga/branch.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/mobile-walkthrough/ga/discovery.yaml
 

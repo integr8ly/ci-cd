@@ -35,8 +35,6 @@ String lookupProductAnsibleRole(String product) {
     switch (product) {
         case "amq-online":
             role = "enmasse"
-        case "ups-operator":
-            role = "ups"
         case "backup-container":
             role = "backup"
         case "datasync-template":
