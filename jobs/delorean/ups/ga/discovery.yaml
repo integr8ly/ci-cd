@@ -19,7 +19,7 @@
           read-only: true
       - string:
           name: 'projectRepo'
-          default: 'aerogear-unifiedpush-server'
+          default: 'unifiedpush-operator'
           description: '[REQUIRED] github project repository'
           read-only: true
       - string:
