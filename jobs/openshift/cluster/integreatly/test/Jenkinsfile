@@ -103,10 +103,12 @@ pipeline {
     stage('Test Integreatly') {
       steps {
         echo "[INFO] Running Tests on Integreatly"
-        script { 
+        script {
+          def branchExists = sh(returnStatus: true, script: "git ls-remote --exit-code --heads ${QE_REPO_URL} ${testOptions.gitBranch}") == 0
+
           jobParams = [
             [$class: 'StringParameterValue', name: 'REPOSITORY', value: QE_REPO_URL],
-            [$class: 'StringParameterValue', name: 'BRANCH', value: 'master'],
+            [$class: 'StringParameterValue', name: 'BRANCH', value: branchExists ? testOptions.gitBranch : 'master'],
             [$class: 'StringParameterValue', name: 'CLUSTER_URL', value: testOptions.openshiftMasterUrl],
             [$class: 'StringParameterValue', name: 'EVALS_USERNAME', value: 'evals05@example.com'],
             [$class: 'StringParameterValue', name: 'ADMIN_USERNAME', value: clusterAdminCredentials.clusterAdminUsername],
