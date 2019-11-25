@@ -52,6 +52,10 @@
           name: TIMEOUT_THRESHOLD
           default: '1'
           description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'
+      - bool:
+          name: CLEAN_RESOURCES
+          default: false
+          description: 'depending on whether the resources should be cleaned after the successful execution'
     pipeline-scm:
       script-path: jobs/integr8ly/ocp4/tests/executor/Jenkinsfile
       scm:
