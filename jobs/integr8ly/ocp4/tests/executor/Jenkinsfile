@@ -10,7 +10,8 @@ jobParams = [
     string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
     string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
-    string(name: 'WEBAPP_URL', value: webappUrl)
+    string(name: 'WEBAPP_URL', value: webappUrl),
+    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}"))
 ]
 def err = null
 def wtTestStatus;
@@ -54,6 +55,7 @@ try {
             } // stage
 
             stage ('Browser tests') {
+                jobParams.add(string(name: 'EVALS_USERNAME', value: tempAdmin))
                 String[] testsToRun = ["tests/00_walkthroughs_start/start-walkthroughs.js", 
                                        "tests/10_fuse/fuse-console-login.js", 
                                        "tests/50_enmasse/enmasse-console-login.js",
@@ -62,9 +64,12 @@ try {
                 for (i = 0; i < testsToRun.size(); i++) {
                     parameters = jobParams
                     parameters.add(string(name: 'TEST_TO_RUN', value: testsToRun[i]))
-                    parameters.add(string(name: 'EVALS_USERNAME', value: tempAdmin))
                     runTest('browser-based-single-test', parameters)
                 }
+            } // stage
+
+            stage ('WT1 backend tests') {
+                runTest('w1-test-executor', jobParams)
             } // stage
 
         } // node
