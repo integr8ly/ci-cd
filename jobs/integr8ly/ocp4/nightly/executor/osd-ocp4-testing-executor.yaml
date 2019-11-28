@@ -18,6 +18,10 @@
           name: RECIPIENTS
           default: 'integreatly-qe@redhat.com'
           description: "Whitespace- or comma-separated list of recipient addresses"
+      - string:
+          name: INTEGREATLY_OPERATOR_BRANCH
+          default: 'master'
+          description: "Branch of the Integreatly Operator repository"
       - choice:
           name: TO_DO
           description: "It specifies what stages of the pipeline will be executed"
