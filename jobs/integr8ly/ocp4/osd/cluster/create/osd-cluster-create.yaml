@@ -8,7 +8,6 @@
     parameters:
       - string:
           name: 'CLUSTER_NAME'
-          default: ''
           description: 'Name of the cluster (e.g. <your kerberos username>-small)'
       - choice:
           name: 'OCM_TOKEN'

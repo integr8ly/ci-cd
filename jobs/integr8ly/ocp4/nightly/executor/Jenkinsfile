@@ -93,7 +93,7 @@ def provisionCluster() {
 }
 
 def install(clusterDomain, password) {
-    build job: 'openshift4-rhmi-install', parameters: [
+    build job: 'openshift4-rhmi-olm-install', parameters: [
         string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
         string(name: 'CLUSTER_DOMAIN', value: clusterDomain),
         string(name: 'ADMIN_PASSWORD', value: password),

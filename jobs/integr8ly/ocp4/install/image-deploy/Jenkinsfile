@@ -1,0 +1,175 @@
+#!groovy
+import java.util.LinkedHashMap
+import java.util.Map
+
+Boolean isPds = params.PDS_CLUSTER
+Boolean selfSigned = params.SELF_SIGNED_CERTS
+
+String clusterSuffix = isPds ? "cluster-${CLUSTER_NAME}.${CLUSTER_NAME}.${CLUSTER_DOMAIN}" : "${CLUSTER_NAME}.${CLUSTER_DOMAIN}"
+
+String clusterAPI = "https://api.${clusterSuffix}:6443"
+
+String selfSignedCerts = selfSigned ? "true" : "false"
+
+String installationName = "example-installation"
+
+String installationNamespace = "integreatly"
+
+String expectedOcCommandOutput = ""
+
+def err = null
+
+node('cirhos_rhel7') {
+    timeout(75) { ansiColor('gnome-terminal') { timestamps {
+        try {
+            currentBuild.displayName = "${currentBuild.displayName} ${CLUSTER_NAME}"
+
+            stage('Clone integreatly-operator repository') {
+                dir('integreatly-operator') {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: INTEGREATLY_OPERATOR_BRANCH]],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [],
+                        userRemoteConfigs: [[url: INTEGREATLY_OPERATOR_REPOSITORY]]
+                    ])
+
+                    sh "git clean -xdf"
+                    sh "oc login ${clusterAPI} --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD}"
+                } // dir
+            } // stage
+
+            stage ('Cleanup resources') {
+                dir('integreatly-operator') {
+                    sh(
+                        returnStdout: false,
+                        script: """
+                            oc project integreatly | true
+                            oc delete secret oauth-client-secrets | true
+                            oc delete installation example-installation --timeout=60s --wait | true
+                            oc delete crd applicationmonitorings.applicationmonitoring.integreatly.org | true
+                            oc delete crd blackboxtargets.applicationmonitoring.integreatly.org | true
+                            oc delete crd grafanadashboards.integreatly.org | true
+                            oc delete crd grafanadatasources.integreatly.org | true
+                            oc delete crd grafanas.integreatly.org | true
+                            oc delete crd installations.integreatly.org | true
+                            oc delete crd webapps.integreatly.org | true
+                            oc delete CatalogSourceConfig installed-integreatly-operator -n openshift-marketplace | true
+                            oc delete OperatorSource integreatly-operators -n openshift-marketplace | true
+                            oc delete ClusterRole integreatly-operator | true
+                            oc delete ClusterRoleBinding integreatly-operator | true
+                            oc delete ClusterRoleBinding integreatly-operator-cluster-view | true
+                            oc delete namespace ${installationNamespace} --timeout=240s --wait | true
+                        """
+                    )
+                }
+            }
+
+            stage ('Build and push new integreatly-image') {
+                dir('integreatly-operator') {
+                    withCredentials([string(credentialsId: "integreatly-quay-bot-password", variable: "PASSWORD")]) {
+                        sh "docker login -u=\"integreatly+intlytravis\" -p=\"${PASSWORD}\" quay.io"
+                        sh "make image/build/push ORG=integreatly TAG=nightly"
+                    }
+                }
+            }
+
+            stage ('Prepare cluster resources') {
+                // note. `make cluster/prepare/osrc` needs to be removed when 
+                dir('integreatly-operator') {
+                    sh(
+                        returnStdout: false,
+                        script: """
+                            make cluster/prepare/project
+                            make cluster/prepare/secrets
+                            make cluster/prepare/configmaps
+                            oc create -f deploy/crds/*_crd.yaml
+                            oc create -f deploy/service_account.yaml
+                            oc create -f deploy/role.yaml
+                            oc create -f deploy/role_binding.yaml
+                        """
+                    )
+                }
+            }
+
+            stage('Fetch and deploy operator.yaml template') {
+                sh "curl -O https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins/raw/master/templates/operator.yaml"
+                sh "oc create -f operator.yaml"
+            } // stage
+
+            stage ('Create Installation CR') {
+                dir('integreatly-operator') {
+                    sh(
+                        returnStdout: false,
+                        script: """
+                            sed -i "s@SELF_SIGNED_CERTS@${selfSignedCerts}@" deploy/crds/examples/integreatly-installation-cr.yaml
+                            sed -i "s@INSTALLATION_NAME@${installationName}@" deploy/crds/examples/integreatly-installation-cr.yaml
+                            sed -i "s@INSTALLATION_TYPE@${INSTALLATION_TYPE}@" deploy/crds/examples/integreatly-installation-cr.yaml
+                        """
+                    )
+
+                    sh "oc create -f deploy/crds/examples/integreatly-installation-cr.yaml -n ${installationNamespace}"
+                    sleep time: 2, unit: 'MINUTES'
+                }
+            } // stage
+
+            stage ('Verify Installation Has Finished') {
+                Map<String, Integer> stages = new LinkedHashMap<String, Integer>()
+                stages.put("bootstrap", 10)
+                stages.put("cloud-resources", 20)
+                stages.put("monitoring", 20)
+                stages.put("authentication", 20)
+                stages.put("products", 60)
+                stages.put("solution-explorer", 20)
+                String getStageStatusCommand = ""
+                
+                for (int i = 0; i < stages.size(); i++) {
+                    int counter = 0
+                    String stage = stages.keySet().toArray()[i]
+                    getStageStatusCommand = "oc get Installation ${installationName} -n ${installationNamespace} --output=json -o jsonpath='{.status.stages.${stage}.phase}'"
+                    expectedOcCommandOutput = getInstallationStatus(getStageStatusCommand)
+                    while (!expectedOcCommandOutput.contains("completed")) {
+                        println "${stage} stage has not completed yet"
+
+                        sleep time: 30, unit: 'SECONDS'
+                        expectedOcCommandOutput = getInstallationStatus(getStageStatusCommand)
+                        counter++
+                        if (counter == stages.values().toArray()[i]) {
+                            error "${stage} did not complete in time!"
+                        }
+                    }
+                    println "${stage} completed!"
+                }
+            } // stage
+        } catch (caughtError){
+            currentBuild.result = 'FAILURE'
+            err = caughtError
+        } finally {
+            notifyBuild(currentBuild.result, err)
+        }
+    }}} // timeout, ansiColor, timestamps
+} // node
+
+def getInstallationStatus(command) {
+    String ocCommandOutput = sh (
+        script: "${command}",
+        returnStdout: true
+    ).trim()
+    return ocCommandOutput
+}
+
+def notifyBuild(String buildStatus, err) {
+    if (params.RECIPIENTS.toString().length() > 0) {
+        buildStatus =  buildStatus ?: "SUCCESS"
+    
+        String mailRecipients = "${RECIPIENTS}"
+        String subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+        String body = "${subject}\n\n(${env.BUILD_URL})"
+    
+        if (err != null) {
+            body = "${body}\n\n FAILURE was ${err}"
+        }
+    
+        mail body: body, subject: subject, to: mailRecipients   
+    }
+}

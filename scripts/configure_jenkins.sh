@@ -137,7 +137,8 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/tower/tow
 
 
 #Integreatly-QE jobs - OpenShift 4
-generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/install/openshift4-rhmi-install.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/install/image-deploy/openshift4-rhmi-image-install.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/install/olm/openshift4-rhmi-olm-install.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/nightly/executor/osd-ocp4-testing-executor.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/nightly/trigger/osd-ocp4-testing-nightly-trigger.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/utils/htpasswd/openshift4-htpasswd-setup.yaml
