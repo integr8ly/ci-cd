@@ -5,6 +5,7 @@ timeout(240) { ansiColor('gnome-terminal') { timestamps {
             buildStatus = build(job: 'osd-ocp4-testing-executor', propagate: false, parameters: [
                 string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
                 string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
+                string(name: 'INTEGREATLY_OPERATOR_BRANCH', value: "${INTEGREATLY_OPERATOR_BRANCH}"),
                 string(name: 'TO_DO', value: "${TO_DO}")
             ]).result
 
