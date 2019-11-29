@@ -1,24 +1,24 @@
 ---
 
 - job:
-    name: osd-ocp4-olm-testing-nightly-trigger
-    display-name: OpenShift 4 OSD OLM Nightly Testing Trigger
+    name: osd-ocp4-master-testing-nightly-trigger
+    display-name: OpenShift 4 OSD Master Nightly Testing Trigger
     project-type: pipeline
-    description: "Nightly trigger for osd ocp4 testing"
+    description: "Nightly trigger for osd ocp4 testing using master branch"
     sandbox: false
     concurrent: false
     triggers:
-      - timed: "H(30-40) H(5-6) * * *"
+      - timed: "H(0-10) H(3-4) * * *"
     properties:
       - build-discarder:
           num-to-keep: 56
       - inject:
           properties-content: |
-            CLUSTER_NAME=nightly-olm
+            CLUSTER_NAME=nightly-master
             RECIPIENTS=integreatly-qe@redhat.com
-            INTEGREATLY_OPERATOR_BRANCH=1.14.0
+            INTEGREATLY_OPERATOR_BRANCH=master
             TO_DO=provision + install + tests + destroy
-            OLM_INSTALLATION=true
+            OLM_INSTALLATION=false
     pipeline-scm:
       script-path: jobs/integr8ly/ocp4/nightly/trigger/Jenkinsfile
       scm:

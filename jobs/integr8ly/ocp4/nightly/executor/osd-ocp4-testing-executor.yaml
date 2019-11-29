@@ -22,6 +22,10 @@
           name: INTEGREATLY_OPERATOR_BRANCH
           default: 'master'
           description: "Branch of the Integreatly Operator repository"
+      - bool:
+          name: OLM_INSTALLATION
+          default: false
+          description: "Indicates whether fixed release image (olm - when set to true) or master should be used for the installation"
       - choice:
           name: TO_DO
           description: "It specifies what stages of the pipeline will be executed"
