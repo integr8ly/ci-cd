@@ -141,6 +141,7 @@ generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/install/image-dep
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/install/olm/openshift4-rhmi-olm-install.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/nightly/executor/osd-ocp4-testing-executor.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/nightly/trigger/olm/osd-ocp4-olm-testing-nightly-trigger.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/nightly/trigger/master/osd-ocp4-master-testing-nightly-trigger.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/utils/htpasswd/openshift4-htpasswd-setup.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/tests/executor/ocp4-all-tests-executor.yaml
 
