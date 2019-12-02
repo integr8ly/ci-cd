@@ -1,7 +1,4 @@
 #!groovy
-import java.util.LinkedHashMap
-import java.util.Map
-
 Boolean isPds = params.PDS_CLUSTER
 Boolean selfSigned = params.SELF_SIGNED_CERTS
 
@@ -114,18 +111,14 @@ node('cirhos_rhel7') {
             } // stage
 
             stage ('Verify Installation Has Finished') {
-                Map<String, Integer> stages = new LinkedHashMap<String, Integer>()
-                stages.put("bootstrap", 10)
-                stages.put("cloud-resources", 20)
-                stages.put("monitoring", 20)
-                stages.put("authentication", 20)
-                stages.put("products", 60)
-                stages.put("solution-explorer", 20)
+                String[] stages = ["bootstrap", "cloud-resources", "monitoring",
+                                   "authentication", "products", "solution-explorer"]
+                int[] timeoutRetries = [10, 20, 20, 20, 60, 20]
                 String getStageStatusCommand = ""
                 
-                for (int i = 0; i < stages.size(); i++) {
+                for (int i = 0; i < stages.length; i++) {
                     int counter = 0
-                    String stage = stages.keySet().toArray()[i]
+                    String stage = stages[i]
                     getStageStatusCommand = "oc get Installation ${installationName} -n ${installationNamespace} --output=json -o jsonpath='{.status.stages.${stage}.phase}'"
                     expectedOcCommandOutput = getInstallationStatus(getStageStatusCommand)
                     while (!expectedOcCommandOutput.contains("completed")) {
@@ -134,7 +127,7 @@ node('cirhos_rhel7') {
                         sleep time: 30, unit: 'SECONDS'
                         expectedOcCommandOutput = getInstallationStatus(getStageStatusCommand)
                         counter++
-                        if (counter == stages.values().toArray()[i]) {
+                        if (counter == timeoutRetries[i]) {
                             error "${stage} did not complete in time!"
                         }
                     }
