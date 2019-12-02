@@ -17,10 +17,22 @@ String domainName = ""
 try {
     timeout(240) { ansiColor('gnome-terminal') { timestamps {
         node('cirhos_rhel7') {
+
+            stage("Make sure cluster name is unique") {
+                dir("rhmi-jenkins") {
+                    git branch: "master", url: "https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git"
+                    def dirExists = fileExists(clusterInfoDirectory)
+                    while (dirExists) {
+                        clusterName = "${clusterName}1"
+                        clusterInfoDirectory = "osd_clusters/" + clusterName
+                        dirExists = fileExists(clusterInfoDirectory)
+                    }
+                }
+            }
             
             stage ('Provision') {
                 if (TO_DO.contains('provision')) {
-                    provisionCluster()
+                    provisionCluster(clusterName)
                 } else {
                     println 'Provision skipped'
                 }
@@ -28,7 +40,15 @@ try {
             
             stage ('Obtain cluster info') {
                 dir("rhmi-jenkins") {
-                    git branch: "master", url: "https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git"
+                    sh(
+                        returnStdout: false,
+                        script: """
+                            git remote add jenkins https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git | true
+                            git config --global user.email "integreatly-qe@redhat.com" | true
+                            git config --global user.name "rhmi-jenkins-bot" | true
+                            git pull jenkins master
+                        """
+                    )
                     def dirExists = fileExists(clusterInfoDirectory)
                     if (!dirExists) {
                         error "[ERROR] no configuration files found for ${clusterName}! Make sure that the cluster exists!"
@@ -51,16 +71,16 @@ try {
             } // stage
 
             stage ('Install') {
-                install(domainName, adminPassword)
+                install(clusterName, domainName, adminPassword)
             } // stage
 
             stage ('Add htpasswd IDP') {
-                addIDP(domainName, adminPassword)
+                addIDP(clusterName, domainName, adminPassword)
             } // stage
 
             stage ('Test') {
                 if (TO_DO.contains('tests')) {
-                    test(domainName, adminPassword)
+                    test(clusterName, domainName, adminPassword)
                 } else {
                     println 'Tests skipped'
                 }
@@ -68,7 +88,7 @@ try {
             
             stage ('Deprovision') {
                 if (TO_DO.contains('destroy')) {
-                    deprovisionCluster()
+                    deprovisionCluster(clusterName)
                 } else {
                     println 'Deprovision skipped'
                 }
@@ -84,17 +104,17 @@ try {
 }
 
 // Waiting for ${sleepTime} minutes so that resources scheduled for termination are actually terminated
-def provisionCluster() {
+def provisionCluster(clusterName) {
     build job: 'openshift4-osd-cluster-create', parameters: [
-        string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
+        string(name: 'CLUSTER_NAME', value: clusterName),
         string(name: 'RECIPIENTS', value: "${RECIPIENTS}")
     ]
     sleep time: 15, unit: 'MINUTES'
 }
 
-def install(clusterDomain, password) {
+def install(clusterName, clusterDomain, password) {
     parameters = [
-        string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
+        string(name: 'CLUSTER_NAME', value: clusterName),
         string(name: 'CLUSTER_DOMAIN', value: clusterDomain),
         string(name: 'ADMIN_PASSWORD', value: password),
         string(name: 'INTEGREATLY_OPERATOR_BRANCH', value: "${INTEGREATLY_OPERATOR_BRANCH}"),
@@ -108,26 +128,26 @@ def install(clusterDomain, password) {
     sleep time: 3, unit: 'MINUTES'
 }
 
-def addIDP(clusterDomain, password) {
+def addIDP(clusterName, clusterDomain, password) {
     build job: 'openshift4-htpasswd-setup', parameters: [
-        string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
+        string(name: 'CLUSTER_NAME', value: clusterName),
         string(name: 'CLUSTER_DOMAIN', value: clusterDomain),
         string(name: 'INTEGREATLY_OPERATOR_BRANCH', value: "${INTEGREATLY_OPERATOR_BRANCH}"),
         string(name: 'ADMIN_PASSWORD', value: password)
     ]
 }
 
-def test(clusterDomain, password) {
+def test(clusterName, clusterDomain, password) {
     build job: 'ocp4-all-tests-executor', parameters: [
-        string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
+        string(name: 'CLUSTER_NAME', value: clusterName),
         string(name: 'CLUSTER_DOMAIN', value: clusterDomain),
         string(name: 'ADMIN_PASSWORD', value: password)
     ]
 }
 
-def deprovisionCluster() {
+def deprovisionCluster(clusterName) {
     parameters = [
-        string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
+        string(name: 'CLUSTER_NAME', value: clusterName),
         string(name: 'RECIPIENTS', value: "${RECIPIENTS}")
     ]
 
