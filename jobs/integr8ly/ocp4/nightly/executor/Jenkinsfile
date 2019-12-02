@@ -39,34 +39,36 @@ try {
             } // stage
             
             stage ('Obtain cluster info') {
-                dir("rhmi-jenkins") {
-                    sh(
-                        returnStdout: false,
-                        script: """
-                            git remote add jenkins https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git | true
-                            git config --global user.email "integreatly-qe@redhat.com" | true
-                            git config --global user.name "rhmi-jenkins-bot" | true
-                            git pull jenkins master
-                        """
-                    )
-                    def dirExists = fileExists(clusterInfoDirectory)
-                    if (!dirExists) {
-                        error "[ERROR] no configuration files found for ${clusterName}! Make sure that the cluster exists!"
-                    } 
-                    rootWorkspaceDir = sh (
-                        script: "pwd",
-                        returnStdout: true
-                    ).trim()
-                    installConfigDirectory = rootWorkspaceDir + "/" + clusterInfoDirectory + "/"
-                    apiURL = sh (
-                        script: "cat ${installConfigDirectory}${clusterInfoFileName} | jq -r .api.url",
-                        returnStdout: true
-                    )
-                    domainName = apiURL.substring((apiURL.indexOf(clusterName) + clusterName.length() + 1), apiURL.lastIndexOf(":"))
-                    adminPassword = sh (
-                        script: "cat ${installConfigDirectory}${clusterCredentialsFileName} | jq -r .admin.password",
-                        returnStdout: true
-                    )
+                withCredentials([string(credentialsId: "gitlab-access-token", variable: "GITLAB_ACCESS_TOKEN")]) {
+                    dir("rhmi-jenkins") {
+                        sh(
+                            returnStdout: false,
+                            script: """
+                                git remote add jenkins https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git | true
+                                git config --global user.email "integreatly-qe@redhat.com" | true
+                                git config --global user.name "rhmi-jenkins-bot" | true
+                                git pull jenkins master
+                            """
+                        )
+                        def dirExists = fileExists(clusterInfoDirectory)
+                        if (!dirExists) {
+                            error "[ERROR] no configuration files found for ${clusterName}! Make sure that the cluster exists!"
+                        } 
+                        rootWorkspaceDir = sh (
+                            script: "pwd",
+                            returnStdout: true
+                        ).trim()
+                        installConfigDirectory = rootWorkspaceDir + "/" + clusterInfoDirectory + "/"
+                        apiURL = sh (
+                            script: "cat ${installConfigDirectory}${clusterInfoFileName} | jq -r .api.url",
+                            returnStdout: true
+                        )
+                        domainName = apiURL.substring((apiURL.indexOf(clusterName) + clusterName.length() + 1), apiURL.lastIndexOf(":"))
+                        adminPassword = sh (
+                            script: "cat ${installConfigDirectory}${clusterCredentialsFileName} | jq -r .admin.password",
+                            returnStdout: true
+                        )
+                    }
                 }
             } // stage
 
