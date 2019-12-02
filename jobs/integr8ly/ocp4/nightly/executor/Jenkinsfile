@@ -21,11 +21,13 @@ try {
             stage("Make sure cluster name is unique") {
                 dir("rhmi-jenkins") {
                     git branch: "master", url: "https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git"
-                    def dirExists = fileExists(clusterInfoDirectory)
-                    while (dirExists) {
-                        clusterName = "${clusterName}1"
-                        clusterInfoDirectory = "osd_clusters/" + clusterName
-                        dirExists = fileExists(clusterInfoDirectory)
+                    if (TO_DO.contains('provision')) {
+                        def dirExists = fileExists(clusterInfoDirectory)
+                        while (dirExists) {
+                            clusterName = "${clusterName}1"
+                            clusterInfoDirectory = "osd_clusters/" + clusterName
+                            dirExists = fileExists(clusterInfoDirectory)
+                        }
                     }
                 }
             }
@@ -47,7 +49,7 @@ try {
                                 git remote add jenkins https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git | true
                                 git config --global user.email "integreatly-qe@redhat.com" | true
                                 git config --global user.name "rhmi-jenkins-bot" | true
-                                git pull jenkins master
+                                git pull jenkins master | true
                             """
                         )
                         def dirExists = fileExists(clusterInfoDirectory)
