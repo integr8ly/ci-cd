@@ -49,7 +49,7 @@ try {
                                 git remote add jenkins https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git | true
                                 git config --global user.email "integreatly-qe@redhat.com" | true
                                 git config --global user.name "rhmi-jenkins-bot" | true
-                                git pull jenkins master | true
+                                git pull jenkins master
                             """
                         )
                         def dirExists = fileExists(clusterInfoDirectory)

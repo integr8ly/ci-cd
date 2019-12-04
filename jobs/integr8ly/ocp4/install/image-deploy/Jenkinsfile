@@ -138,7 +138,7 @@ node('cirhos_rhel7') {
             currentBuild.result = 'FAILURE'
             err = caughtError
         } finally {
-            notifyBuild(currentBuild.result, err)
+            notifyBuild(currentBuild.result, err, clusterAPI, clusterSuffix)
         }
     }}} // timeout, ansiColor, timestamps
 } // node
@@ -151,7 +151,7 @@ def getInstallationStatus(command) {
     return ocCommandOutput
 }
 
-def notifyBuild(String buildStatus, err) {
+def notifyBuild(String buildStatus, err, clusterAPI, clusterSuffix) {
     if (params.RECIPIENTS.toString().length() > 0) {
         buildStatus =  buildStatus ?: "SUCCESS"
     
@@ -161,6 +161,9 @@ def notifyBuild(String buildStatus, err) {
     
         if (err != null) {
             body = "${body}\n\n FAILURE was ${err}"
+        } else {
+            body = "Installation complete\n\nCluster details:\n\nUsername: ${ADMIN_USERNAME}\nPassword: ${ADMIN_PASSWORD}\n" + 
+                   "API url: ${clusterAPI}\nCluster console URL: https://console-openshift-console.apps.${clusterSuffix}"
         }
     
         mail body: body, subject: subject, to: mailRecipients   
