@@ -8,9 +8,9 @@
       - timed: '@daily'
     parameters:
       - string:
-          name: 'productVersionVar'
-          default: 'ups_release_tag'
-          description: '[REQUIRED] The manifest variable to be used as the current component version'
+          name: 'releaseTagVar'
+          default: 'ups_operator_release_tag'
+          description: '[OPTIONAL] The manifest variable to be used as the current component release tag'
           read-only: true
       - string:
           name: 'projectOrg'
