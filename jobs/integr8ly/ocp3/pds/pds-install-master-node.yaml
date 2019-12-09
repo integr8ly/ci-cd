@@ -68,11 +68,11 @@
                                 "webapp_operator_release_tag",
                                 "middleware_monitoring_operator_release_tag",
                                 "backup_version"]
-        String MASTER_URL = "master.${YOURCITY}.${CLUSTER_DOMAIN}"    
+        String MASTER_URL = "master.${YOURCITY}.${CLUSTER_DOMAIN}"
         String masterLabel = "${MASTER_URL}-slave"
-        String BASTION_URL = "bastion.${YOURCITY}.${CLUSTER_DOMAIN}"    
-        String bastionLabel = "${BASTION_URL}-slave"  
-        String secretFileName = "QE-AWS-SECRET.yml"                   
+        String BASTION_URL = "bastion.${YOURCITY}.${CLUSTER_DOMAIN}"
+        String bastionLabel = "${BASTION_URL}-slave"
+        String secretFileName = "QE-AWS-SECRET.yml"
         def secretContent
         try {
             timeout(75) { ansiColor('gnome-terminal') { timestamps {
@@ -104,7 +104,7 @@
                 } // node
                 node (bastionLabel) {
                     stage('Install JDK on master node') {
-                        // Java is not installed on master node and is required to create an agent in Jenkins
+                        // Java is not installed on master node by default and is required to create an agent in Jenkins
                         String masterNode = "master1.${YOURCITY}.internal"
                         sh(
                             returnStdout: false,

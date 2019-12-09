@@ -186,15 +186,12 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 uninstallationBranch = params.UNINSTALLATION_BRANCH
             }
 
-            build job: 'pds-uninstall', parameters: [
+            build job: 'pds-uninstall-master-node', parameters: [
                 string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
                 string(name: 'BRANCH', value: "${uninstallationBranch}"),
-                string(name: 'ANSIBLE_USER', value: 'ec2-user'),
                 string(name: 'YOURCITY', value: "${YOURCITY}"),
                 string(name: 'CLUSTER_DOMAIN', value: "${CLUSTER_DOMAIN}"),
-                string(name: 'BASTION_USER', value: 'ec2-user'),
-                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
-                string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')
+                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}")
             ]
 
             sleep time: sleepTime, unit: 'MINUTES'
