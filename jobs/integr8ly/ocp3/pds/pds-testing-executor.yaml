@@ -201,7 +201,7 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
         }
 
         def install(sleepAfterInstall) {
-            build job: 'pds-install', parameters: [
+            build job: 'pds-install-master-node', parameters: [
                 string(name: 'REPOSITORY', value: "${INSTALLATION_REPOSITORY}"),
                 string(name: 'BRANCH', value: "${INSTALLATION_BRANCH}"),
                 string(name: 'GH_CLIENT_ID', value: "${GH_CLIENT_ID}"),
@@ -209,12 +209,9 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
                 booleanParam(name: 'INSTALL_BACKUPS', value: Boolean.valueOf("${INSTALL_BACKUPS}")),
                 booleanParam(name: 'PATCH_TO_MASTER', value: Boolean.valueOf("${PATCH_TO_MASTER}")),
                 booleanParam(name: 'SELF_SIGNED_CERTS', value: Boolean.valueOf("${SELF_SIGNED_CERTS}")),
-                string(name: 'ANSIBLE_USER', value: 'ec2-user'),
                 string(name: 'YOURCITY', value: "${YOURCITY}"),
                 string(name: 'CLUSTER_DOMAIN', value: "${CLUSTER_DOMAIN}"),
-                string(name: 'BASTION_USER', value: 'ec2-user'),
-                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
-                string(name: 'BASTION_PRIVATE_KEY_ID', value: 'pds-bastion-pem')
+                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}")
             ]
             
             if (sleepAfterInstall) {
