@@ -2,18 +2,14 @@
 apiVersion: v1
 kind: Template
 labels:
-  template: intly-base-image-build-template
+  template: intly-base-image-template
 metadata:
-  name: intly-base-image-build
+  name: intly-base-image
 objects:
 - apiVersion: v1
   kind: ImageStream
   metadata:
     name: ${IMAGE_NAME}
-    annotations:
-        slave-label: ${AGENT_LABEL}
-    labels:
-      role: jenkins-slave
 - apiVersion: v1
   kind: BuildConfig
   metadata:
@@ -26,7 +22,7 @@ objects:
     runPolicy: Serial
     source:
       git:
-        uri: https://github.com/${GITHUB_ORG}/ci-cd
+        uri: https://github.com/${GITHUB_ORG}/${GITHUB_REPO}
         ref: ${GITHUB_REF}
       contextDir: ${CONTEXT_DIR}
       type: Git
@@ -34,7 +30,7 @@ objects:
       dockerStrategy:
           noCache: true
           forcePull: true
-          dockerfilePath: Dockerfile.tools
+          dockerfilePath: ${DOCKERFILE_PATH}
       type: Docker
     triggers:
     - type: ImageChange
@@ -45,14 +41,20 @@ parameters:
   displayName: Github Organization
   name: GITHUB_ORG
   value: integr8ly
+- description: The name of the github repo to reference in the configuration
+  displayName: Github Repo
+  name: GITHUB_REPO
+  value: ci-cd
 - description: The name of the repository branch to reference in the configuration
   displayName: Branch
   name: GITHUB_REF
   value: master
-- description: The name of the OpenShift Service exposed for the Jenkins container.
-  displayName: Service Name
+- description: The name of the OpenShift Image Stream name
   name: IMAGE_NAME
   value: intly-base-image
-- description: The directory that houses the Dockerfile
+- description: The directory that contains the Dockerfile
   name: CONTEXT_DIR
   value: openshift-ci
+- description: The dockerfile path
+  name: DOCKERFILE_PATH
+  value: Dockerfile.tools
