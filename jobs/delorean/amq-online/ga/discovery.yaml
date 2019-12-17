@@ -33,10 +33,6 @@
           default: 'tag'
           description: '[REQUIRED] Method to fetch latest release which can either be by tag or by release'
           read-only: true
-      - string:
-          name: 'gaReleaseTagRef'
-          default: 'GA'
-          description: '[REQUIRED] Reference used to filter GA releases from the repository tags'
       - bool:
           name: 'updateLatestRHMIRelease'
           default: false
