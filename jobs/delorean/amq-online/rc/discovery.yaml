@@ -4,6 +4,7 @@
     display-name: 'amq-online-rc-discovery'
     project-type: pipeline
     concurrent: false
+    disabled: false
     triggers:
       - timed: '@daily'
     parameters:

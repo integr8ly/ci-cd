@@ -4,6 +4,7 @@
     display-name: 'codeready-ga-branch'
     project-type: pipeline
     concurrent: false
+    disabled: false
     parameters:
       - string:
           name: 'installationGitUrl'

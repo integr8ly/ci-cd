@@ -60,7 +60,7 @@ def productVersionVar = params.productVersionVar
 def productVersion
 String[] defaultPRLabels = ["product update", productName]
 def installationManifestFile = './inventories/group_vars/all/manifest.yaml'
-String jiraRestApiUrl = "https://issues.jboss.org/rest/api/2"
+String jiraRestApiUrl = "https://issues.redhat.com/rest/api/2"
 
 currentBuild.description = "sourceBranch: ${sourceBranch}\n targetBranch: ${targetBranch}"
 
@@ -135,7 +135,7 @@ node {
             String query = createJiraQuery(labels)
             def body = createJiraBody(summary, description, prUrl, labels)
             def jiraID = jiraCreateIssue(jiraUserPass, jiraRestApiUrl, query, body)
-            println "[INFO] Issue created: https://issues.jboss.org/browse/${jiraID}"
+            println "[INFO] Issue created: https://issues.redhat.com/browse/${jiraID}"
         }
     }
 

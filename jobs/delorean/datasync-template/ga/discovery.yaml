@@ -4,6 +4,7 @@
     display-name: 'datasync-template-ga-discovery'
     project-type: pipeline
     concurrent: false
+    disabled: true
     triggers:
       - timed: '@daily'
     parameters:

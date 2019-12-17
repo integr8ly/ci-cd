@@ -4,6 +4,7 @@
     display-name: 'webapp-ga-discovery'
     project-type: pipeline
     concurrent: false
+    disabled: true
     triggers:
       - timed: '@hourly'
     parameters:
