@@ -40,6 +40,10 @@
       - string:
           name: SSO_URL
           description: 'SSO URL for the cluster. Used to obtain authentication for CRUD operations on keycloak resources'
+      - bool:
+          name: IS_DEDICATED_ADMIN
+          default: false
+          description: 'Indicates whether user with CUSTOMER_ADMIN_USERNAME provided is a member of dedicated-admins group'
       - string:
           name: NAMESPACE_PREFIX
           description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
