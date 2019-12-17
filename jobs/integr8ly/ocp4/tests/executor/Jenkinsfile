@@ -36,13 +36,19 @@ try {
                 parameters = jobParams
                 parameters.add(string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"))
 
-                tempAdminParams = parameters
+                nonAdminParams = parameters
+                nonAdminParams.add(booleanParam(name: 'IS_DEDICATED_ADMIN', value: false))
+
+                parameters.add(booleanParam(name: 'IS_DEDICATED_ADMIN', value: true))
+
+                adminParams = parameters
+
                 parameters.add(string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"))
 
                 runTest('customer-admin-permissions-test', parameters)
 
-                tempAdminParams.add(string(name: 'CUSTOMER_ADMIN_USERNAME', value: tempAdmin))
-                runTest('customer-admin-permissions-test', tempAdminParams)
+                adminParams.add(string(name: 'CUSTOMER_ADMIN_USERNAME', value: tempAdmin))
+                runTest('customer-admin-permissions-test', adminParams)
 
                 println "removing ${tempAdmin} from the dedicated admins group"
                 sh "oc login ${clusterAPI}:6443 --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD}"
@@ -51,7 +57,7 @@ try {
                 // some time is needed for the test-user removal from dedicated-admins group propagation, hence the sleep time
                 sleep time: 2, unit: 'MINUTES'
 
-                runTest('customer-admin-permissions-test', tempAdminParams)
+                runTest('customer-admin-permissions-test', nonAdminParams)
             } // stage
 
             stage ('Browser tests') {
