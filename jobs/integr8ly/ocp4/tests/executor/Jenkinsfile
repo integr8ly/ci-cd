@@ -35,9 +35,6 @@ try {
                 
                 parameters = jobParams
 
-                nonAdminParams = parameters
-                nonAdminParams.add(booleanParam(name: 'IS_DEDICATED_ADMIN', value: false))
-
                 parameters.add(booleanParam(name: 'IS_DEDICATED_ADMIN', value: true))
 
                 adminParams = parameters
@@ -55,6 +52,10 @@ try {
 
                 // some time is needed for the test-user removal from dedicated-admins group propagation, hence the sleep time
                 sleep time: 2, unit: 'MINUTES'
+
+                nonAdminParams = jobParams
+                nonAdminParams.add(booleanParam(name: 'IS_DEDICATED_ADMIN', value: false))
+                nonAdminParams.add(string(name: 'CUSTOMER_ADMIN_USERNAME', value: tempAdmin))
 
                 runTest('customer-admin-permissions-test', nonAdminParams)
             } // stage
