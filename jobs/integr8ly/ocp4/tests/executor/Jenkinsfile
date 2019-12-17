@@ -34,7 +34,6 @@ try {
                 sleep time: 2, unit: 'MINUTES'
                 
                 parameters = jobParams
-                parameters.add(string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"))
 
                 nonAdminParams = parameters
                 nonAdminParams.add(booleanParam(name: 'IS_DEDICATED_ADMIN', value: false))
