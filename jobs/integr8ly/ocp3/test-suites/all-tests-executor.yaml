@@ -161,6 +161,7 @@
                         if (wtTestStatus == 'SUCCESS') {
                             runSingleBrowserTest('tests/80_walkthrough_wt1a/wt1a-walkthrough.js')
                             runSingleBrowserTest('tests/90_walkthrough_wt2/wt2-walkthrough.js')
+                            runSingleBrowserTest('tests/100_walkthrough_wt3a/wt3a-walkthrough.js')
                         }
                     } // stage
 
