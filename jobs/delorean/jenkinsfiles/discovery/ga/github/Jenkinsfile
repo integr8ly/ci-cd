@@ -127,6 +127,16 @@ String findLatestVersionFor(String product, String currentVersion, List allVersi
     return latestVersion ?: currentVersion
 }
 
+def gitDeleteCommitWithMessage(commitMsg, baseBranch) {
+    def commit = sh(returnStdout: true, script: "git log origin/${baseBranch}..HEAD --grep '${commitMsg}' --pretty=format:\"%H\"").trim()
+    if (commit) {
+        print "Deleting commit ${commit}"
+        sh "git rebase --onto ${commit}^ ${commit}"
+    } else {
+        print "No commit found for message ${commitMsg} since origin/${baseBranch}!"
+    }
+}
+
 def processInstallationBranch(body) {
     def config = [:]
     body.resolveStrategy = Closure.DELEGATE_FIRST
@@ -221,9 +231,12 @@ def processInstallationBranch(body) {
             currentBuild.description = (currentBuild.description ?: "") + "\nbranch: ${branch}\n latest: ${latestProductRelease}\n current: ${currentProductRelease}\n type: ${updateVersionType}"
             println("processInstallationBranch - baseBranch:${baseBranch}, branch:${branch}, product:${product}, latestProductRelease:${latestProductRelease}, currentProductRelease:${currentProductRelease}, latestProductVersion:${latestProductVersion}, updateVersionType:${updateVersionType}")
 
+            String productUpgradeCommitMsg = "Add ${product} to update products list"
+
             stage("Ensure Branch (${branch})") {
                 println "[INFO] Ensure Branch (${branch})"
                 gitCreateAndCheckoutBranch(branch, true, false)
+                gitDeleteCommitWithMessage(productUpgradeCommitMsg, baseBranch)
                 gitRebaseBranch(baseBranch, branch, false)
             }
 
@@ -244,7 +257,7 @@ def processInstallationBranch(body) {
                 if (latestProductRelease != currentProductRelease) {
                     def exists = fileExists installationUpgradeFile
                     if (exists) {
-                        gitCommitWhenChanges("Add ${product} to update products list") { msgs ->
+                        gitCommitWhenChanges(productUpgradeCommitMsg) { msgs ->
                             def upgradeVariables = readYaml file: installationUpgradeFile
                             def upgradeProductRoles = upgradeVariables['upgrade_product_roles']
                             upgradeProductRoles.remove(product)
@@ -263,7 +276,19 @@ def processInstallationBranch(body) {
             stage("Push Branch (${branch})") {
                 println "[INFO] Push Branch (${branch})"
                 int commmitCount = sh(returnStdout: true, script: "git log origin/${baseBranch}..${branch} --pretty=o | wc -l").trim() as int
-                boolean doPush = (branch != 'master') && (commmitCount > 0)
+                def existingBranchCommitHash = sh(returnStdout: true, script: "git ls-remote origin refs/heads/${branch} | cut -f 1").trim()
+
+                boolean doPush = false
+
+                if (branch != 'master') {
+                    if (existingBranchCommitHash) {
+                        doPush = true
+                    } else {
+                        doPush = commmitCount > 0
+                    }
+                }
+                println "doPush = ${doPush}"
+
                 if (doPush) {
                     gitPushBranch(branch, true)
                 } else {
