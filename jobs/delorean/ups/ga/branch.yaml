@@ -4,6 +4,7 @@
     display-name: 'ups-ga-branch'
     project-type: pipeline
     concurrent: false
+    disabled: true
     parameters:
       - string:
           name: 'installationGitUrl'
