@@ -4,7 +4,7 @@
     display-name: 'fuse-online-ga-branch'
     project-type: pipeline
     concurrent: false
-    disabled: true
+    disabled: false
     parameters:
       - string:
           name: 'installationGitUrl'
