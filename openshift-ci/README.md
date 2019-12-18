@@ -26,3 +26,11 @@ Cloud Resource Operator
 ```bash
 oc new-app -p IMAGE_NAME=cro-base-image -p GITHUB_ORG=integr8ly -p GITHUB_REPO=cloud-resource-operator -p GITHUB_REF=master -f openshift-ci/templates/base-image-build-template.yml -n integr8ly
 ```
+
+## Deploy a new image
+
+After making a change to the base image configuration in your repo, trigger a new deployment of the image stream in order to deploy those changes by:
+
+. Navigating to [openshift ci](https://api.ci.openshift.org/console/project/integr8ly/browse/builds)
+. Choosing the relevant image
+. Clicking on the `Start Build` button
