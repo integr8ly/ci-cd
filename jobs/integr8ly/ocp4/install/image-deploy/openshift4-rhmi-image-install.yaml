@@ -44,6 +44,10 @@
             default: 'master'
             description: "Branch of the Integreatly Operator repository"
         - string:
+            name: INSTALLATION_PREFIX
+            default: 'rhmi'
+            description: "Value used to prefix the names of the namespaces created during RHMI installation (minus the hyphen)"
+        - string:
             name: RECIPIENTS
             default: ''
             description: "Whitespace- or comma-separated list of recipient addresses"

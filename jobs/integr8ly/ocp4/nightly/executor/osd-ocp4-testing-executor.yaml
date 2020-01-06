@@ -26,6 +26,10 @@
           name: OLM_INSTALLATION
           default: false
           description: "Indicates whether fixed release image (olm - when set to true) or master should be used for the installation"
+      - string:
+          name: INSTALLATION_PREFIX
+          default: 'rhmi'
+          description: "Value used to prefix the names of the namespaces created during RHMI installation (minus the hyphen)"
       - choice:
           name: TO_DO
           description: "It specifies what stages of the pipeline will be executed"

@@ -102,6 +102,7 @@ node('cirhos_rhel7') {
                             sed -i "s@SELF_SIGNED_CERTS@${selfSignedCerts}@" deploy/crds/examples/integreatly-installation-cr.yaml
                             sed -i "s@INSTALLATION_NAME@${installationName}@" deploy/crds/examples/integreatly-installation-cr.yaml
                             sed -i "s@INSTALLATION_TYPE@${INSTALLATION_TYPE}@" deploy/crds/examples/integreatly-installation-cr.yaml
+                            sed -i "s@INSTALLATION_PREFIX@${INSTALLATION_PREFIX}@" deploy/crds/examples/integreatly-installation-cr.yaml
                         """
                     )
 

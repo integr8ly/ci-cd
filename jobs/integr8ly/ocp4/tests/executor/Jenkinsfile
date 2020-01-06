@@ -1,6 +1,6 @@
 #!groovy
 String clusterAPI = "https://api.${CLUSTER_NAME}.${CLUSTER_DOMAIN}"
-String webappUrl = "https://tutorial-web-app-integreatly-solution-explorer.apps.${CLUSTER_NAME}.${CLUSTER_DOMAIN}"
+String webappUrl = "https://tutorial-web-app-${NAMESPACE_PREFIX}solution-explorer.apps.${CLUSTER_NAME}.${CLUSTER_DOMAIN}"
 jobParams = [
     string(name: 'REPOSITORY', value: "${REPOSITORY}"),
     string(name: 'BRANCH', value: "${BRANCH}"),
