@@ -18,6 +18,7 @@
             RECIPIENTS=integreatly-qe@redhat.com
             INTEGREATLY_OPERATOR_BRANCH=master
             TO_DO=provision + install + tests + destroy
+            INSTALLATION_PREFIX=rhmi
             OLM_INSTALLATION=false
     pipeline-scm:
       script-path: jobs/integr8ly/ocp4/nightly/trigger/Jenkinsfile
