@@ -135,6 +135,10 @@
                         runTests('w2-test-executor')
                     } // stage
 
+                    stage ('Walkthrough 3 test') {
+                        runTests('w3-test-executor')
+                    } // stage
+
                     stage ('CodeReady test') {
                         runTests('codeready-tests')
                     } // stage
