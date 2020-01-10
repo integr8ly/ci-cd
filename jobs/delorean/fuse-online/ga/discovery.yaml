@@ -15,12 +15,12 @@
           read-only: true
       - string:
           name: 'projectOrg'
-          default: 'syndesisio'
+          default: 'jboss-fuse'
           description: '[REQUIRED] github project organization'
           read-only: true
       - string:
           name: 'projectRepo'
-          default: 'fuse-online-install'
+          default: 'fuse-clients'
           description: '[REQUIRED] github project repository'
           read-only: true
       - string:
