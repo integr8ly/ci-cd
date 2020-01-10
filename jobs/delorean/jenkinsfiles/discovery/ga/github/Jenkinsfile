@@ -61,11 +61,7 @@ String[] extractSemVer(String productVersion, String productName) {
 }
 
 boolean verifyIsGA(String product, String version) {
-    if (product == "fuse-online") {
-        //ToDo Since fuse online have changed their installation we have currently have no way of knowing if it's GA or not.
-        return version < "1.9.0"
-    }
-    return true
+      return true
 }
 
 String findLatestVersionFor(String product, String currentVersion, List allVersions, String type, List levels) {

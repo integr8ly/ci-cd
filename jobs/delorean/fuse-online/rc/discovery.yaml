@@ -4,7 +4,7 @@
     display-name: 'fuse-online-rc-discovery'
     project-type: pipeline
     concurrent: false
-    disabled: false
+    disabled: true
     triggers:
       - timed: '@daily'
     parameters:
