@@ -99,6 +99,8 @@
                     oc patch deployment msb -n openshift-managed-service-broker -p  '{ "spec": { "template": { "spec": { "containers": [{ "name": "managed-service-broker", "image": "quay.io/integreatly/managed-service-broker:master" }]}}}}'
                     sleep 10
                     oc project openshift-managed-service-broker
+                    # make sure msb pod is running before executing the tests
+                    until oc get pods | grep 1/1; do sleep 2; done
                     oc expose svc/msb
                   """
                   
