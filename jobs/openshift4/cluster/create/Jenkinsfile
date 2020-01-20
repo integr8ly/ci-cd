@@ -91,6 +91,60 @@ node("cirhos_rhel7") {
                     }
                 }
             }
+
+            stage("Configure VPC Peering Connection") {
+              def cloudResourceVPCId = "default"
+              def metadataFile = "${installConfigDirectory}metadata.json"
+              def clusterMetadata = readJSON file: metadataFile
+              def clusterId = clusterMetadata['infraID']
+
+              // Get cluster VPC
+              String clusterVPCId = sh (
+                script: "aws ec2 describe-vpcs --filters Name=tag:Name,Values=${clusterId} | jq '.[] | .[] | .VpcId'",
+                returnStdout: true
+              ).trim()
+
+              // Get cloud-resources VPC
+              String cloudResourceVPCId = sh (
+                script: "aws ec2 describe-vpcs --filters Name=tag:Name,Values=${cloudResourceVPCId} | jq '.[] | .[] | .VpcId'",
+                returnStdout: true
+              ).trim()
+
+              // Create vpc peering connection
+              String vpcPeeringConnectionId = sh (
+                script: "aws ec2 create-vpc-peering-connection --vpc-id ${clusterVPCId} --peer-vpc-id ${cloudResourceVPCId} | jq '.VpcPeeringConnection | .VpcPeeringConnectionId'",
+                returnStdout: true
+              ).trim()
+
+              // Accept newly created peering connection
+              sh "aws ec2 accept-vpc-peering-connection --vpc-peering-connection-id ${vpcPeeringConnectionId}"
+
+              // Add peering connection route to cluster VPC
+              String clusterRouteTableId = sh (
+                script: "aws ec2 describe-route-tables --filters Name=tag:Name,Values=${clusterId}-public | jq '.[] | .[] | .RouteTableId'",
+                returnStdout: true
+              ).trim()
+
+              String cloudResourceCIDR = sh (
+                script: "aws ec2 describe-vpcs --vpc-id ${cloudResourceVPCId} | jq '.[] | .[] | .CidrBlockAssociationSet | .[] | .CidrBlock'",
+                returnStdout: true
+              ).trim()
+
+              sh "aws ec2 create-route --route-table-id ${clusterRouteTableId} --destination-cidr-block ${cloudResourceCIDR}--vpc-peering-connection-id ${vpcPeeringConnectionId}"
+
+              // Add peering connection route to cloud-resources VPC
+              String cloudResourceRouteTableId = sh (
+                script: "aws ec2 describe-route-tables --filters Name=vpc-id,Values=${cloudResourceVPCId} | jq '.[] | .[] | .RouteTableId'",
+                returnStdout: true
+              ).trim()
+
+              String clusterResourceCIDR = sh (
+                script: "aws ec2 describe-vpcs --vpc-id ${clusterVPCId} | jq '.[] | .[] | .CidrBlockAssociationSet | .[] | .CidrBlock'",
+                returnStdout: true
+              ).trim()
+
+              sh "aws ec2 create-route --route-table-id ${cloudResourceRouteTableId} --destination-cidr-block ${clusterResourceCIDR}--vpc-peering-connection-id ${vpcPeeringConnectionId}"
+            }
             
             stage("Install dedicated-admin operator") {
                 String installationLog = sh (
