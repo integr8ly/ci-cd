@@ -102,6 +102,7 @@
                     # make sure msb pod is running before executing the tests
                     until oc get pods | grep 1/1; do sleep 2; done
                     oc expose svc/msb
+                    sleep 1m
                   """
                   
                   // I wasn't able to do this in one single sh command. There are two issues, which I don't know how to solve
