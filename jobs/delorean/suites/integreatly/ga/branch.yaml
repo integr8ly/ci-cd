@@ -4,7 +4,7 @@
     display-name: 'integreatly-ga-branch'
     project-type: pipeline
     concurrent: false
-    disabled: false
+    disabled: true
     parameters:
       - string:
           name: 'installationGitUrl'
