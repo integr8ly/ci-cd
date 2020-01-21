@@ -1,0 +1,61 @@
+---
+- job:
+    name: delorean-1-team/3scale/openshift-cluster-create
+    display-name: 'OpenShift Cluster Create'
+    project-type: pipeline
+    concurrent: true
+    parameters:
+      - string:
+          name: 'clusterName'
+          default: ''
+          description: '[REQUIRED] The name of the cluster to create'
+      - choice:
+          name: 'awsRegion'
+          choices:
+            - 'us-east-1'
+            - 'eu-west-1'
+            - 'eu-west-2'
+          description: '[REQUIRED] The AWS Region the cluster should be created in'
+          default: 'eu-west-2'
+      - choice:
+          name: 'awsAccountName'
+          choices:
+            - ToDo
+          description: '[REQUIRED] The AWS Account to use'
+      - bool:
+          name: 'dryRun'
+          default: false
+          description: '[OPTIONAL][Test] Dry run only, only prints what it would do!'
+      - string:
+          name: 'master_instance_type'
+          default: 'm4.xlarge'
+          description: '[REQUIRED] the AWS instance type for master node(s)'
+      - string:
+          name: 'compute_instance_type'
+          default: 'm4.xlarge'
+          description: '[REQUIRED] the AWS instance type for compute node(s)'
+      - string:
+          name: 'infra_instance_type'
+          default: 'm4.xlarge'
+          description: '[REQUIRED] the AWS instance type for infra node(s)'
+      - string:
+          name: 'master_group_size'
+          default: '1'
+          description: '[REQUIRED] The amount of AWS master nodes to be created'
+      - string:
+          name: 'compute_group_size'
+          default: '3'
+          description: '[REQUIRED] The amount of AWS compute nodes to be created'
+      - string:
+          name: 'infra_group_size'
+          default: '3'
+          description: '[REQUIRED] The amount of AWS infra nodes to be created'
+    pipeline-scm:
+      script-path: jobs/delorean/jenkinsfiles/1.0/cluster/openshift/create/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

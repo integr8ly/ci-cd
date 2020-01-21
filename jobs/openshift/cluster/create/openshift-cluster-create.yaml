@@ -51,7 +51,7 @@
           default: '3'
           description: '[REQUIRED] The amount of AWS infra nodes to be created'
     pipeline-scm:
-      script-path: jobs/openshift/cluster/create/Jenkinsfile
+      script-path: jobs/delorean/jenkinsfiles/1.0/cluster/openshift/create/Jenkinsfile
       scm:
         - git:
             branches:

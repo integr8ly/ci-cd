@@ -1,0 +1,58 @@
+---
+
+- job:
+    name: delorean-2-ews
+    description: "DeLorean 2.0 Early Warning System for RHMI Installations on OpenShift/OSD 4 (https://github.com/integr8ly/integreatly-operator)"
+    display-name: 'Early Warning System'
+    project-type: folder
+
+- job:
+    name: delorean-2-team
+    description: "Individual Team Jobs"
+    display-name: 'Teams'
+    project-type: folder
+
+##Teams
+- job:
+    name: delorean-2-team/3scale
+    description: "3Scale Team Jobs"
+    display-name: '3Scale'
+    project-type: folder
+- job:
+    name: delorean-2-team/amq
+    description: "AMQ Team Jobs"
+    display-name: 'AMQ'
+    project-type: folder
+- job:
+    name: delorean-2-team/cloud-services
+    description: "Cloud Services Team Jobs"
+    display-name: 'Cloud Services'
+    project-type: folder
+- job:
+    name: delorean-2-team/fuse
+    description: "Fuse Team Jobs"
+    display-name: 'Fuse'
+    project-type: folder
+- job:
+    name: delorean-2-team/integeration
+    description: "Integration Team Jobs"
+    display-name: 'Integration'
+    project-type: folder
+
+# 3Scale
+# ToDo
+
+# AMQ Online
+# ToDo
+
+# Code Ready
+# ToDo
+
+# Fuse
+# ToDo
+
+# Fuse Online
+# ToDo
+
+# Suites
+# ToDo

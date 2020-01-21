@@ -1,0 +1,48 @@
+---
+- job:
+    name: delorean-1-ews/amq-online/ga/discovery
+    display-name: 'amq-online-ga-discovery'
+    project-type: pipeline
+    concurrent: false
+    disabled: false
+    triggers:
+      - timed: '@daily'
+    parameters:
+      - string:
+          name: 'productVersionVar'
+          default: 'enmasse_version'
+          description: '[REQUIRED] The manifest variable to be used as the current component version'
+          read-only: true
+      - string:
+          name: 'projectOrg'
+          default: 'jboss-container-images'
+          description: '[REQUIRED] github project organization'
+          read-only: true
+      - string:
+          name: 'projectRepo'
+          default: 'amq-online-images'
+          description: '[REQUIRED] github project repository'
+          read-only: true
+      - string:
+          name: 'productName'
+          default: 'amq-online'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
+          read-only: true
+      - string:
+          name: 'releaseFetchMethod'
+          default: 'tag'
+          description: '[REQUIRED] Method to fetch latest release which can either be by tag or by release'
+          read-only: true
+      - bool:
+          name: 'updateLatestRHMIRelease'
+          default: false
+          description: '[OPTIONAL] Update the latest RHMI release branch with patch releases!'
+    pipeline-scm:
+      script-path: jobs/delorean/jenkinsfiles/1.0/ews/discovery/ga/github/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - master
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

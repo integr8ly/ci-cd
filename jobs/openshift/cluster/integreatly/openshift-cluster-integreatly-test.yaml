@@ -21,7 +21,7 @@
           default: false
           description: '[OPTIONAL][Test] Dry run only, only prints what it would do!'
     pipeline-scm:
-      script-path: jobs/openshift/cluster/integreatly/test/Jenkinsfile
+      script-path: jobs/delorean/jenkinsfiles/1.0/cluster/openshift/integreatly/test/Jenkinsfile
       scm:
         - git:
             branches:

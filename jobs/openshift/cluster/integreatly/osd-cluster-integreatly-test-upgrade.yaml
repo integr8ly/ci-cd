@@ -91,7 +91,7 @@
           description: '[REQUIRED][INSTALL] Desired client secret value for RHSSO'   
 
     pipeline-scm:
-      script-path: jobs/openshift/cluster/integreatly/upgrade/Jenkinsfile
+      script-path: jobs/delorean/jenkinsfiles/1.0/cluster/openshift/integreatly/upgrade/Jenkinsfile
       scm:
         - git:
             branches:

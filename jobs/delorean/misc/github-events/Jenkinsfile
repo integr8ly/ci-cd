@@ -38,7 +38,7 @@ node {
             def branchType = productAndType.split("-").last()
             def productName = productAndType.minus("-${branchType}")
             println "Delorean branch($branch), run branch job for ${productName}/${branchType}"
-            def jobName = "delorean-${productName}/${branchType}/branch"
+            def jobName = "delorean-1-ews/${productName}/${branchType}/branch"
             def jobParams = [
                     [$class: 'StringParameterValue', name: 'installationProductBranch', value: gitBranch],
                     [$class: 'StringParameterValue', name: 'installationTargetBranch', value: targetBranch]

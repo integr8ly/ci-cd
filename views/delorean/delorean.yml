@@ -1,7 +1,15 @@
 - view:
-   name: Delorean
-   regex: delorean-.*(?<!generated)
+   name: Delorean 1.0
+   regex: delorean-1-.*(?<!generated)
    columns:
     - status
     - job
     - description
+
+- view:
+     name: Delorean 2.0
+     regex: delorean-2-.*(?<!generated)
+     columns:
+     - status
+     - job
+     - description
