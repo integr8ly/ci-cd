@@ -1,0 +1,55 @@
+---
+- job:
+    name: delorean-1-cluster/openshift-cluster-integreatly-install
+    display-name: 'Openshift Cluster Integreatly Install'
+    project-type: pipeline
+    concurrent: true
+    parameters:
+      - string:
+          name: 'clusterName'
+          default: ''
+          description: '[REQUIRED] The name of the target cluster to install Integreatly against'
+      - string:
+          name: 'openshiftMasterUrl'
+          default: ''
+          description: '[REQUIRED] The public URL of the target OpenShift cluster'
+      - string:
+          name: 'clusterAdminUsername'
+          default: ''
+          description: '[OPTIONAL] Username of the cluster admin account. Defaults to the username stored in tower-openshift-cluster-credentials'
+      - password:
+          name: 'clusterAdminPassword'
+          default: ''
+          description: '[OPTIONAL] Password of the cluster admin account. Defaults to the password stored in tower-openshift-cluster-credentials'
+      - string:
+          name: 'installationGitUrl'
+          default: 'https://github.com/integr8ly/installation.git'
+          description: '[REQUIRED] Integreatly installer Git URL'
+      - string:
+          name: 'installationGitBranch'
+          default: 'master'
+          description: '[REQUIRED] The name of the git branch to be used for the Integreatly installer'
+      - string:
+          name: 'userCount'
+          default: '50'
+          description: '[OPTIONAL] The number of users to pre-seed in the environment'
+      - bool:
+          name: 'selfSignedCerts'
+          default: false
+          description: '[OPTIONAL] Set to true if the target OpenShift cluster uses self-signed certs'
+      - bool:
+          name: 'dryRun'
+          default: false
+          description: '[OPTIONAL][Test] Dry run only, only prints what it would do!'
+      - text:
+          name: 'additionalParameters'
+          description: '[OPTIONAL] List of additional parameters separated by line e.g amq_streams: true.'
+    pipeline-scm:
+      script-path: jobs/delorean/jenkinsfiles/1.0/cluster/openshift/integreatly/install/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

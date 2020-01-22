@@ -1,0 +1,43 @@
+---
+- job:
+    name: delorean-1-ews/3scale/ga/discovery
+    display-name: '3scale-ga-discovery'
+    project-type: pipeline
+    concurrent: false
+    disabled: false
+    triggers:
+      - timed: '@daily'
+    parameters:
+      - string:
+          name: 'productVersionVar'
+          default: 'threescale_version'
+          description: '[REQUIRED] The manifest variable to be used as the current component version'
+          read-only: true
+      - string:
+          name: 'projectOrg'
+          default: '3scale'
+          description: '[REQUIRED] github project organization'
+          read-only: true
+      - string:
+          name: 'projectRepo'
+          default: '3scale-amp-openshift-templates'
+          description: '[REQUIRED] github project repository'
+          read-only: true
+      - string:
+          name: 'productName'
+          default: '3scale'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
+          read-only: true
+      - bool:
+          name: 'updateLatestRHMIRelease'
+          default: false
+          description: '[OPTIONAL] Update the latest RHMI release branch with patch releases!'
+    pipeline-scm:
+      script-path: jobs/delorean/jenkinsfiles/1.0/ews/discovery/ga/github/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - master
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

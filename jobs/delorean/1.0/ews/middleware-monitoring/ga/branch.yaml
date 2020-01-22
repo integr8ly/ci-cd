@@ -1,0 +1,42 @@
+---
+- job:
+    name: delorean-1-ews/middleware-monitoring/ga/branch
+    display-name: 'middleware-monitoring-ga-branch'
+    project-type: pipeline
+    concurrent: false
+    disabled: true
+    parameters:
+      - string:
+          name: 'installationGitUrl'
+          default: 'git@github.com:integr8ly/installation.git'
+          description: '[REQUIRED] The installation repo'
+      - string:
+          name: 'installationProductBranch'
+          default: 'middleware-monitoring-ga'
+          description: '[REQUIRED] The installation git branch to push new version changes'
+      - string:
+          name: 'installationTargetBranch'
+          default: 'master'
+          description: '[REQUIRED] The installation git branch to target'
+      - string:
+          name: 'productName'
+          default: 'middleware-monitoring'
+          description: '[REQUIRED] Product to check, this affects the way the job verifies if a new version is available'
+      - string:
+          name: 'productVersionVar'
+          default: 'middleware_monitoring_operator_release_tag'
+          description: '[OPTIONAL] The manifest variable to be used as the current component release tag'
+          read-only: true
+      - bool:
+          name: 'dryRun'
+          default: false
+          description: '[OPTIONAL][Test] Dry run only, only prints what it would do!'
+    pipeline-scm:
+      script-path: jobs/delorean/jenkinsfiles/1.0/ews/branch/ga/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - master
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

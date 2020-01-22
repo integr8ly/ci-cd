@@ -45,7 +45,7 @@
           name: 'additionalParameters'
           description: '[OPTIONAL] List of additional parameters separated by line e.g amq_streams: true.'
     pipeline-scm:
-      script-path: jobs/openshift/cluster/integreatly/install/Jenkinsfile
+      script-path: jobs/delorean/jenkinsfiles/1.0/cluster/openshift/integreatly/install/Jenkinsfile
       scm:
         - git:
             branches:
