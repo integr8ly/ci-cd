@@ -2,8 +2,14 @@
 timeout(240) { ansiColor('gnome-terminal') { timestamps {
     node('cirhos_rhel7') {
         stage ('Trigger OSD OCP4 Pipeline') {
+            Date now = new Date()
+            Integer month = now.month + 1
+            Integer day = now.getAt(Calendar.DAY_OF_MONTH)
+            Integer hour = now.hours
+            String clusterNameSuffix = params.CLUSTER_NAME.contains("master") ? "master" : "olm"
+            String clusterName = "${hour}${day}${month}${clusterName}"
             buildStatus = build(job: 'osd-ocp4-testing-executor', propagate: false, parameters: [
-                string(name: 'CLUSTER_NAME', value: "${CLUSTER_NAME}"),
+                string(name: 'CLUSTER_NAME', value: clusterName),
                 string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
                 string(name: 'INTEGREATLY_OPERATOR_BRANCH', value: "${INTEGREATLY_OPERATOR_BRANCH}"),
                 booleanParam(name: 'OLM_INSTALLATION', value:  Boolean.valueOf(OLM_INSTALLATION)),
