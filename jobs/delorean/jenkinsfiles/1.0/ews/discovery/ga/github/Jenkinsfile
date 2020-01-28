@@ -326,12 +326,16 @@ node() {
         println "[INFO] Latest Product Release = ${latestReleases}"
     }
 
+    //Only apply product patch updates to master if we have opted to not update the latest release for this product
+    List masterVersionLevels = updateLatestRHMIRelease ? ['major', 'minor'] : ['major', 'minor', 'patch']
+    List latestReleaseVersionLevels = ['patch']
+
     processInstallationBranch {
         branch = gaBranch
         baseBranch = installationGitRef
         product = productName
         latestProductReleases = latestReleases
-        updateVersionLevels = ['major', 'minor', 'patch']
+        updateVersionLevels = masterVersionLevels
         updateVersionType = 'ga'
     }
 
@@ -352,7 +356,7 @@ node() {
             baseBranch = latestRHMIBranch
             product = productName
             latestProductReleases = latestReleases
-            updateVersionLevels = ['patch']
+            updateVersionLevels = latestReleaseVersionLevels
             updateVersionType = 'ga'
         }
     }
