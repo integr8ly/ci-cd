@@ -150,8 +150,6 @@ def test(clusterName, clusterDomain, password) {
     ]
     if (OLM_INSTALLATION.toString() == 'false') {   
         parameters.add(string(name: 'NAMESPACE_PREFIX', value: "${INSTALLATION_PREFIX}-"))
-    } else {
-        parameters.add(string(name: 'BRANCH', value: 'v2-olm-1.14'))
     }
 
     buildStatus = build(job: 'ocp4-all-tests-executor', parameters: parameters).result
