@@ -1,6 +1,7 @@
 ---
 - job:
     name: polarion-reporter
+    description: "The pipeline used during release testing to report test results to polarion. Doc: https://gitlab.cee.redhat.com/dbizzarr/integreatly-polarion-reporter"
     project-type: pipeline
     sandbox: true
     concurrent: true
