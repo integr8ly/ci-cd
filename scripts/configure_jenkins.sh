@@ -35,6 +35,7 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/osd/grant
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/generated/
 
 #utils
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/utils/polarion-reporter.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/utils/recreate-pipelines.yaml
 
 #Integreatly-QE jobs - OpenShift 3
