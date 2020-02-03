@@ -54,13 +54,13 @@
                         }
                     }
                 }
-                stage("Clone polarion-reporter") {
+                stage("Prepare polarion-reporter") {
                     steps {
-                        git "https://gitlab.cee.redhat.com/dbizzarr/integreatly-polarion-reporter.git"
+                        git "https://gitlab.cee.redhat.com/integreatly-qe/integreatly-polarion-reporter.git"
                         sh "npm install"
                     }
                 }
-                stage("Download artifact") {
+                stage("Download the artifact") {
                     environment {
                         ARTIFACT = "https://integreatly-qe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com/job/${JOB_NAME}/${JOB_ID}/artifact/${ARTIFACT_NAME}"
                     }
@@ -77,10 +77,10 @@
                 stage("Push testruns") {
                     steps {
                         sh """
-                        ./polarion.js testruns ./report.xml \
-                            --testrun-title "${TESTRUN_TITLE}" \
-                            --testrun-template-id "${TESTRUN_TEMPLATE_ID}"
-                        """
+                            ./polarion.js testruns ./report.xml \
+                                --testrun-title "${TESTRUN_TITLE}" \
+                                --testrun-template-id "${TESTRUN_TEMPLATE_ID}"
+                            """
                     }
                 }
             }
