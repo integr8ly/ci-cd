@@ -1,0 +1,72 @@
+---
+
+- job:
+    name: slb-test
+    description: 'Test hello world service exposed via SLB on port 5671'
+    project-type: pipeline
+    sandbox: true
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
+          description: 'QE repository containing the test source code.'
+      - string:
+          name: BRANCH
+          default: 'master'
+          description: 'Branch of the repository'
+      - string:
+          name: CLUSTER_URL
+          default: 'https://console.rhmi-qe1.openshift.com/'
+          description: 'URL of cluster on which the test will be executed.'
+      - string:
+          name: CUSTOMER_ADMIN_USERNAME
+          default: 'customer-admin'
+          description: 'Username to login to Integreatly cluster.'
+      - string:
+          name: CUSTOMER_ADMIN_PASSWORD
+          default: 'Password1'
+          description: 'Password to login to Integreatly cluster.'
+      - string:
+          name: TIMEOUT_THRESHOLD
+          default: '1'
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
+    dsl: |
+        timeout(10) { ansiColor('gnome-terminal') { timestamps {
+            node('cirhos_rhel7'){
+
+                Boolean publishTestResults = true
+
+                stage('Clone QE repository') {
+                    dir('.') {
+                        git branch: "${BRANCH}", url: "${REPOSITORY}"
+                    }
+                }
+                stage('Run slb test'){
+                    dir('test-suites/backend-testsuite') {
+                        sh '''
+                            npm install
+                            ./node_modules/gulp/bin/gulp.js slb 2>&1 | tee output.txt
+                        '''  
+                        String output = readFile("output.txt");
+                        
+                        if(!output.contains('OSD Service Load Balancer test')) {
+                            currentBuild.result = 'FAILURE'
+                            publishTestResults = false
+                        } else if(output.contains('There were test failures')) {
+                            currentBuild.result = 'UNSTABLE'
+                        }
+                    }
+                }
+                stage('Publish test results') {
+                    if(publishTestResults) {
+                        dir('test-suites/backend-testsuite/reports/') {
+                            archiveArtifacts 'slb.xml'                  
+                            junit allowEmptyResults:true, testResults: 'slb.xml'
+                        }
+                    } else {
+                        println 'Publishing the results skipped. Probably due to an error.'
+                    }
+                }
+            }
+        }}}
+
