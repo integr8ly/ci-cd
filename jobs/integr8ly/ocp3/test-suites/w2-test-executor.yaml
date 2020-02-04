@@ -38,7 +38,10 @@
       - string:
           name: TIMEOUT_THRESHOLD
           default: '1'
-          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'
+      - string:
+          name: POLARION_TEMPLATE_ID
+          description: 'Optional: the Polarion test run template id to use to report the test result to Polarion'
     dsl: |
         def err = null
         try {
@@ -62,7 +65,8 @@
                                     string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
-                                    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}"))
+                                    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
+                                    string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}")
                                 ]).result;
 
                                 println "Build finished with ${buildStatus}"
@@ -81,7 +85,8 @@
                                     string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
-                                    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}"))
+                                    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
+                                    string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}")
                                 ]).result;
 
                                 println "Build finished with ${buildStatus}"
