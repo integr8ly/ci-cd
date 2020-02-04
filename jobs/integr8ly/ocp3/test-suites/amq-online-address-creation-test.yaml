@@ -39,6 +39,9 @@
       - string:
           name: NAMESPACE_PREFIX
           description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
+      - string:
+          name: POLARION_TEMPLATE_ID
+          description: 'Optional: the Polarion test run template id to use to report the test result to Polarion'
     dsl: |
         timeout(10) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){
@@ -71,6 +74,14 @@
                         dir('test-suites/backend-testsuite/reports/') {
                             archiveArtifacts 'address-create.xml'
                             junit allowEmptyResults:true, testResults: 'address-create.xml'
+
+                            if(params.POLARION_TEMPLATE_ID) {
+                                build(job: 'polarion-reporter', wait: false, parameters: [
+                                    string(name: 'ARTIFACT_URL', value: "${BUILD_URL}/artifact/address-create.xml"),
+                                    string(name: 'TESTRUN_TITLE', value: "W1 AMQ Online Adress Creation Test"),
+                                    string(name: 'TESTRUN_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
+                                ])
+                            }
                         }
                     } else {
                         println 'Publishing the results skipped. Probably due to an error.'
