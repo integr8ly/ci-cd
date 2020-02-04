@@ -78,7 +78,7 @@
                             if(params.POLARION_TEMPLATE_ID) {
                                 build(job: 'polarion-reporter', wait: false, parameters: [
                                     string(name: 'ARTIFACT_URL', value: "${BUILD_URL}/artifact/booster-creation.xml"),
-                                    string(name: 'TESTRUN_TITLE', value: "W2 Launcher Tests"),
+                                    string(name: 'TESTRUN_TITLE', value: "W2 Launcher Test"),
                                     string(name: 'TESTRUN_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
                                 ])
                             }
