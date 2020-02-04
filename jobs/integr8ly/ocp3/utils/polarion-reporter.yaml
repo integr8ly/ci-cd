@@ -7,14 +7,8 @@
     concurrent: true
     parameters:
       - string:
-          name: JOB_NAME
-          description: The Jenkins job name with the Artifact
-      - string:
-          name: JOB_ID
-          description: The Jenkins job id with the Artifact
-      - string:
-          name: ARTIFACT_NAME
-          description: The name of the Artifact containing the JUnit report
+          name: ARTIFACT_URL
+          description: The url of the Artifact containing the JUnit report
       - string:
           name: TESTRUN_TITLE
           description: The title to assign to the Test Run that will be created in Polarion
@@ -37,20 +31,18 @@
             stages {
                 stage("Validate parameters") {
                     when {
-                        expression { return !params.JOB_NAME }
-                        expression { return !params.JOB_ID }
-                        expression { return !params.ARTIFACT_NAME }
+                        expression { return !params.ARTIFACT_URL }
                         expression { return !params.TESTRUN_TITLE }
                         expression { return !params.TESTRUN_TEMPLATE_ID }
                     }
                     steps {
-                        error "JOB_NAME, JOB_ID, ARTIFACT_NAME, TESTRUN_TITLE and TESTRUN_TEMPLATE_ID must be defined"
+                        error "ARTIFACT_NAME, TESTRUN_TITLE and TESTRUN_TEMPLATE_ID must be defined"
                     }
                 }
                 stage("Name") {
                     steps {
                         script {
-                            currentBuild.displayName = "${TESTRUN_TITLE} - ${TESTRUN_TEMPLATE_ID} - ${JOB_NAME}/${JOB_ID}"
+                            currentBuild.displayName = "${TESTRUN_TITLE} / ${TESTRUN_TEMPLATE_ID}"
                         }
                     }
                 }
@@ -61,12 +53,9 @@
                     }
                 }
                 stage("Download the artifact") {
-                    environment {
-                        ARTIFACT = "https://integreatly-qe-jenkins.rhev-ci-vms.eng.rdu2.redhat.com/job/${JOB_NAME}/${JOB_ID}/artifact/${ARTIFACT_NAME}"
-                    }
                     steps {
                         sh "rm -f report.xml"
-                        sh "curl -k ${ARTIFACT} -o report.xml"
+                        sh "curl -k ${ARTIFACT_URL} -o report.xml"
                     }
                 }
                 stage("Push testcases") {
