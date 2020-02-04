@@ -42,6 +42,14 @@
       - string:
           name: POLARION_TEMPLATE_ID
           description: 'Optional: the Polarion test run template id to use to report the test result to Polarion'
+      - bool:
+          name: W1_FINAL_VERIFICATION
+          default: false
+          description: 'Expects existing AMQ Online address. When it's set to true then it verifies last step (sending data (order) from one REST app to another) in W1. This defaults to false.'
+      - bool:
+          name: FINAL_CHECK_ONLY
+          default: false
+          description: 'defaults to false. When set to true - only the final check is performed (e.g. whether it is possible to send an order and see it appearing in the list of orders)'
     dsl: |
         timeout(10) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){

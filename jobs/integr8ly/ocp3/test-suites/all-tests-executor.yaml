@@ -119,6 +119,10 @@
                         runTests('alerts-test')
                     }
 
+                    stage ('OSD Service Load Balancer test') {
+                        runTests('slb-test')
+                    }
+
                     stage ('Start Basic Walkthroughs Browser Test') {
                        wtTestStatus = runSingleBrowserTest('tests/00_walkthroughs_start/start-walkthroughs.js')
                     } // stage

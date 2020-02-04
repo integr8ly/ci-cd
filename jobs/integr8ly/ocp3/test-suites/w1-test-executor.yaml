@@ -42,6 +42,14 @@
       - string:
           name: POLARION_TEMPLATE_ID
           description: 'Optional: the Polarion test run template id to use to report the test result to Polarion'
+      - bool:
+          name: W1_FINAL_VERIFICATION
+          default: true
+          description: 'Expects existing AMQ Online address. When it's set to true then it verifies last step of fuse test (sending data (order) from one REST app to another) in W1. This defaults to false.'
+      - bool:
+          name: FINAL_CHECK_ONLY
+          default: false
+          description: 'defaults to false. When set to true - this entire test is skipped and only final part of fuse wt1 test is executed'
     dsl: |
         def err = null
         try {
@@ -66,7 +74,9 @@
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
                                     string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
-                                    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("false"))
+                                    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("false")),
+                                    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("false")),
+                                    booleanParam(name: 'FINAL_CHECK_ONLY', value: Boolean.valueOf("${FINAL_CHECK_ONLY}"))
                                 ]).result;
 
                                 println "Build finished with ${buildStatus}"
@@ -87,7 +97,8 @@
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
                                     string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
                                     booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
-                                    booleanParam(name: 'W1_FINAL_VERIFICATION', value: Boolean.valueOf("true"))
+                                    booleanParam(name: 'W1_FINAL_VERIFICATION', value: Boolean.valueOf("${W1_FINAL_VERIFICATION}")),
+                                    booleanParam(name: 'FINAL_CHECK_ONLY', value: Boolean.valueOf("${FINAL_CHECK_ONLY}"))
                                 ]).result;
 
                                 println "Build finished with ${buildStatus}"

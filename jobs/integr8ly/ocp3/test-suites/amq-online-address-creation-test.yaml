@@ -42,6 +42,10 @@
       - string:
           name: POLARION_TEMPLATE_ID
           description: 'Optional: the Polarion test run template id to use to report the test result to Polarion'
+      - bool:
+          name: FINAL_CHECK_ONLY
+          default: false
+          description: 'defaults to false. When set to true - this entire test is skipped and only final part of fuse wt1 test is executed'
     dsl: |
         timeout(10) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){
