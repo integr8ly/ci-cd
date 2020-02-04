@@ -75,7 +75,6 @@
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
                                     string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
                                     booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("false")),
-                                    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("false")),
                                     booleanParam(name: 'FINAL_CHECK_ONLY', value: Boolean.valueOf("${FINAL_CHECK_ONLY}"))
                                 ]).result;
 
