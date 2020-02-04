@@ -39,6 +39,10 @@
       - string:
           name: NAMESPACE_PREFIX
           description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
+      - bool:
+          name: FINAL_CHECK_ONLY
+          default: false
+          description: 'defaults to false. When set to true - this entire test is skipped and only final part of fuse wt1 test is executed'
     dsl: |
         timeout(10) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){
