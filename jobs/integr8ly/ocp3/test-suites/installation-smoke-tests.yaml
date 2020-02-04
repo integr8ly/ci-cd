@@ -39,7 +39,10 @@
       - string:
           name: TIMEOUT_THRESHOLD
           default: '1'
-          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'
+      - string:
+          name: POLARION_TEMPLATE_ID
+          description: 'Optional: the Polarion test run template id to use to report the test result to Polarion'
     dsl: |
         timeout(10) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){
@@ -72,6 +75,14 @@
                         dir('test-suites/backend-testsuite/reports/') {
                             archiveArtifacts 'smoke.xml'                  
                             junit allowEmptyResults:true, testResults: 'smoke.xml'
+
+                            if(params.POLARION_TEMPLATE_ID) {
+                                build(job: 'polarion-reporter', wait: false, parameters: [
+                                    string(name: 'ARTIFACT_URL', value: "${BUILD_URL}/artifact/smoke.xml"),
+                                    string(name: 'TESTRUN_TITLE', value: "Installation Smoke Tests"),
+                                    string(name: 'TESTRUN_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
+                                ])
+                            }
                         }
                     } else {
                         println 'Publishing the results skipped. Probably due to an error.'
