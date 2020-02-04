@@ -10,9 +10,11 @@ String selfSignedCerts = selfSigned ? "true" : "false"
 
 String installationName = "example-installation"
 
-String installationNamespace = "integreatly"
+String installationNamespace = "redhat-rhmi-operator"
 
 String expectedOcCommandOutput = ""
+
+String useClusterStorage = "false"
 
 def err = null
 
@@ -41,7 +43,7 @@ node('cirhos_rhel7') {
                     sh(
                         returnStdout: false,
                         script: """
-                            oc project integreatly | true
+                            oc project ${installationNamespace} | true
                             oc delete secret oauth-client-secrets | true
                             oc delete installation example-installation --timeout=60s --wait | true
                             oc delete crd applicationmonitorings.applicationmonitoring.integreatly.org | true
@@ -66,7 +68,8 @@ node('cirhos_rhel7') {
                 dir('integreatly-operator') {
                     withCredentials([string(credentialsId: "integreatly-quay-bot-password", variable: "PASSWORD")]) {
                         sh "docker login -u=\"integreatly+intlytravis\" -p=\"${PASSWORD}\" quay.io"
-                        sh "make image/build/push ORG=integreatly TAG=nightly"
+                        sh "mkdir -p $HOME/go/bin"
+                        sh "PATH=$PATH:$HOME/go/bin make image/build/push ORG=integreatly TAG=nightly"
                     }
                 }
             }
@@ -77,13 +80,7 @@ node('cirhos_rhel7') {
                     sh(
                         returnStdout: false,
                         script: """
-                            make cluster/prepare/project
-                            make cluster/prepare/secrets
-                            make cluster/prepare/configmaps
-                            oc create -f deploy/crds/*_crd.yaml
-                            oc create -f deploy/service_account.yaml
-                            oc create -f deploy/role.yaml
-                            oc create -f deploy/role_binding.yaml
+                            make cluster/prepare/local
                         """
                     )
                 }
@@ -103,6 +100,7 @@ node('cirhos_rhel7') {
                             sed -i "s@INSTALLATION_NAME@${installationName}@" deploy/crds/examples/integreatly-installation-cr.yaml
                             sed -i "s@INSTALLATION_TYPE@${INSTALLATION_TYPE}@" deploy/crds/examples/integreatly-installation-cr.yaml
                             sed -i "s@INSTALLATION_PREFIX@${INSTALLATION_PREFIX}@" deploy/crds/examples/integreatly-installation-cr.yaml
+                            sed -i "s@USE_CLUSTER_STORAGE@${useClusterStorage}@" deploy/crds/examples/integreatly-installation-cr.yaml
                         """
                     )
 
