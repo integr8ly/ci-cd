@@ -38,7 +38,7 @@
           description: 'GH default user password'
       - bool:
           name: CLEAN_RESOURCES
-          default: false
+          default: true
           description: 'depending on whether the resources should be cleaned after the successful execution'
       - string:
           name: NAMESPACE_PREFIX
@@ -62,11 +62,11 @@
                     dir('test-suites/backend-testsuite') {
                         sh '''
                             npm install
-                            ./node_modules/gulp/bin/gulp.js create-booster 2>&1 | tee output.txt
+                            ./node_modules/gulp/bin/gulp.js codeready-part-wt2 2>&1 | tee output.txt
                         '''  
                         String output = readFile("output.txt");
                         
-                        if(!output.contains('Launcher booster creation tests')) {
+                        if(!output.contains('Test for updating the source code')) {
                             currentBuild.result = 'FAILURE'
                             publishTestResults = false
                         } else if(output.contains('There were test failures')) {
@@ -77,8 +77,8 @@
                 stage('Publish test results') {
                     if(publishTestResults) {
                         dir('test-suites/backend-testsuite/reports/') {
-                            archiveArtifacts 'booster-creation.xml'
-                            junit allowEmptyResults:true, testResults: 'booster-creation.xml'
+                            archiveArtifacts 'update-sourcecode.xml'
+                            junit allowEmptyResults:true, testResults: 'update-sourcecode.xml'
                         }
                     } else {
                         println 'Publishing the results skipped. Probably due to an error.'

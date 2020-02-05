@@ -71,6 +71,25 @@
                                 }
                             }
 
+                            stage('Run Update sourcecode test') {
+                                buildStatus = build(job: 'update-sourcecode-test', propagate: false, parameters: [
+                                    string(name: 'REPOSITORY', value: "${REPOSITORY}"),
+                                    string(name: 'BRANCH', value: "${BRANCH}"),
+                                    string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                                    string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
+                                    string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+                                    string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+                                    string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
+                                    string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
+                                    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}"))
+                                ]).result;
+
+                                println "Build finished with ${buildStatus}"
+                                if (buildStatus != 'SUCCESS') {
+                                    currentBuild.result = 'UNSTABLE'
+                                }
+                            }
+
                             stage('Run the 3scale test') {
                                  buildStatus = build(job: '3scale-test', propagate: false, parameters: [
                                     string(name: 'REPOSITORY', value: "${REPOSITORY}"),
