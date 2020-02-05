@@ -72,11 +72,11 @@ This needs to be changed to 'false' for Integreatly Workshop since it uses valid
             default: 'Password1'
             description: 'Password to login to Integreatly cluster.'
         - string:
-          name: GH_USER
-          description: 'Github user name'
+            name: GH_USER
+            description: 'Github user name'
         - string:
-          name: GH_PERSONAL_TOKEN
-          description: 'Github password for the username provided'
+            name: GH_PERSONAL_TOKEN
+            description: 'Github token for the user provided'
         - bool:
             name: CLEAN_RESOURCES
             default: true

@@ -33,10 +33,10 @@
           description: 'Evals user name'
       - string:
           name: GH_USER
-          description: 'GH default user name'
+          description: 'Github user name'
       - string:
           name: GH_PERSONAL_TOKEN
-          description: 'GH default user password'
+          description: 'Github token for the user provided'
       - bool:
           name: CLEAN_RESOURCES
           default: true

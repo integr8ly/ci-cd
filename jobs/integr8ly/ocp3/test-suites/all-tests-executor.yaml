@@ -75,7 +75,7 @@
           description: 'Github user name'
       - string:
           name: GH_PERSONAL_TOKEN
-          description: 'Github password for the username provided'
+          description: 'Github token for the user provided'
       - string:
           name: NUMBER_OF_USERS
           default: "5"
