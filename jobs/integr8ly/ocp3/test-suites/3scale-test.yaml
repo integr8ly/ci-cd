@@ -38,7 +38,11 @@
       - string:
           name: TIMEOUT_THRESHOLD
           default: '1'
-          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'
+      - bool:
+          name: FINAL_CHECK_ONLY
+          default: false
+          description: 'defaults to false. When set to true - only final checks of the individual wt2 related tests are checked'
     dsl: |
         timeout(35) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){
