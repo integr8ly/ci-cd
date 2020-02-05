@@ -71,6 +71,12 @@
           default: "tester"
           description: 'Name of newly created users in SSO.'   
       - string:
+          name: GH_USER
+          description: 'Github user name'
+      - string:
+          name: GH_PERSONAL_TOKEN
+          description: 'Github password for the username provided'
+      - string:
           name: NUMBER_OF_USERS
           default: "5"
           description: 'Number of created users (sso-user-create test)'
@@ -95,6 +101,8 @@
             booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
             string(name: 'WALKTHROUGHS_VERSION', value: "${WALKTHROUGHS_VERSION}"),
             string(name: 'SSO_URL', value: "${SSO_URL}"),
+            string(name: 'GH_USER', value: "${GH_USER}"),
+            string(name: 'GH_PERSONAL_TOKEN', value: "${GH_PERSONAL_TOKEN}"),
             string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
             string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}"),
             string(name: 'USERNAME', value: "${USERNAME}"),

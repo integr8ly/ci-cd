@@ -30,11 +30,9 @@
           description: 'Evals user name'
       - string:
           name: GH_USER
-          default: ''
           description: 'GH default user name'
       - string:
           name: GH_PERSONAL_TOKEN
-          default: ''
           description: 'GH default user password'
       - bool:
           name: CLEAN_RESOURCES
