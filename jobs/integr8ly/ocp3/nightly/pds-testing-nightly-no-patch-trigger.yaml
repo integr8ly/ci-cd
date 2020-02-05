@@ -28,6 +28,8 @@
             ADMIN_PASSWORD=Password1
             CUSTOMER_ADMIN_USERNAME=customer-admin@example.com
             CUSTOMER_ADMIN_PASSWORD=Password1
+            GH_USER=yourgithubname
+            GH_PERSONAL_TOKEN=yourgithubtoken
             CLEAN_RESOURCES=true
             MANIFEST_VERSION=master
             INSTALL_BACKUPS=false
@@ -55,6 +57,8 @@
                         string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                         string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),
                         string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
+                        string(name: 'GH_USER', value: "${GH_USER}"),
+                        string(name: 'GH_PERSONAL_TOKEN', value: "${GH_PERSONAL_TOKEN}"),
                         booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
                         string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
                         booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
