@@ -78,6 +78,10 @@ try {
                 runTest('w1-test-executor', jobParams)
             } // stage
 
+            stage ('Alerts test') {
+                runTests('alerts-test', jobParams)
+            } // stage
+
         } // node
     }}} // timeout, ansiColor, timestamps
 } catch (caughtError){
