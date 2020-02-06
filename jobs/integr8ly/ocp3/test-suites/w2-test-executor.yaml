@@ -31,6 +31,12 @@
           name: EVALS_USERNAME
           default: 'evals11@example.com'
           description: 'Evals user name'
+      - string:
+          name: GH_USER
+          description: 'Github user name'
+      - string:
+          name: GH_PERSONAL_TOKEN
+          description: 'Github token for the user provided'
       - bool:
           name: CLEAN_RESOURCES
           default: true
@@ -42,10 +48,14 @@
       - string:
           name: POLARION_TEMPLATE_ID
           description: 'Optional: the Polarion test run template id to use to report the test result to Polarion'
+      - bool:
+          name: FINAL_CHECK_ONLY
+          default: false
+          description: 'defaults to false. When set to true - only final checks of the individual wt2 related tests are checked'
     dsl: |
         def err = null
         try {
-            timeout(40) { 
+            timeout(90) { 
                 ansiColor('gnome-terminal') { 
                     timestamps {
                         node('cirhos_rhel7') {        
@@ -66,6 +76,30 @@
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
                                     string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
+                                    string(name: 'GH_USER', value: "${GH_USER}"),
+                                    string(name: 'GH_PERSONAL_TOKEN', value: "${GH_PERSONAL_TOKEN}"),
+                                    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
+                                    booleanParam(name: 'FINAL_CHECK_ONLY', value: Boolean.valueOf("${FINAL_CHECK_ONLY}"))
+                                ]).result;
+
+                                println "Build finished with ${buildStatus}"
+                                if (buildStatus != 'SUCCESS') {
+                                    currentBuild.result = 'UNSTABLE'
+                                }
+                            }
+
+                            stage('Run Update sourcecode test') {
+                                buildStatus = build(job: 'update-sourcecode-test', propagate: false, parameters: [
+                                    string(name: 'REPOSITORY', value: "${REPOSITORY}"),
+                                    string(name: 'BRANCH', value: "${BRANCH}"),
+                                    string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                                    string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
+                                    string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+                                    string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+                                    string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
+                                    string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
+                                    string(name: 'GH_USER', value: "${GH_USER}"),
+                                    string(name: 'GH_PERSONAL_TOKEN', value: "${GH_PERSONAL_TOKEN}"),
                                     booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}"))
                                 ]).result;
 
@@ -86,7 +120,8 @@
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
                                     string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
-                                    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}"))
+                                    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
+                                    booleanParam(name: 'FINAL_CHECK_ONLY', value: Boolean.valueOf("${FINAL_CHECK_ONLY}"))
                                 ]).result;
 
                                 println "Build finished with ${buildStatus}"

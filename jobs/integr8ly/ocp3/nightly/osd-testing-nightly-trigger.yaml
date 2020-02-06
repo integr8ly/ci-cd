@@ -24,9 +24,11 @@
             USERNAME=osdtester
             TEST_SUITES_REPOSITORY=https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git
             TEST_SUITES_BRANCH=master
-            GH_CLIENT_ID=ddcd7a1eb016735c03f3
-            GH_CLIENT_SECRET=eea86b769a70475b3bb820d293371c7a8b03eda5
+            GH_CLIENT_ID=yourclientid
+            GH_CLIENT_SECRET=yourclientsecret
             CUSTOMER_ADMIN_PASSWORD=Password1
+            GH_USER=yourgithubname
+            GH_PERSONAL_TOKEN=yourgithubtoken
             CREDENTIALS_ID=osd-s3-access-key-and-secret
             THREESCALE_BUCKET_NAME=integreatly-qe1-3scale
             THREESCALE_BUCKET_REGION=eu-west-1
@@ -90,6 +92,8 @@
                                 string(name: 'githubClientId', value: "${GH_CLIENT_ID}"),
                                 string(name: 'githubClientSecret', value: "${GH_CLIENT_SECRET}"),
                                 string(name: 'customerAdminPassword', value: "${CUSTOMER_ADMIN_PASSWORD}"),
+                                string(name: 'GH_USER', value: "${GH_USER}"),
+                                string(name: 'GH_PERSONAL_TOKEN', value: "${GH_PERSONAL_TOKEN}"),
                                 string(name: 'threeScaleAwsAccessKey', value: "${AWS_ACCESS_KEY_ID}"),
                                 string(name: 'threeScaleAwsSecretKey', value: "${AWS_SECRET_ACCESS_KEY}"),
                                 string(name: 'threeScaleBucketName', value: "${THREESCALE_BUCKET_NAME}"),
@@ -174,6 +178,8 @@
                                 string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
                                 string(name: 'NAMESPACE_PREFIX', value: "openshift-"),
                                 string(name: 'WEBAPP_URL', value: "https://tutorial-web-app-openshift-webapp.${ROUTER_SHARD}.${CLUSTER_NAME}.openshiftapps.com"),
+                                string(name: 'GH_USER', value: "${GH_USER}"),
+                                string(name: 'GH_PERSONAL_TOKEN', value: "${GH_PERSONAL_TOKEN}"),
                                 booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
                                 string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
                                 booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
