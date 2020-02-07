@@ -83,7 +83,10 @@
       - string:
           name: TIMEOUT_THRESHOLD
           default: '1'
-          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'      
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'
+      - string:
+          name: POLARION_TEMPLATE_ID
+          description: 'Optional: the Polarion test run template id to use to report the test result to Polarion'   
     dsl: |
         jobParams = [
             string(name: 'REPOSITORY', value: "${REPOSITORY}"),
@@ -106,6 +109,7 @@
             string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
             string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}"),
             string(name: 'USERNAME', value: "${USERNAME}"),
+            string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
         ]
         def err = null
         def wtTestStatus;
