@@ -42,7 +42,7 @@
       - bool:
           name: W1_FINAL_VERIFICATION
           default: false
-          description: 'Expects existing AMQ Online address. When it's set to true then it verifies last step (sending data (order) from one REST app to another) in W1. This defaults to false.'
+          description: 'Expects existing AMQ Online address. When it is set to true then it verifies last step (sending data (order) from one REST app to another) in W1. This defaults to false.'
       - bool:
           name: FINAL_CHECK_ONLY
           default: false
