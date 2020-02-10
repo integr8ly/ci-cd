@@ -79,7 +79,7 @@ try {
             } // stage
 
             stage ('Alerts test') {
-                runTests('alerts-test', jobParams)
+                runTest('alerts-test', jobParams)
             } // stage
 
         } // node
