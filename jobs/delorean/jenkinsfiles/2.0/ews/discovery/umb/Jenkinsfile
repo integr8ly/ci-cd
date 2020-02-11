@@ -1,0 +1,30 @@
+pipeline {
+    agent none
+
+    parameters {
+
+        // https://datagrepper.engineering.redhat.com/id?id=ID:messaging-devops-broker02.web.prod.ext.phx2.redhat.com-44775-1580379079663-8:893046:0:0:1&is_raw=true&size=extra-large
+        string defaultValue: '', description: 'This will be populated by the CI trigger', name: 'CI_MESSAGE', trim: true
+    }
+
+    stages {
+        stage('Send mail') {
+            steps {
+                script {
+                    final Map msg = readJSON text: CI_MESSAGE
+                    // Sending this mail is just to test things for now
+                    // TODO Replace with pr creation
+                    mail(
+                        subject: "New build of ${msg.info.name} created in Brew",
+                        to: 'lfitzger@redhat.com',
+                        body: [
+                            "A brew build was created for ${msg.info.name}",
+                            "image_url: ${msg.info.extra.image.index.pull[1]}",
+                            "product_name: ${msg.info.name}"
+                        ].join('\n')
+                    )
+                }
+            }
+        }
+    }
+}

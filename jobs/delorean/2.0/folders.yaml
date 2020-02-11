@@ -39,17 +39,29 @@
     display-name: 'Integration'
     project-type: folder
 
-# 3Scale
-# ToDo
+# EWS
+- job:
+    name: delorean-2-ews/3scale
+    description: "3Scale EWS Jobs"
+    display-name: '3Scale'
+    project-type: folder
 
 # AMQ Online
-# ToDo
+- job:
+    name: delorean-2-ews/amq-online
+    description: "AMQ Online EWS Jobs"
+    display-name: 'AMQ'
+    project-type: folder
 
 # Code Ready
 # ToDo
 
 # Fuse
-# ToDo
+- job:
+    name: delorean-2-ews/fuse-online
+    description: "Fuse Online EWS Jobs"
+    display-name: 'Fuse'
+    project-type: folder
 
 # Fuse Online
 # ToDo

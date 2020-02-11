@@ -94,3 +94,9 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/generated/
 
 ###Views
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../views/delorean/
+
+##Delorean 2.0 Early Warning System Jobs
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/2.0/ews/3scale/discovery.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/2.0/ews/amq-online/discovery.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/delorean/2.0/ews/fuse-online/discovery.yaml
+
