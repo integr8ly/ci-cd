@@ -14,7 +14,7 @@ String installationNamespace = "redhat-rhmi-operator"
 
 String expectedOcCommandOutput = ""
 
-String useClusterStorage = "false"
+String useClusterStorage = "true"
 
 def err = null
 
