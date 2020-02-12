@@ -1,0 +1,34 @@
+---
+- job:
+    name: delorean-2-ews/fuse-online/discovery
+    display-name: Fuse Online Brew Build Created
+    description: |
+      <h2>Click <a href="https://github.com/integr8ly/ci-cd/tree/master/jobs/delorean/2.0/ews/fuse-online">here</a> to see the job definition on GitHub!</h2>
+
+      <h3>This job gets triggered by <a href="https://brewweb.engineering.redhat.com/brew/packageinfo?packageID=69209">Brew Builds</a> on the UMB</h3>
+    disabled: false
+    project-type: pipeline
+
+    # Trigger responds to new builds of fuse-online-operator-container
+    # e.g. https://brewweb.engineering.redhat.com/brew/packageinfo?packageID=69209
+    triggers:
+      - ci-trigger:
+          override-topic: Consumer.rh-jenkins-ci-plugin.bea57040-c451-4049-ba2d-fd80830712f3.VirtualTopic.eng.brew.build.complete 
+          message-checks:
+            - field: '$.info.package_id'
+              value: '69209'
+
+    parameters:
+    - string:
+          name: CI_MESSAGE
+          description: This will be populated by the CI trigger
+
+    pipeline-scm:
+      script-path: jobs/delorean/jenkinsfiles/2.0/ews/discovery/umb/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - master
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false
