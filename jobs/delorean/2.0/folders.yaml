@@ -50,7 +50,7 @@
 - job:
     name: delorean-2-ews/amq-online
     description: "AMQ Online EWS Jobs"
-    display-name: 'AMQ'
+    display-name: 'AMQ Online'
     project-type: folder
 
 # Code Ready
@@ -60,7 +60,7 @@
 - job:
     name: delorean-2-ews/fuse-online
     description: "Fuse Online EWS Jobs"
-    display-name: 'Fuse'
+    display-name: 'Fuse Online'
     project-type: folder
 
 # Fuse Online
