@@ -1,7 +1,7 @@
 ---
 - job:
     name: delorean-2-ews/amq-online/discovery
-    display-name: AMQ Online Brew Build Created
+    display-name: AMQ Online Discovery
     description: |
       <h2>Click <a href="https://github.com/integr8ly/ci-cd/tree/master/jobs/delorean/2.0/ews/amq-online">here</a> to see the job definition on GitHub!</h2>
 
