@@ -51,7 +51,7 @@
 
                 stage('oc login') {
                       sh """
-                      oc login ${CLUSTER_URL} --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD} 
+                      oc login ${CLUSTER_URL}:6443 --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD} 
                       """      
                 }
 
