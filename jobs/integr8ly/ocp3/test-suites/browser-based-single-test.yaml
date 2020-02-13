@@ -49,12 +49,6 @@
 
             node('cirhos_rhel7') {  
 
-                stage('oc login') {
-                      sh """
-                      oc login ${CLUSTER_URL} --insecure-skip-tls-verify=true -u ${ADMIN_USERNAME} -p ${ADMIN_PASSWORD} 
-                      """      
-                }
-
                 stage('Clone the testsuite') {
                     dir('integreatly-qe') {
                         git branch: BRANCH, url: REPOSITORY
