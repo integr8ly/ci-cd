@@ -76,7 +76,7 @@ pipeline {
         always {
             script {
                 final Map msg = readJSON text: CI_MESSAGE
-                String mailTo = 'lfitzger@redhat.com,mnairn+delorean@redhat.com'
+                String mailTo = 'cloud-services-delorean@redhat.com'
                 mail(
                         subject: "New build of ${msg.info.name} created in Brew",
                         to: mailTo,
