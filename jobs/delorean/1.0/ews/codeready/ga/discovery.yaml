@@ -40,7 +40,7 @@
           read-only: true
       - bool:
           name: 'updateLatestRHMIRelease'
-          default: true
+          default: false
           description: '[OPTIONAL] Update the latest RHMI release branch with patch releases!'
     pipeline-scm:
       script-path: jobs/delorean/jenkinsfiles/1.0/ews/discovery/ga/github/Jenkinsfile
