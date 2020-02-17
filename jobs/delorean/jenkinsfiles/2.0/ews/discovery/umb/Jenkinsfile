@@ -6,6 +6,16 @@ pipeline {
         string defaultValue: '', description: 'This will be populated by the CI trigger', name: 'CI_MESSAGE', trim: true
     }
     stages {
+        stage('Install yq') {
+            steps {
+                script {
+                    // install yq
+                    sh 'wget -O yq https://github.com/mikefarah/yq/releases/download/3.1.1/yq_linux_amd64'
+                    sh 'chmod +x ./yq'
+                    sh 'sudo cp yq /usr/bin'
+                }
+            }
+        }
 
         stage('Process UMB Message') {
             steps {
@@ -28,7 +38,7 @@ pipeline {
                 script {
                     dir("${env.WORKSPACE}/integreatly-operator"){
                         //This branch can be updated later, just using the pushed one for now
-                        sh 'git checkout INTLY-4795'
+                        sh 'git checkout image-extract'
                     } 
                 }
             }
@@ -38,7 +48,8 @@ pipeline {
             steps {
                 dir("${env.WORKSPACE}/integreatly-operator"){
                     // final Map msg = readJSON text: CI_MESSAGE
-                    sh "scripts/process-image-manifests registry-proxy.engineering.redhat.com/rh-osbs/3scale-amp2-3scale-rhel7-operator-metadata:1.11.0-3"
+                    sh "scripts/process-image-manifests registry-proxy.engineering.redhat.com/rh-osbs/3scale-amp2-3scale-rhel7-operator-metadata:1.11.0-3 3scale 3scale-operator"
+                    sh 'git status'
                 }
             }
         }
