@@ -9,12 +9,8 @@ pipeline {
 
         stage('Process UMB Message') {
             steps {
-                script{
-                    final Map msg = readJSON text: CI_MESSAGE
-                    export IMAGE_URL='${msg.info.extra.image.index.pull[1]}'
-                    export PRODUCT_NAME='${msg.info.name}'
-                }
-
+                //ToDo Process the input UMB Message (CI_MESSAGE) to extract information required by the following stages
+                echo "Process UMB Message"
             }
         }
 
@@ -22,7 +18,7 @@ pipeline {
             steps {
                 cleanWs()
                 script {
-                    sh 'git clone https://github.com/integr8ly/integreatly-operator.git'
+                    sh 'git clone https://github.com/laurafitzgerald/integreatly-operator.git'
                 }
             }
         }
@@ -32,7 +28,7 @@ pipeline {
                 script {
                     dir("${env.WORKSPACE}/integreatly-operator"){
                         //This branch can be updated later, just using the pushed one for now
-                        sh 'git checkout 3scale-next'
+                        sh 'git checkout INTLY-4795'
                     } 
                 }
             }
@@ -41,8 +37,8 @@ pipeline {
         stage('Extract and Process Manifests') {
             steps {
                 dir("${env.WORKSPACE}/integreatly-operator"){
-                    final Map msg = readJSON text: CI_MESSAGE
-                    sh "scripts/process-image-manifests ${msg.info.extra.image.index.pull[1]}"
+                    // final Map msg = readJSON text: CI_MESSAGE
+                    sh "scripts/process-image-manifests registry-proxy.engineering.redhat.com/rh-osbs/3scale-amp2-3scale-rhel7-operator-metadata:1.11.0-3"
                 }
             }
         }
@@ -89,12 +85,12 @@ pipeline {
                 final Map msg = readJSON text: CI_MESSAGE
                 String mailTo = 'cloud-services-delorean@redhat.com'
                 mail(
-                        subject: "New build of ${PRODUCT_NAME} created in Brew",
+                        subject: "New build of ${msg.info.name} created in Brew",
                         to: mailTo,
                         body: [
-                                "A brew build was created for ${PRODUCT_NAME}",
-                                "image_url: ${IMAGE_URL}",
-                                "product_name: ${PRODUCT_NAME}",
+                                "A brew build was created for ${msg.info.name}",
+                                "image_url: ${msg.info.extra.image.index.pull[1]}",
+                                "product_name: ${msg.info.name}",
                                 "jenkins_job: ${env.BUILD_URL}"
                         ].join('\n')
                 )
