@@ -18,6 +18,18 @@
           name: 'RECIPIENTS'
           default: ''
           description: "Whitespace- or comma-separated list of email addresses to which the result of this pipeline execution will be sent"
+      - string:
+          name: 'BYOC'
+          default: 'false'
+          description: 'set to true to create a BYOC cluster, also requires AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_ACCOUNT_ID'
+      - string:
+          name: 'AWS_CREDENTIALS'
+          default: ''
+          description: 'the AWS access key ID for BYOC clusters'
+      - string:
+          name: 'AWS_ACCOUNT_ID'
+          default: ''
+          description: 'the AWS account ID'
     pipeline-scm:
       script-path: jobs/integr8ly/ocp4/osd/cluster/create/Jenkinsfile
       scm:

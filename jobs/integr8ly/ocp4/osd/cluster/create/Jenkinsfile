@@ -2,6 +2,14 @@
 if (params.CLUSTER_NAME.toString().trim() == "") {
     error "CLUSTER_NAME is required to run this pipeline!"
 }
+if (params.BYOC == "true") {
+    if(params.AWS_CREDENTIALS.trim() == "") {
+        error "AWS_CREDENTIALS is required if BYOC is specified"
+    }
+    if(params.AWS_ACCOUNT_ID.trim() == "") {
+        error "AWS_ACCOUNT_ID is required if BYOC is specified"
+    }
+}
 String clusterName = CLUSTER_NAME
 String clusterInfoDirectory = "osd_clusters/" + clusterName
 String installConfigDirectory = ""
@@ -20,6 +28,7 @@ node("cirhos_rhel7") {
             
             stage("Prepare the repo to store created cluster information") {
                 dir("rhmi-jenkins") {
+                    sh "rm -rf ${clusterInfoDirectory}"
                     git branch: "master", url: "https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git"
                     def dirExists = fileExists(clusterInfoDirectory)
                     if (dirExists) {
@@ -30,16 +39,50 @@ node("cirhos_rhel7") {
             } // stage
             
             stage("Update the cluster creation template information") {
-                dir("rhmi-jenkins") {
-                    sh(
-                        returnStdout: false,
-                        script: """
-                            cp templates/cluster.json ${clusterInfoDirectory}
-                            sed -i 's/CLUSTER_NAME/${clusterName}/g' ${clusterInfoDirectory}/cluster.json
-                            echo 'Creating OpenShift 4 OSD cluster with the following configuration:'
-                            cat ${clusterInfoDirectory}/cluster.json
-                        """
-                    )
+                script {
+                    dir("rhmi-jenkins") {
+                        if(params.BYOC == "true") {
+                            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: params.AWS_CREDENTIALS, accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                                sh(
+                                    returnStdout: false,
+                                    script: """
+                                        aws iam create-access-key --user-name osdCcsAdmin > access-key.json
+                                    """
+                                )
+                                AccessKey = sh(
+                                    returnStdout: true,
+                                    script: """
+                                        cat access-key.json | jq ".AccessKey.AccessKeyId" -r
+                                    """
+                                ).trim()
+                                SecretKey = sh(
+                                    returnStdout: true,
+                                    script: """
+                                        cat access-key.json | jq ".AccessKey.SecretAccessKey" -r
+                                    """
+                                ).trim()
+                                sh(
+                                    returnStdout: false,
+                                    script: """
+                                        sleep 60
+                                        cat templates/cluster.json | jq '.name = "${clusterName}" | .byoc = true | .aws.access_key_id = "${AccessKey}" | .aws.secret_access_key = "${SecretKey}" | .aws.account_id = "${params.AWS_ACCOUNT_ID}" ' > ${clusterInfoDirectory}/cluster.json
+                                        echo 'Creating OpenShift 4 OSD cluster with the following configuration:'
+                                        cat ${clusterInfoDirectory}/cluster.json
+                                    """
+                                )
+                            }
+                        } else {
+                            sh(
+                                returnStdout: false,
+                                script: """
+                                    cp templates/cluster.json ${clusterInfoDirectory}
+                                    sed -i 's/CLUSTER_NAME/${clusterName}/g' ${clusterInfoDirectory}/cluster.json
+                                    echo 'Creating OpenShift 4 OSD cluster with the following configuration:'
+                                    cat ${clusterInfoDirectory}/cluster.json
+                                """
+                            )
+                        }
+                    }
                 }
             } // stage
 
@@ -66,7 +109,7 @@ node("cirhos_rhel7") {
                     }
                 }
             } // stage
-            
+
             stage("Begin cluster creation") {
                 rootWorkspaceDir = sh (
                     script: "pwd",
