@@ -16,7 +16,7 @@
           properties-content: |
             CLUSTER_NAME=nightly-olm
             RECIPIENTS=integreatly-qe@redhat.com
-            INTEGREATLY_OPERATOR_BRANCH=1.16.0
+            INTEGREATLY_OPERATOR_BRANCH=1.18.0
             TO_DO=provision + install + tests + destroy
             OLM_INSTALLATION=true
     pipeline-scm:
