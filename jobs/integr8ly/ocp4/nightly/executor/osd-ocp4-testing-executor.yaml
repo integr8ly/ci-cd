@@ -30,6 +30,16 @@
           name: INSTALLATION_PREFIX
           default: 'rhmi'
           description: "Value used to prefix the names of the namespaces created during RHMI installation (minus the hyphen)"
+      - string:
+          name: AWS_ACCOUNT_ID
+          description: "AWS account id"
+      - bool:
+          name: BYOC
+          default: false
+          description: "Indicates whether the cluster should have byoc features enabled"
+      - string:
+          name: AWS_CREDENTIALS
+          description: "AWS credentials"
       - choice:
           name: TO_DO
           description: "It specifies what stages of the pipeline will be executed"
