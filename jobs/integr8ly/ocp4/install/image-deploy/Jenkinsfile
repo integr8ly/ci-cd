@@ -93,18 +93,8 @@ node('cirhos_rhel7') {
 
             stage ('Create Installation CR') {
                 dir('integreatly-operator') {
-                    sh(
-                        returnStdout: false,
-                        script: """
-                            sed -i "s@SELF_SIGNED_CERTS@${selfSignedCerts}@" deploy/crds/examples/integreatly-rhmi-cr.yaml
-                            sed -i "s@INSTALLATION_NAME@${installationName}@" deploy/crds/examples/integreatly-rhmi-cr.yaml
-                            sed -i "s@INSTALLATION_TYPE@${INSTALLATION_TYPE}@" deploy/crds/examples/integreatly-rhmi-cr.yaml
-                            sed -i "s@INSTALLATION_PREFIX@${INSTALLATION_PREFIX}@" deploy/crds/examples/integreatly-rhmi-cr.yaml
-                            sed -i "s@USE_CLUSTER_STORAGE@${useClusterStorage}@" deploy/crds/examples/integreatly-rhmi-cr.yaml
-                        """
-                    )
-
-                    sh "oc create -f deploy/crds/examples/integreatly-rhmi-cr.yaml -n ${installationNamespace}"
+                    sh "oc project ${installationNamespace}"
+                    sh "make deploy/integreatly-rhmi-cr.yml SELF_SIGNED_CERTS=${selfSignedCerts} INSTALLATION_NAME=${installationName} INSTALLATION_TYPE=${INSTALLATION_TYPE} INSTALLATION_PREFIX=${INSTALLATION_PREFIX} USE_CLUSTER_STORAGE=${useClusterStorage}"
                     sleep time: 2, unit: 'MINUTES'
                 }
             } // stage
