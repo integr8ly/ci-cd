@@ -7,10 +7,13 @@ pipeline {
     parameters {
         // https://datagrepper.engineering.redhat.com/id?id=ID:messaging-devops-broker02.web.prod.ext.phx2.redhat.com-44775-1580379079663-8:893046:0:0:1&is_raw=true&size=extra-large
         string defaultValue: '', description: 'This will be populated by the CI trigger', name: 'CI_MESSAGE', trim: true
-        string defaultValue: '', description: 'The name of the product branch', name: 'productBranch'
+        string defaultValue: '', description: 'The name of the product', name: 'product'
         string defaultValue: 'delorean-ews', description: 'The base branch for the <product>-next branch', name: 'baseBranch'
     }
 
+    environment {
+        productBranch = "${product}-next"
+    }
     stages {
 
         stage('Process UMB Message') {
@@ -77,8 +80,23 @@ pipeline {
             steps {
                 script {
                     int commmitCount = sh(returnStdout: true, script: "git log origin/${baseBranch}..${productBranch} --pretty=o | wc -l").trim() as int
-                    if (commmitCount > 0) {
-                        sh 'git push origin ${productBranch} --force'
+                    def existingBranchCommitHash = sh(returnStdout: true, script: "git ls-remote origin refs/heads/${productBranch} | cut -f 1").trim()
+
+                    boolean doPush = false
+
+                    if (product != 'master') {
+                        if (existingBranchCommitHash) {
+                            doPush = true
+                        } else {
+                            doPush = commmitCount > 0
+                        }
+                    }
+                    echo "doPush = ${doPush}"
+
+                    if (doPush) {
+                        gitPushBranch(productBranch, true)
+                    } else {
+                        echo "[INFO] Branch push criteria not met for ${productBranch}"
                     }
                 }
             }
