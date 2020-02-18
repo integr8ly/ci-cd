@@ -84,7 +84,7 @@ pipeline {
 
                     boolean doPush = false
 
-                    if (product != 'master') {
+                    if (product != 'master') and (productBranch != 'master') {
                         if (existingBranchCommitHash) {
                             doPush = true
                         } else {
