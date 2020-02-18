@@ -23,9 +23,9 @@
           name: CI_MESSAGE
           description: This will be populated by the CI trigger
     - string:
-        name: productBranch
-        description: The name of the product branch
-        default: 'fuse-online-next'
+        name: product
+        description: The name of the product
+        default: 'fuse-online'
     - string:
         name: baseBranch
         description: The branch to base the product-next branch off
