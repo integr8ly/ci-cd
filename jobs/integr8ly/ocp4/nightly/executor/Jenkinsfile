@@ -126,7 +126,7 @@ def install(clusterName, clusterDomain, password) {
         string(name: 'INTEGREATLY_OPERATOR_BRANCH', value: "${INTEGREATLY_OPERATOR_BRANCH}"),
         string(name: 'INSTALLATION_PREFIX', value: "${INSTALLATION_PREFIX}"),
         string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
-        string(name: 'BYOC', value "${BYOC}")
+        string(name: 'BYOC', value: "${BYOC}")
     ]
     if (OLM_INSTALLATION.toString() == 'true') {   
         build (job: 'openshift4-rhmi-olm-install', parameters: parameters)
