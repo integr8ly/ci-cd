@@ -1,3 +1,6 @@
+#!groovy
+@Library('delorean-pipeline-library') _
+
 pipeline {
     agent any
 
@@ -55,8 +58,11 @@ pipeline {
 
         stage('Process Manifest Images') {
             steps {
-                //ToDo Process the manifests CSV to update release image registries for any non GA images (Generates image_mirror_mapping file)
-                echo "Process Manifest Images"
+                gitCommitWhenChanges("Updated image_mirror_mapping") { msgs ->
+                    //ToDo Process the manifests CSV to update release image registries for any non GA images (Generates image_mirror_mapping file)
+                    echo "Process Manifest Images"
+                    //sh "scripts/process-csv-imag/es manifests/integreatly-3scale/3scale-0.4.0/3scale-operator.v0.4.0.clusterserviceversion.yaml"
+                }
             }
         }
 
@@ -70,8 +76,8 @@ pipeline {
         stage('Push Branch') {
             steps {
                 script {
-                    def changes = sh(script: 'git log ${productBranch}..origin/${baseBranch} --pretty=o | wc -l', returnStdout: true)
-                    if ((changes as int) > 0) {
+                    int commmitCount = sh(returnStdout: true, script: "git log origin/${baseBranch}..${productBranch} --pretty=o | wc -l").trim() as int
+                    if (commmitCount > 0) {
                         sh 'git push origin ${productBranch} --force'
                     }
                 }
