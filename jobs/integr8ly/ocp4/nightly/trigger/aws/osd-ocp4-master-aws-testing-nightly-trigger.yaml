@@ -1,0 +1,34 @@
+---
+
+- job:
+    name: osd-ocp4-master-aws-testing-nightly-trigger
+    display-name: OpenShift 4 OSD Master AWS Nightly Testing Trigger
+    project-type: pipeline
+    description: "Nightly trigger for osd ocp4 testing using master branch and AWS resources"
+    sandbox: false
+    concurrent: false
+    triggers:
+      - timed: "H(0-10) H(4-5) * * *"
+    properties:
+      - build-discarder:
+          num-to-keep: 56
+      - inject:
+          properties-content: |
+            CLUSTER_NAME=nightly-master-aws
+            RECIPIENTS=integreatly-qe@redhat.com
+            INTEGREATLY_OPERATOR_BRANCH=master
+            TO_DO=provision + install + tests + destroy
+            INSTALLATION_PREFIX=redhat-rhmi
+            BYOC=true
+            AWS_CREDENTIALS=rhmi-clouds@redhat.com
+            AWS_ACCOUNT_ID=408612754352
+            OLM_INSTALLATION=false
+    pipeline-scm:
+      script-path: jobs/integr8ly/ocp4/nightly/trigger/Jenkinsfile
+      scm:
+        - git:
+            branches:
+              - 'master'
+            url: 'https://github.com/integr8ly/ci-cd.git'
+            skip-tag: true
+            wipe-workspace: false

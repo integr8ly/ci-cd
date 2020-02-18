@@ -17,7 +17,6 @@ String domainName = ""
 try {
     timeout(240) { ansiColor('gnome-terminal') { timestamps {
         node('cirhos_rhel7') {
-
             stage("Make sure cluster name is unique") {
                 dir("rhmi-jenkins") {
                     git branch: "master", url: "https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins.git"
@@ -111,7 +110,10 @@ try {
 def provisionCluster(clusterName) {
     build job: 'openshift4-osd-cluster-create', parameters: [
         string(name: 'CLUSTER_NAME', value: clusterName),
-        string(name: 'RECIPIENTS', value: "${RECIPIENTS}")
+        string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
+        string(name: 'BYOC', value: "${BYOC}"),
+        string(name: "AWS_CREDENTIALS", value: "${AWS_CREDENTIALS}"),
+        string(name: "AWS_ACCOUNT_ID", value: "${AWS_ACCOUNT_ID}")
     ]
     sleep time: 15, unit: 'MINUTES'
 }
@@ -123,7 +125,8 @@ def install(clusterName, clusterDomain, password) {
         string(name: 'ADMIN_PASSWORD', value: password),
         string(name: 'INTEGREATLY_OPERATOR_BRANCH', value: "${INTEGREATLY_OPERATOR_BRANCH}"),
         string(name: 'INSTALLATION_PREFIX', value: "${INSTALLATION_PREFIX}"),
-        string(name: 'RECIPIENTS', value: "${RECIPIENTS}")
+        string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
+        string(name: 'BYOC', value "${BYOC}")
     ]
     if (OLM_INSTALLATION.toString() == 'true') {   
         build (job: 'openshift4-rhmi-olm-install', parameters: parameters)
