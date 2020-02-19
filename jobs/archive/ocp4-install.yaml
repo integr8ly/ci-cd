@@ -241,7 +241,7 @@
                     } // stage
 
                     stage ('Verify Installation Has Finished') {
-                        String getAuthStatusCommand = "oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.authentication.phase}'"
+                        String getAuthStatusCommand = "oc get rhmi example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.authentication.phase}'"
                         expectedOcCommandOutput = getInstallationStatus(getAuthStatusCommand, clusterAPI, ADMIN_USERNAME, adminPassword)
                         while (!expectedOcCommandOutput.contains("completed")) {
                             println "Authentication stage has not completed yet"
@@ -249,7 +249,7 @@
                             expectedOcCommandOutput = getInstallationStatus(getAuthStatusCommand, clusterAPI, ADMIN_USERNAME, adminPassword)
                         }  
 
-                        String getProductsStatusCommand = "oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.products.phase}'"
+                        String getProductsStatusCommand = "oc get rhmi example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.products.phase}'"
                         expectedOcCommandOutput = getInstallationStatus(getProductsStatusCommand, clusterAPI, ADMIN_USERNAME, adminPassword)
                         while (!expectedOcCommandOutput.contains("completed")) {
                             println "Products are not installed yet"
@@ -257,7 +257,7 @@
                             expectedOcCommandOutput = getInstallationStatus(getProductsStatusCommand, clusterAPI, ADMIN_USERNAME, adminPassword)
                         }
 
-                        String getSolutionExplorerStatusCommand = "oc get Installation example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.solution-explorer.phase}'"
+                        String getSolutionExplorerStatusCommand = "oc get rhmi example-installation -n ${namespaceName} --output=json -o jsonpath='{.status.stages.solution-explorer.phase}'"
                         expectedOcCommandOutput = getInstallationStatus(getSolutionExplorerStatusCommand, clusterAPI, ADMIN_USERNAME, adminPassword)
                         while (!expectedOcCommandOutput.contains("completed")) {
                             println "Solution-explorer is not installed yet"
