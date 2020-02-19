@@ -8,6 +8,7 @@ pipeline {
         // https://datagrepper.engineering.redhat.com/id?id=ID:messaging-devops-broker02.web.prod.ext.phx2.redhat.com-44775-1580379079663-8:893046:0:0:1&is_raw=true&size=extra-large
         string defaultValue: '', description: 'This will be populated by the CI trigger', name: 'CI_MESSAGE', trim: true
         string defaultValue: '', description: 'The name of the product', name: 'product'
+        string defaultValue: '', description: 'The name of the product', name: 'productOperator'
         string defaultValue: 'delorean-ews', description: 'The base branch for the <product>-next branch', name: 'baseBranch'
     }
 
@@ -15,11 +16,14 @@ pipeline {
         productBranch = "${product}-next"
     }
     stages {
-
         stage('Process UMB Message') {
             steps {
-                //ToDo Process the input UMB Message (CI_MESSAGE) to extract information required by the following stages
-                echo "Process UMB Message"
+                script {
+                    sh "echo \"Process UMB Message\""
+                    final Map msg = readJSON text: CI_MESSAGE
+                    image = msg.info.extra.image.index.pull[1]
+                    sh "echo Image to process: ${image}"
+                }
             }
         }
 
@@ -52,27 +56,30 @@ pipeline {
             }
         }
 
-        stage('Extract and Process Manifests') {
+        stage('Extract Manifests') {
             steps {
-                //ToDo Extract the manifests from a container image and process them as required
-                echo "Extract and Process Manifests"
+                script {
+                    gitCommitWhenChanges("Added New image Manifests") { msgs ->
+                        sh "scripts/process-image-manifests ${image} ${product} ${productOperator}"
+                    }
+                }
             }
         }
 
         stage('Process Manifest Images') {
             steps {
                 gitCommitWhenChanges("Updated image_mirror_mapping") { msgs ->
-                    //ToDo Process the manifests CSV to update release image registries for any non GA images (Generates image_mirror_mapping file)
                     echo "Process Manifest Images"
-                    //sh "scripts/process-csv-imag/es manifests/integreatly-3scale/3scale-0.4.0/3scale-operator.v0.4.0.clusterserviceversion.yaml"
-                }
+                    sh "scripts/process-csv-images ${product}"                }
             }
         }
 
         stage('Mirror Images') {
             steps {
-                //ToDo Mirror any pre release images to the delorean quay.io account
-                echo "Mirror Images"
+                withCredentials([usernamePassword(credentialsId: "quay-integreatly_delorean", usernameVariable: "USERNAME", passwordVariable: "PASSWORD")]) {
+                    sh "docker login -u=\"${USERNAME}\" -p=\"${PASSWORD}\" quay.io"
+                    sh "scripts/mirror-images.sh"
+                }
             }
         }
 

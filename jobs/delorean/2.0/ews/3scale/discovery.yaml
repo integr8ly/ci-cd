@@ -27,6 +27,10 @@
           description: The name of the product
           default: '3scale'
     - string:
+          name: productOperator
+          description: The name of the product operator
+          default: '3scale-operator'
+    - string:
           name: baseBranch
           description: The branch to base the product-next branch off
           default: 'delorean-ews'
