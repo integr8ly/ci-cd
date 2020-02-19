@@ -109,7 +109,7 @@ node('cirhos_rhel7') {
                 for (int i = 0; i < stages.length; i++) {
                     int counter = 0
                     String stage = stages[i]
-                    getStageStatusCommand = "oc get Installation ${installationName} -n ${installationNamespace} --output=json -o jsonpath='{.status.stages.${stage}.phase}'"
+                    getStageStatusCommand = "oc get rhmi ${installationName} -n ${installationNamespace} --output=json -o jsonpath='{.status.stages.${stage}.phase}'"
                     expectedOcCommandOutput = getInstallationStatus(getStageStatusCommand)
                     while (!expectedOcCommandOutput.contains("completed")) {
                         println "${stage} stage has not completed yet"
