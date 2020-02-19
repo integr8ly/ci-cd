@@ -15,6 +15,9 @@ timeout(240) { ansiColor('gnome-terminal') { timestamps {
                 string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
                 string(name: 'INTEGREATLY_OPERATOR_BRANCH', value: "${INTEGREATLY_OPERATOR_BRANCH}"),
                 booleanParam(name: 'OLM_INSTALLATION', value:  Boolean.valueOf(OLM_INSTALLATION)),
+                booleanParam(name: 'BYOC', value:  Boolean.valueOf(BYOC)),
+                string(name: 'AWS_CREDENTIALS', value: "${AWS_CREDENTIALS}"),
+                string(name: 'AWS_ACCOUNT_ID', value: "${AWS_ACCOUNT_ID}"),
                 string(name: 'TO_DO', value: "${TO_DO}")
             ]).result
 
