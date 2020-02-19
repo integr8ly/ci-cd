@@ -62,9 +62,7 @@ pipeline {
         stage('Process Manifest Images') {
             steps {
                 gitCommitWhenChanges("Updated image_mirror_mapping") { msgs ->
-                    //ToDo Process the manifests CSV to update release image registries for any non GA images (Generates image_mirror_mapping file)
-                    echo "Process Manifest Images"
-                    //sh "scripts/process-csv-imag/es manifests/integreatly-3scale/3scale-0.4.0/3scale-operator.v0.4.0.clusterserviceversion.yaml"
+                    sh "scripts/process-csv-images ${product}"
                 }
             }
         }
