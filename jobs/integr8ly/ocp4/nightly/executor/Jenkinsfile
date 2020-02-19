@@ -111,7 +111,7 @@ def provisionCluster(clusterName) {
     build job: 'openshift4-osd-cluster-create', parameters: [
         string(name: 'CLUSTER_NAME', value: clusterName),
         string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
-        string(name: 'BYOC', value: "${BYOC}"),
+        booleanParam(name: 'BYOC', value:  Boolean.valueOf(BYOC)),
         string(name: "AWS_CREDENTIALS", value: "${AWS_CREDENTIALS}"),
         string(name: "AWS_ACCOUNT_ID", value: "${AWS_ACCOUNT_ID}")
     ]
@@ -126,7 +126,7 @@ def install(clusterName, clusterDomain, password) {
         string(name: 'INTEGREATLY_OPERATOR_BRANCH', value: "${INTEGREATLY_OPERATOR_BRANCH}"),
         string(name: 'INSTALLATION_PREFIX', value: "${INSTALLATION_PREFIX}"),
         string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
-        string(name: 'BYOC', value: "${BYOC}")
+        booleanParam(name: 'BYOC', value:  Boolean.valueOf(BYOC))
     ]
     if (OLM_INSTALLATION.toString() == 'true') {   
         build (job: 'openshift4-rhmi-olm-install', parameters: parameters)
@@ -167,7 +167,9 @@ def deprovisionCluster(clusterName) {
     if (buildStatus == 'SUCCESS') {
         parameters = [
             string(name: 'CLUSTER_NAME', value: clusterName),
-            string(name: 'RECIPIENTS', value: "${RECIPIENTS}")
+            string(name: 'RECIPIENTS', value: "${RECIPIENTS}"),
+            booleanParam(name: 'BYOC', value:  Boolean.valueOf(BYOC)),
+            string(name: 'NAMESPACE_PREFIX', value: "${INSTALLATION_PREFIX}-")
         ]
 
         build (job: 'openshift4-osd-cluster-deprovision', parameters: parameters)

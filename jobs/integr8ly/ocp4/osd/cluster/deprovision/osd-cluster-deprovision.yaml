@@ -19,6 +19,14 @@
           name: 'RECIPIENTS'
           default: ''
           description: "Whitespace- or comma-separated list of email addresses to which the result of this pipeline execution will be sent"
+      - bool:
+          name: 'BYOC'
+          default: false
+          description: "Whether this cluster was provisioned using BYOC or not"
+       - string:
+          name: "NAMESPACE_PREFIX"
+          default: "redhat-rhmi-"
+          description: "namespace prefix used during provision"
     pipeline-scm:
       script-path: jobs/integr8ly/ocp4/osd/cluster/deprovision/Jenkinsfile
       scm:

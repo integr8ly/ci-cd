@@ -51,9 +51,9 @@
             name: RECIPIENTS
             default: ''
             description: "Whitespace- or comma-separated list of recipient addresses"
-        - string:
+        - bool:
             name: BYOC
-            default: 'false'
+            default: false
             description: "Whether the cluster is using BYOC or not"
     pipeline-scm:
       script-path: jobs/integr8ly/ocp4/install/image-deploy/Jenkinsfile

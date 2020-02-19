@@ -14,8 +14,8 @@ String installationNamespace = "redhat-rhmi-operator"
 
 String expectedOcCommandOutput = ""
 
-//not byoc = use cluster storage
-String useClusterStorage = params.BYOC == "false" ? "true" : "false"
+//byoc = do not use cluster storage
+String useClusterStorage = params.BYOC ? "false" : "true"
 
 def err = null
 

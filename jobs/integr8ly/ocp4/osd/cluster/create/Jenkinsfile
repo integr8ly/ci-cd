@@ -2,7 +2,7 @@
 if (params.CLUSTER_NAME.toString().trim() == "") {
     error "CLUSTER_NAME is required to run this pipeline!"
 }
-if (params.BYOC == "true") {
+if (params.BYOC) {
     if(params.AWS_CREDENTIALS.trim() == "") {
         error "AWS_CREDENTIALS is required if BYOC is specified"
     }
@@ -41,7 +41,7 @@ node("cirhos_rhel7") {
             stage("Update the cluster creation template information") {
                 script {
                     dir("rhmi-jenkins") {
-                        if(params.BYOC == "true") {
+                        if(params.BYOC) {
                             withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: params.AWS_CREDENTIALS, accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                                 sh(
                                     returnStdout: false,

@@ -18,9 +18,9 @@
           name: 'RECIPIENTS'
           default: ''
           description: "Whitespace- or comma-separated list of email addresses to which the result of this pipeline execution will be sent"
-      - string:
+      - bool:
           name: 'BYOC'
-          default: 'false'
+          default: false
           description: 'set to true to create a BYOC cluster, also requires AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_ACCOUNT_ID'
       - string:
           name: 'AWS_CREDENTIALS'
