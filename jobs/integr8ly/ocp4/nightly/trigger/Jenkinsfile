@@ -5,7 +5,7 @@ timeout(240) { ansiColor('gnome-terminal') { timestamps {
             String clusterName = ""
             if ( "${CLUSTER_NAME}".toString().contains("master") ) {
                 clusterName = "master-${BUILD_NUMBER}"
-            } else if ( "${CLUSTER_NAME}".toString.contains("aws") ) {
+            } else if ( "${CLUSTER_NAME}".toString().contains("aws") ) {
                 clusterName = "aws-${BUILD_NUMBER}"
             } else {
                 clusterName = "olm-${BUILD_NUMBER}"
