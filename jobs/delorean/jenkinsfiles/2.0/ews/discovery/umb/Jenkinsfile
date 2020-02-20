@@ -61,6 +61,7 @@ pipeline {
                 script {
                     gitCommitWhenChanges("Added New image Manifests") { msgs ->
                         sh "scripts/process-image-manifests ${image} ${product} ${productOperator}"
+                        sh "git add ."
                     }
                 }
             }
@@ -91,11 +92,13 @@ pipeline {
 
                     boolean doPush = false
 
-                    if (product != 'master') and (productBranch != 'master') {
-                        if (existingBranchCommitHash) {
-                            doPush = true
-                        } else {
-                            doPush = commmitCount > 0
+                    if (product != 'master') {
+                        if (productBranch != 'master') {
+                            if (existingBranchCommitHash) {
+                                doPush = true
+                            } else {
+                                doPush = commmitCount > 0
+                            }
                         }
                     }
                     echo "doPush = ${doPush}"
