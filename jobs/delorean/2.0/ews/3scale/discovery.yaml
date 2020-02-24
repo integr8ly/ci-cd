@@ -23,7 +23,7 @@
         name: CI_MESSAGE
         description: This will be populated by the CI trigger
     - string:
-        name: product
+        name: productName
         description: The name of the product
         default: '3scale'
     - string:
@@ -31,7 +31,7 @@
         description: The name of the product operator
         default: '3scale-operator'
     - string:
-        name: baseBranch
+        name: sourceBranch
         description: The branch to base the product-next branch off
         default: 'delorean-ews'
     - string: 
