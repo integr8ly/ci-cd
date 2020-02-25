@@ -65,8 +65,12 @@
                                 } // if
                             } // stage
 
-                            stage('Run Launcher test') {
-                                buildStatus = build(job: 'launcher-tests', propagate: false, parameters: [
+                            stage('Run Launcher test') {                              
+                              withCredentials([usernamePassword(
+                                credentialsId: fh-automatron-github-credentials,
+                                passwordVariable: 'GH_PERSONAL_TOKEN',
+                                usernameVariable: 'GH_USER')]) {
+                                  buildStatus = build(job: 'launcher-tests', propagate: false, parameters: [
                                     string(name: 'REPOSITORY', value: "${REPOSITORY}"),
                                     string(name: 'BRANCH', value: "${BRANCH}"),
                                     string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
@@ -76,20 +80,23 @@
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
                                     string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
-                                    string(name: 'GH_USER', value: "${GH_USER}"),
-                                    string(name: 'GH_PERSONAL_TOKEN', value: "${GH_PERSONAL_TOKEN}"),
                                     booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
                                     booleanParam(name: 'FINAL_CHECK_ONLY', value: Boolean.valueOf("${FINAL_CHECK_ONLY}"))
-                                ]).result;
+                                  ]).result;
 
-                                println "Build finished with ${buildStatus}"
-                                if (buildStatus != 'SUCCESS') {
-                                    currentBuild.result = 'UNSTABLE'
-                                }
+                                  println "Build finished with ${buildStatus}"
+                                  if (buildStatus != 'SUCCESS') {
+                                      currentBuild.result = 'UNSTABLE'
+                                  }
+                                }                                
                             }
 
                             stage('Run Update sourcecode test') {
-                                buildStatus = build(job: 'update-sourcecode-test', propagate: false, parameters: [
+                              withCredentials([usernamePassword(
+                                credentialsId: fh-automatron-github-credentials,
+                                passwordVariable: 'GH_PERSONAL_TOKEN',
+                                usernameVariable: 'GH_USER')]) {
+                                  buildStatus = build(job: 'update-sourcecode-test', propagate: false, parameters: [
                                     string(name: 'REPOSITORY', value: "${REPOSITORY}"),
                                     string(name: 'BRANCH', value: "${BRANCH}"),
                                     string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
@@ -98,37 +105,36 @@
                                     string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
-                                    string(name: 'GH_USER', value: "${GH_USER}"),
-                                    string(name: 'GH_PERSONAL_TOKEN', value: "${GH_PERSONAL_TOKEN}"),
                                     booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}"))
-                                ]).result;
+                                  ]).result;
 
-                                println "Build finished with ${buildStatus}"
-                                if (buildStatus != 'SUCCESS') {
-                                    currentBuild.result = 'UNSTABLE'
+                                  println "Build finished with ${buildStatus}"
+                                  if (buildStatus != 'SUCCESS') {
+                                      currentBuild.result = 'UNSTABLE'
+                                  }
                                 }
                             }
 
                             stage('Run the 3scale test') {
-                                 buildStatus = build(job: '3scale-test', propagate: false, parameters: [
-                                    string(name: 'REPOSITORY', value: "${REPOSITORY}"),
-                                    string(name: 'BRANCH', value: "${BRANCH}"),
-                                    string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
-                                    string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
-                                    string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
-                                    string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
-                                    string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
-                                    string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
-                                    string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
-                                    booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
-                                    booleanParam(name: 'FINAL_CHECK_ONLY', value: Boolean.valueOf("${FINAL_CHECK_ONLY}"))
-                                ]).result;
+                              buildStatus = build(job: '3scale-test', propagate: false, parameters: [
+                                string(name: 'REPOSITORY', value: "${REPOSITORY}"),
+                                string(name: 'BRANCH', value: "${BRANCH}"),
+                                string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+                                string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
+                                string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+                                string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+                                string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
+                                string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
+                                string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
+                                booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
+                                booleanParam(name: 'FINAL_CHECK_ONLY', value: Boolean.valueOf("${FINAL_CHECK_ONLY}"))
+                            ]).result;
 
-                                println "Build finished with ${buildStatus}"
-                                if (buildStatus != 'SUCCESS') {
-                                    currentBuild.result = 'UNSTABLE'
-                                }
+                            println "Build finished with ${buildStatus}"
+                            if (buildStatus != 'SUCCESS') {
+                                currentBuild.result = 'UNSTABLE'
                             }
+                          }
                         } // node end
                     }
                 }  
