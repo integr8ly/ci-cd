@@ -1,15 +1,58 @@
 #!groovy
-import org.integr8ly.GitHubUtils
 
 @Library('delorean-pipeline-library') _
-def ghUtils = new GitHubUtils()
 
+import org.integr8ly.GitHubUtils
 import org.kohsuke.github.GitHub
 import org.kohsuke.github.GHPullRequest
 import org.kohsuke.github.GitHubBuilder
 
-def githubUserPassCredentialsID = 'githubjenkins'
+def ghUtils = new GitHubUtils()
 
+def createJiraQuery(labels) {
+  String query = "project = INTLY AND status = Open"
+
+  for (i = 0; i < labels.size(); i++) {
+    def label = labels[i].replaceAll('"', "'")
+    query = "${query} AND labels=${label}"
+  }
+
+  return query
+}
+
+String[] jiraLabelsFor(String productName, String tag, def labels = []) {
+    def defaultLabels = [
+            /"unplanned"/,
+            /"${productName}"/
+    ]
+    if('master' != tag) {
+        labels << /"${tag}"/
+    }
+    return labels + defaultLabels
+}
+
+def createJiraBody(summary, description, gitPrUrl, labels) {
+  return """{
+      "fields": {
+          "project": {
+              "id": "12321620",
+              "key": "INTLY",
+              "name": "Integreatly"
+          },
+          "summary": "${summary}",
+          "description": "${description}",
+          "labels": ${labels},
+          "issuetype": {
+              "name": "Task"
+          },
+          "priority": {
+              "id": "3",
+              "name": "Major"
+          },
+          "customfield_12310220": "${gitPrUrl}"
+      }
+  }"""
+}
 
 pipeline {
     agent any
@@ -26,6 +69,10 @@ pipeline {
 
     environment {
         productBranch = "${productName}-next"
+        githubUserPassCredentialsID = 'githubjenkins'
+        jiraCredentials = 'integreatly-jira-bot'
+        jiraUrl = "https://issues.redhat.com"
+        jiraRestApiUrl = "https://issues.redhat.com/rest/api/2"
     }
     stages {
         stage('Process UMB Message') {
@@ -34,6 +81,7 @@ pipeline {
                     sh "echo \"Process UMB Message\""
                     final Map msg = readJSON text: CI_MESSAGE
                     image = msg.info.extra.image.index.pull[1]
+                    tag = msg.info.extra.image.index.tags[0]
                     sh "echo Image to process: ${image}"
                 }
             }
@@ -164,8 +212,13 @@ pipeline {
                     if (params.dryRun) {
                         println "[DRYRUN] A JIRA ticket would be created"
                     } else {
-                        //ToDo Create a Jira linked to the pull request for this update if changes have been made
-                        echo "Create Jira"
+                      String[] labels = jiraLabelsFor("${productName}", "${tag}", [/"product-update"/])
+                      String summary = "Update of ${productName} available"
+                      String description = "Update of ${productName} is availabe to go back to branch ${sourceBranch}"
+                      String query = createJiraQuery(labels)
+                      def body = createJiraBody(summary, description, "${prUrl}", labels)
+                      def jiraID = jiraCreateIssue("${jiraCredentials}", "${jiraRestApiUrl}", query, body)
+                      println "[INFO] JIRA issue: ${jiraUrl}/browse/${jiraID}"
                     }
                 }
             }
