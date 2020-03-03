@@ -1,0 +1,178 @@
+{
+    "certificate": null,
+    "crypto": null,
+    "headers": {
+        "JMSXUserID": "msg-producer-brew",
+        "JMS_AMQP_FirstAcquirer": "false",
+        "JMS_AMQP_MESSAGE_FORMAT": "0",
+        "JMS_AMQP_NATIVE": "false",
+        "amq6100_destination": "queue://Consumer.client-datanommer.upshift-prod.VirtualTopic.eng.>",
+        "amq6100_originalDestination": "topic://VirtualTopic.eng.brew.build.complete",
+        "attribute": "state",
+        "content-length": "3460",
+        "correlation-id": "265baa83-7c04-46d9-a244-5b3195226f0f",
+        "destination": "/topic/VirtualTopic.eng.brew.build.complete",
+        "expires": "0",
+        "message-id": "ID:messaging-devops-broker01.web.prod.ext.phx2.redhat.com-38486-1575242222804-6:236893:0:0:1",
+        "name": "amq7-amq-online-1-olm-manifest-operator-container",
+        "new": "COMPLETE",
+        "old": "null",
+        "original-destination": "/topic/VirtualTopic.eng.brew.build.complete",
+        "priority": "4",
+        "release": "1",
+        "subscription": "/queue/Consumer.client-datanommer.upshift-prod.VirtualTopic.eng.>",
+        "timestamp": "0",
+        "type": "BuildStateChange",
+        "version": "1.4"
+    },
+    "i": 0,
+    "msg": {
+        "attribute": "state",
+        "info": {
+            "build_id": 1026832,
+            "cg_id": null,
+            "cg_name": null,
+            "completion_time": "2019-12-03 12:49:10",
+            "completion_ts": 1575377350.0,
+            "creation_event_id": 27674410,
+            "creation_time": "2019-12-03 12:49:11.572348",
+            "creation_ts": 1575377351.57235,
+            "epoch": null,
+            "extra": {
+                "container_koji_task_id": 25116493,
+                "image": {
+                    "autorebuild": false,
+                    "help": null,
+                    "index": {
+                        "digests": {
+                            "application/vnd.docker.distribution.manifest.list.v2+json": "sha256:f40da69eadb652048e21324be5e413d99ec07cd34cf72ca8d4048b4d4215e666"
+                        },
+                        "floating_tags": [
+                            "latest",
+                            "1.4"
+                        ],
+                        "pull": [
+                            "registry-proxy.engineering.redhat.com/rh-osbs/amq7-amq-online-1-olm-manifest-rhel7-operator@sha256:f40da69eadb652048e21324be5e413d99ec07cd34cf72ca8d4048b4d4215e666",
+                            "registry-proxy.engineering.redhat.com/rh-osbs/amq7-amq-online-1-olm-manifest-rhel7-operator:1.4-1"
+                        ],
+                        "tags": [
+                            "1.4-1"
+                        ],
+                        "unique_tags": [
+                            "amq7-amq-online-1.4-rhel-7-containers-candidate-64985-20191203124048"
+                        ]
+                    },
+                    "isolated": false,
+                    "media_types": [
+                        "application/vnd.docker.distribution.manifest.list.v2+json",
+                        "application/vnd.docker.distribution.manifest.v1+json",
+                        "application/vnd.docker.distribution.manifest.v2+json"
+                    ],
+                    "odcs": {
+                        "compose_ids": [
+                            228538
+                        ],
+                        "signing_intent": "release",
+                        "signing_intent_overridden": false
+                    },
+                    "parent_build_id": 1014106,
+                    "parent_image_builds": {
+                        "rh-osbs/ubi7:7-released": {
+                            "id": 1014106,
+                            "nvr": "ubi7-container-7.7-214"
+                        }
+                    },
+                    "parent_images": [
+                        "ubi7:7-released"
+                    ]
+                },
+                "operator_manifests": {
+                    "appregistry": {
+                        "endpoint": "https://quay.io/cnr",
+                        "registryNamespace": "rh-osbs-operators",
+                        "release": "15.0.0",
+                        "repository": "amq-online"
+                    }
+                },
+                "operator_manifests_archive": "operator_manifests.zip",
+                "submitter": "osbs",
+                "typeinfo": {
+                    "image": {
+                        "autorebuild": false,
+                        "help": null,
+                        "index": {
+                            "digests": {
+                                "application/vnd.docker.distribution.manifest.list.v2+json": "sha256:f40da69eadb652048e21324be5e413d99ec07cd34cf72ca8d4048b4d4215e666"
+                            },
+                            "floating_tags": [
+                                "latest",
+                                "1.4"
+                            ],
+                            "pull": [
+                                "registry-proxy.engineering.redhat.com/rh-osbs/amq7-amq-online-1-olm-manifest-rhel7-operator@sha256:f40da69eadb652048e21324be5e413d99ec07cd34cf72ca8d4048b4d4215e666",
+                                "registry-proxy.engineering.redhat.com/rh-osbs/amq7-amq-online-1-olm-manifest-rhel7-operator:1.4-1"
+                            ],
+                            "tags": [
+                                "1.4-1"
+                            ],
+                            "unique_tags": [
+                                "amq7-amq-online-1.4-rhel-7-containers-candidate-64985-20191203124048"
+                            ]
+                        },
+                        "isolated": false,
+                        "media_types": [
+                            "application/vnd.docker.distribution.manifest.list.v2+json",
+                            "application/vnd.docker.distribution.manifest.v1+json",
+                            "application/vnd.docker.distribution.manifest.v2+json"
+                        ],
+                        "odcs": {
+                            "compose_ids": [
+                                228538
+                            ],
+                            "signing_intent": "release",
+                            "signing_intent_overridden": false
+                        },
+                        "parent_build_id": 1014106,
+                        "parent_image_builds": {
+                            "rh-osbs/ubi7:7-released": {
+                                "id": 1014106,
+                                "nvr": "ubi7-container-7.7-214"
+                            }
+                        },
+                        "parent_images": [
+                            "ubi7:7-released"
+                        ]
+                    },
+                    "operator-manifests": {
+                        "archive": "operator_manifests.zip"
+                    }
+                }
+            },
+            "id": 1026832,
+            "name": "amq7-amq-online-1-olm-manifest-operator-container",
+            "nvr": "amq7-amq-online-1-olm-manifest-operator-container-1.4-1",
+            "owner_id": 4250,
+            "owner_name": "contra/pipeline",
+            "package_id": 73640,
+            "package_name": "amq7-amq-online-1-olm-manifest-operator-container",
+            "release": "1",
+            "source": "git://pkgs.devel.redhat.com/containers/amq7-amq-online-1-olm-manifest#8035275b470af48827e45de3dca3a04055cb2903",
+            "start_time": "2019-12-03 12:41:32",
+            "start_ts": 1575376892.0,
+            "state": 1,
+            "task_id": null,
+            "version": "1.4",
+            "volume_id": 0,
+            "volume_name": "DEFAULT"
+        },
+        "new": 1,
+        "old": null
+    },
+    "msg_id": "ID:messaging-devops-broker01.web.prod.ext.phx2.redhat.com-38486-1575242222804-6:236893:0:0:1",
+    "signature": null,
+    "source_name": "datanommer",
+    "source_version": "0.9.1",
+    "timestamp": 1575377354.0,
+    "topic": "/topic/VirtualTopic.eng.brew.build.complete",
+    "username": null
+}

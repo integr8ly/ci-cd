@@ -27,10 +27,6 @@
         description: The name of the product
         default: '3scale'
     - string:
-        name: productOperator
-        description: The name of the product operator
-        default: '3scale-operator'
-    - string:
         name: sourceBranch
         description: The branch to base the product-next branch off
         default: 'delorean-ews'
@@ -42,6 +38,10 @@
         name: 'dryRun'
         default: false
         description: '[OPTIONAL] Dry run, disables steps which impact external systems!'
+    - bool:
+        name: 'createJIRA'
+        default: false
+        description: '[OPTIONAL] Controls the creation of a JIRA. It is disabled by default for now!'
 
     pipeline-scm:
       script-path: jobs/delorean/jenkinsfiles/2.0/ews/discovery/umb/Jenkinsfile
