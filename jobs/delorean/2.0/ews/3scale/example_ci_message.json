@@ -1,116 +1,123 @@
 {
+  "attribute": "state",
   "info": {
+    "build_id": 1126185,
     "cg_id": 1,
-    "package_name": "3scale-operator-metadata-container",
+    "cg_name": "atomic-reactor",
+    "completion_time": "2020-03-06 12:08:58.006198",
+    "completion_ts": 1583496538.0062,
+    "creation_event_id": 29956211,
+    "creation_time": "2020-03-06 12:06:02.270444",
+    "creation_ts": 1583496362.27044,
+    "epoch": null,
     "extra": {
-      "typeinfo": {
-        "image": {
-          "index": {
-            "unique_tags": [
-              "3scale-amp-2.8-rhel-7-candidate-90268-20200211171434"
-            ],
-            "pull": [
-              "registry-proxy.engineering.redhat.com/rh-osbs/3scale-amp2-3scale-rhel7-operator-metadata@sha256:3bf082272047c051378a5b54aa44c2ad0e3a5998326e5a97957a57bcf09061b2",
-              "registry-proxy.engineering.redhat.com/rh-osbs/3scale-amp2-3scale-rhel7-operator-metadata:1.11.0-3"
-            ],
-            "floating_tags": [
-              "latest",
-              "1.11.0"
-            ],
-            "digests": {
-              "application/vnd.docker.distribution.manifest.list.v2+json": "sha256:3bf082272047c051378a5b54aa44c2ad0e3a5998326e5a97957a57bcf09061b2"
-            },
-            "tags": [
-              "1.11.0-3"
-            ]
-          },
-          "help": null,
-          "media_types": [
-            "application/vnd.docker.distribution.manifest.list.v2+json",
-            "application/vnd.docker.distribution.manifest.v1+json",
-            "application/vnd.docker.distribution.manifest.v2+json"
-          ],
-          "autorebuild": false,
-          "isolated": false,
-          "parent_images": [
-            "scratch"
-          ],
-          "parent_image_builds": {}
-        },
-        "operator-manifests": {
-          "archive": "operator_manifests.zip"
-        }
-      },
-      "operator_manifests_archive": "operator_manifests.zip",
+      "container_koji_task_id": 27091244,
       "image": {
+        "autorebuild": false,
+        "help": null,
         "index": {
-          "unique_tags": [
-            "3scale-amp-2.8-rhel-7-candidate-90268-20200211171434"
-          ],
-          "pull": [
-            "registry-proxy.engineering.redhat.com/rh-osbs/3scale-amp2-3scale-rhel7-operator-metadata@sha256:3bf082272047c051378a5b54aa44c2ad0e3a5998326e5a97957a57bcf09061b2",
-            "registry-proxy.engineering.redhat.com/rh-osbs/3scale-amp2-3scale-rhel7-operator-metadata:1.11.0-3"
-          ],
+          "digests": {
+            "application/vnd.docker.distribution.manifest.list.v2+json": "sha256:56ad12d549c8c18e546ff029e8e9cad4021bcfd650ea53279a2df372b0ce44d0"
+          },
           "floating_tags": [
             "latest",
             "1.11.0"
           ],
-          "digests": {
-            "application/vnd.docker.distribution.manifest.list.v2+json": "sha256:3bf082272047c051378a5b54aa44c2ad0e3a5998326e5a97957a57bcf09061b2"
-          },
+          "pull": [
+            "registry-proxy.engineering.redhat.com/rh-osbs/3scale-amp2-3scale-rhel7-operator-metadata@sha256:56ad12d549c8c18e546ff029e8e9cad4021bcfd650ea53279a2df372b0ce44d0",
+            "registry-proxy.engineering.redhat.com/rh-osbs/3scale-amp2-3scale-rhel7-operator-metadata:1.11.0-26"
+          ],
           "tags": [
-            "1.11.0-3"
+            "1.11.0-26"
+          ],
+          "unique_tags": [
+            "3scale-amp-2.8-rhel-7-candidate-61747-20200306120514"
           ]
         },
-        "help": null,
+        "isolated": false,
         "media_types": [
           "application/vnd.docker.distribution.manifest.list.v2+json",
           "application/vnd.docker.distribution.manifest.v1+json",
           "application/vnd.docker.distribution.manifest.v2+json"
         ],
-        "autorebuild": false,
-        "isolated": false,
+        "parent_image_builds": {},
         "parent_images": [
           "scratch"
-        ],
-        "parent_image_builds": {}
+        ]
       },
       "operator_manifests": {
         "appregistry": {
-          "release": "11.0.0",
           "endpoint": "https://quay.io/cnr",
-          "repository": "3scale-operator",
-          "registryNamespace": "rh-osbs-operators"
+          "registryNamespace": "rh-osbs-operators",
+          "release": "34.0.0",
+          "repository": "3scale-operator"
         }
       },
+      "operator_manifests_archive": "operator_manifests.zip",
+      "osbs_build": {
+        "engine": "docker_api",
+        "kind": "container_build",
+        "subtypes": [
+          "operator_appregistry"
+        ]
+      },
       "submitter": "osbs",
-      "container_koji_task_id": 26349892
+      "typeinfo": {
+        "image": {
+          "autorebuild": false,
+          "help": null,
+          "index": {
+            "digests": {
+              "application/vnd.docker.distribution.manifest.list.v2+json": "sha256:56ad12d549c8c18e546ff029e8e9cad4021bcfd650ea53279a2df372b0ce44d0"
+            },
+            "floating_tags": [
+              "latest",
+              "1.11.0"
+            ],
+            "pull": [
+              "registry-proxy.engineering.redhat.com/rh-osbs/3scale-amp2-3scale-rhel7-operator-metadata@sha256:56ad12d549c8c18e546ff029e8e9cad4021bcfd650ea53279a2df372b0ce44d0",
+              "registry-proxy.engineering.redhat.com/rh-osbs/3scale-amp2-3scale-rhel7-operator-metadata:1.11.0-26"
+            ],
+            "tags": [
+              "1.11.0-26"
+            ],
+            "unique_tags": [
+              "3scale-amp-2.8-rhel-7-candidate-61747-20200306120514"
+            ]
+          },
+          "isolated": false,
+          "media_types": [
+            "application/vnd.docker.distribution.manifest.list.v2+json",
+            "application/vnd.docker.distribution.manifest.v1+json",
+            "application/vnd.docker.distribution.manifest.v2+json"
+          ],
+          "parent_image_builds": {},
+          "parent_images": [
+            "scratch"
+          ]
+        },
+        "operator-manifests": {
+          "archive": "operator_manifests.zip"
+        }
+      }
     },
-    "creation_time": "2020-02-11 17:15:54.440932",
-    "completion_time": "2020-02-11 17:18:45.851750",
-    "package_id": 74069,
-    "cg_name": "atomic-reactor",
-    "id": 1083355,
-    "build_id": 1083355,
-    "epoch": null,
-    "source": "git://pkgs.devel.redhat.com/containers/3scale-operator-dev-operator-metadata#00e64a636c95b76a06ff45dbf65b5dcbd1dc68ee",
-    "state": 1,
-    "version": "1.11.0",
-    "completion_ts": 1581441525.85175,
+    "id": 1126185,
+    "name": "3scale-operator-metadata-container",
+    "nvr": "3scale-operator-metadata-container-1.11.0-26",
     "owner_id": 4139,
     "owner_name": "eastizle",
-    "nvr": "3scale-operator-metadata-container-1.11.0-3",
-    "start_time": "2020-02-11 17:15:54.440932",
-    "creation_event_id": 29097929,
-    "start_ts": 1581441354.44093,
-    "volume_id": 0,
-    "creation_ts": 1581441354.44093,
-    "name": "3scale-operator-metadata-container",
+    "package_id": 74069,
+    "package_name": "3scale-operator-metadata-container",
+    "release": "26",
+    "source": "git://pkgs.devel.redhat.com/containers/3scale-operator-prod-operator-metadata#7238048366420903eeca2095b9a692064b6b4048",
+    "start_time": "2020-03-06 12:06:02.270444",
+    "start_ts": 1583496362.27044,
+    "state": 1,
     "task_id": null,
-    "volume_name": "DEFAULT",
-    "release": "3"
+    "version": "1.11.0",
+    "volume_id": 0,
+    "volume_name": "DEFAULT"
   },
-  "attribute": "state",
-  "old": 0,
-  "new": 1
+  "new": 1,
+  "old": 0
 }

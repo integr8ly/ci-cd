@@ -42,6 +42,10 @@
         name: 'createJIRA'
         default: false
         description: '[OPTIONAL] Controls the creation of a JIRA. It is disabled by default for now!'
+    - bool:
+        name: 'createPR'
+        default: false
+        description: '[OPTIONAL] Controls the creation of a Pull Request. It is disabled by default for now!'
 
     pipeline-scm:
       script-path: jobs/delorean/jenkinsfiles/2.0/ews/discovery/umb/Jenkinsfile
