@@ -15,8 +15,8 @@
 ##Teams
 - job:
     name: delorean-2-team/3scale
-    description: "3Scale Team Jobs"
-    display-name: '3Scale'
+    description: "3scale Team Jobs"
+    display-name: '3scale'
     project-type: folder
 - job:
     name: delorean-2-team/amq
@@ -42,8 +42,8 @@
 # EWS
 - job:
     name: delorean-2-ews/3scale
-    description: "3Scale EWS Jobs"
-    display-name: '3Scale'
+    description: "3scale EWS Jobs"
+    display-name: '3scale'
     project-type: folder
 
 # AMQ Online
