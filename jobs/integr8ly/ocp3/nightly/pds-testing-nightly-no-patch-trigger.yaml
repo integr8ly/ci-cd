@@ -1,6 +1,7 @@
 ---
 
 - job:
+    disabled: true
     name: pds-testing-nightly-no-patch-trigger
     project-type: pipeline
     description: "Nightly pipeline for heavy PDS testing (no patching components to master)"
