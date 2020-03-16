@@ -54,6 +54,51 @@ def createJiraBody(summary, description, gitPrUrl, labels) {
   }"""
 }
 
+String createMailBody(msgInfoName, msgInfoImage, passed, prUrl, jiraIssue){
+    def body = ""
+    body += [
+        "Hi folks,",
+        "-",
+        "We wanted to let you know that we got word of a new build of the `${msgInfoName}` image",
+        "There's some details below about it",
+        "-",
+        "The build that triggered this message: ${msgInfoImage}",
+        "The jenkins pipeline which produced this email: ${env.BUILD_URL}",
+    ].join('\n')
+    if (passed) {
+        if (prUrl) {
+            body = [
+                body,
+                "",
+                "The resulting pr can be found here: ${prUrl}"
+            ].join('\n')
+        }
+        if (jiraIssue){
+             body = [
+                body,
+                "",
+                "The resulting JIRA issue can be found here: ${jiraIssue}"
+            ].join('\n')
+        }
+    } else {
+        body = [
+            body,
+            "",
+            "Unfortunately the build DID NOT pass!!",
+            "Please check at the pipeline link above for logs."
+        ].join('\n')
+    }
+    body = [
+        body,
+        "Feel free to reach out to the delorean team about it. :)"
+    ].join('\n')
+    return body
+}
+
+String mailSubject(productName){
+    return "New build of ${productName} created in Brew"
+}
+
 pipeline {
     agent any
     environment {
@@ -211,7 +256,7 @@ pipeline {
                             String description = "Update of ${productName} is availabe to go back to branch ${sourceBranch}"
                             String query = createJiraQuery(labels)
                             def body = createJiraBody(summary, description, "${prUrl}", labels)
-                            def jiraID = jiraCreateIssue("${jiraCredentials}", "${jiraRestApiUrl}", query, body)
+                            jiraID = jiraCreateIssue("${jiraCredentials}", "${jiraRestApiUrl}", query, body)
                             println "[INFO] JIRA issue: ${jiraUrl}/browse/${jiraID}"
                         } else {
                             println "[INFO] JIRA issue creation is disabled for now."
@@ -221,20 +266,28 @@ pipeline {
             }
         }
     }
-
     post {
         always {
             script {
-                final Map msg = readJSON text: CI_MESSAGE
+                if (currentBuild.currentResult == 'FAILURE'){
+                    passed = false
+                }
+                if (currentBuild.currentResult == 'SUCCESS'){ {
+                    passed = true
+                }
+                def Map msg = readJSON text: CI_MESSAGE
+                def jiraIssue = ""
+                if (params.createJIRA){
+                    jiraIssue = "${jiraUrl}/browse/${jiraID}"
+                }
+                def pr = ""
+                if (params.createPR){
+                    pr = "${prUrl}"
+                }
                 mail(
-                        subject: "New build of ${msg.info.name} created in Brew",
-                        to: mailTo,
-                        body: [
-                                "A brew build was created for ${msg.info.name}",
-                                "image_url: ${msg.info.extra.image.index.pull[1]}",
-                                "product_name: ${msg.info.name}",
-                                "jenkins_job: ${env.BUILD_URL}"
-                        ].join('\n')
+                    subject: mailSubject("${productName}"),
+                    to: mailTo,
+                    body: createMailBody("${msg.info.name}", "${image}", passed, jiraIssue, pr)
                 )
             }
         }
