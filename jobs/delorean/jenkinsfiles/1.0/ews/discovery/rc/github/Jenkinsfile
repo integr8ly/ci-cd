@@ -7,7 +7,7 @@ import org.integr8ly.RegistryImage
 def installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
 def installationGitRef = params.installationGitRef ?: 'master'
 def githubCredentialsID = params.credentialId ?: 'githubjenkins'
-def githubSSHCredentialsID = params.sshCredentialId ?: 'jenkinsgithub'
+def githubSSHCredentialsID = params.sshCredentialId ?: 'fh-automatron-github-sshkey'
 def projectOrg = params.projectOrg
 def projectRepo = params.projectRepo
 def productName = params.productName
@@ -41,7 +41,7 @@ String getThreescalePrerelease(projectOrg, projectRepo, githubCredentialsID) {
     def latestRelease = ""
     def ghUtils = new org.integr8ly.GitHubUtils()
     def tags = ghUtils.ghGetRepoTags(projectOrg, projectRepo, githubCredentialsID,"")
-    tags = tags.findAll { tag -> tag.ref.matches(/.*(-CR).*/) }
+    tags = tags.findAll { tag -> tag.ref.matches(/.*(-ER|-CR).*/) }
     if (tags) {
         latestRelease = tags.last().ref
         latestRelease = latestRelease.minus("refs/tags/")
@@ -51,14 +51,11 @@ String getThreescalePrerelease(projectOrg, projectRepo, githubCredentialsID) {
 
 String getAmqOnlinePrerelease(projectOrg, projectRepo, githubSSHCredentialsID) {
     def amqOnlineGitUrl = "git@github.com:${projectOrg}/${projectRepo}.git"
-    def amqOnlineMasterBranch = "amq-online-1-dev"
-    def amqOnlineLatestRC = ""
-    def rcFilter = "grep 'amq-online-' | grep -v 'dev'"
+    def amqOnlineMasterBranch = "amq-online-14"
+    def amqOnlineLatestRC = "amq-online-14"
 
     dir('amq_online') {
         gitCheckoutRepo(amqOnlineGitUrl, amqOnlineMasterBranch, githubSSHCredentialsID, '.')
-        amqOnlineLatestRC = sh(returnStdout: true, script: "git for-each-ref refs/remotes/origin --format='%(refname:short)' | ${rcFilter} | sort -r | head -n 1").trim()
-        amqOnlineLatestRC = amqOnlineLatestRC.minus("origin/")
     }
 
     return amqOnlineLatestRC
