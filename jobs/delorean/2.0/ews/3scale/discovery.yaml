@@ -1,7 +1,7 @@
 ---
 - job:
     name: delorean-2-ews/3scale/discovery
-    display-name: 3Scale Discovery
+    display-name: 3scale Discovery
     description: |
       <h2>Click <a href="https://github.com/integr8ly/ci-cd/tree/master/jobs/delorean/2.0/ews/3scale">here</a> to see the job definition on GitHub!</h2>
 

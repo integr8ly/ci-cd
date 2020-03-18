@@ -16,7 +16,7 @@
           override-topic: Consumer.rh-jenkins-ci-plugin.8cfe81de-2e51-4b77-96a9-191a1a559fb1.VirtualTopic.eng.brew.build.complete
           message-checks:
             - field: '$.info.package_id'
-              value: '73640'
+              value: '74050'
 
     parameters:
     - string:
