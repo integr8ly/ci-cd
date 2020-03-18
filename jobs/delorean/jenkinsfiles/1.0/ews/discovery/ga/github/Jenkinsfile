@@ -6,7 +6,7 @@ import org.integr8ly.GitHubUtils
 String installationGitUrl = params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
 String installationGitRef = params.installationGitRef ?: 'master'
 def githubCredentialsID = params.credentialId ?: 'githubjenkins'
-def githubSSHCredentialsID = params.sshCredentialId ?: 'jenkinsgithub'
+def githubSSHCredentialsID = params.sshCredentialId ?: 'fh-automatron-github-sshkey'
 def projectOrg = params.projectOrg
 def projectRepo = params.projectRepo
 def productName = params.productName
@@ -149,7 +149,7 @@ def processInstallationBranch(body) {
     String projectRepo = config.projectRepo ?: params.projectRepo
 
     String installationGitUrl = config.installationGitUrl ?: params.installationGitUrl ?: 'git@github.com:integr8ly/installation.git'
-    String githubSSHCredentialsID = config.githubSSHCredentialsID ?: params.githubSSHCredentialsID ?: 'jenkinsgithub'
+    String githubSSHCredentialsID = config.githubSSHCredentialsID ?: params.githubSSHCredentialsID ?: 'fh-automatron-github-sshkey'
     String installationManifestFile = config.installationManifestFile ?: params.installationManifestFile ?: './inventories/group_vars/all/manifest.yaml'
     String installationUpgradeFile = config.installationUpgradeFile ?: params.installationUpgradeFile ?: 'playbooks/group_vars/all/upgrade.yml'
     String releaseTagVar = config.releaseTagVar ?: params.manifestVar ?: params.releaseTagVar
