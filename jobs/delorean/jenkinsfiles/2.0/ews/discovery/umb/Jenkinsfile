@@ -102,11 +102,14 @@ String mailSubject(productName) {
 pipeline {
     agent any
     environment {
+        PATH = "$WORKSPACE/delorean/scripts/delorean/:$PATH"
+        MANIFESTS_DIR = "$WORKSPACE/integreatly-operator/manifests"
         productBranch = "${productName}-next"
         githubUserPassCredentialsID = 'githubjenkins'
         jiraCredentials = 'integreatly-jira-bot'
         jiraUrl = "https://issues.redhat.com"
         jiraRestApiUrl = "https://issues.redhat.com/rest/api/2"
+        deloreanBranch = "master"
     }
     stages {
         stage('Process UMB Message') {
@@ -121,41 +124,50 @@ pipeline {
             }
         }
 
-        stage('Clone Operator Repo') {
+        stage('Checkout') {
             steps {
                 cleanWs()
-                git branch: '${sourceBranch}', url: 'https://github.com/integr8ly/integreatly-operator'
+                dir('integreatly-operator') {
+                    git branch: sourceBranch, url: 'https://github.com/integr8ly/integreatly-operator'
+                }
+                dir('delorean') {
+                    git branch: deloreanBranch, url: 'https://github.com/integr8ly/delorean'
+                }
             }
         }
 
         stage("Ensure Product Branch") {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'githubjenkins', passwordVariable: 'gitPassword', usernameVariable: 'gitUsername')]) {
-                    sh("""
+                dir('integreatly-operator') {
+                    withCredentials([usernamePassword(credentialsId: 'githubjenkins', passwordVariable: 'gitPassword', usernameVariable: 'gitUsername')]) {
+                        sh("""
                         git config --global user.name 'Automatron'
                         git config --global user.email 'github.eng@feedhenry.com'
                         git config --global credential.username ${gitUsername}
                         git config --global credential.helper "!echo password=${gitPassword}; echo"
                        """)
-                }
-                script {
-                    def checkout = sh(script: 'git checkout ${productBranch}', returnStatus: true)
-                    if (checkout) {
-                        sh("""
+                    }
+                    script {
+                        def checkout = sh(script: 'git checkout ${productBranch}', returnStatus: true)
+                        if (checkout) {
+                            sh("""
                             git checkout -B ${productBranch}
                            """)
+                        }
+                        sh "git rebase ${sourceBranch}"
                     }
-                    sh 'git rebase ${sourceBranch}'
                 }
             }
         }
 
         stage('Extract Manifests') {
             steps {
-                script {
-                    gitCommitWhenChanges("Added New image Manifests") { msgs ->
-                        sh "scripts/delorean/process-image-manifests ${image} ${productName}"
-                        sh "git add ."
+                dir('integreatly-operator') {
+                    script {
+                        gitCommitWhenChanges("Added New image Manifests") { msgs ->
+                            sh "process-image-manifests ${image} ${productName}"
+                            sh "git add ."
+                        }
                     }
                 }
             }
@@ -163,10 +175,12 @@ pipeline {
 
         stage('Process Manifest Images') {
             steps {
-                gitCommitWhenChanges("Updated image_mirror_mapping") { msgs ->
-                    echo "Process Manifest Images - generate image_mirror_mapping files and update CSV with new images tags"
-                    sh "scripts/delorean/process-csv-images ${productName}"
-                    sh "git add ."
+                dir('integreatly-operator') {
+                    gitCommitWhenChanges("Updated image_mirror_mapping") { msgs ->
+                        echo "Process Manifest Images - generate image_mirror_mapping files and update CSV with new images tags"
+                        sh "process-csv-images ${productName}"
+                        sh "git add ."
+                    }
                 }
             }
         }
@@ -179,7 +193,7 @@ pipeline {
                     } else {
                         withCredentials([usernamePassword(credentialsId: "quay-integreatly_delorean", usernameVariable: "USERNAME", passwordVariable: "PASSWORD")]) {
                             sh "docker login -u=\"${USERNAME}\" -p=\"${PASSWORD}\" quay.io"
-                            sh "scripts/delorean/mirror-images.sh"
+                            sh "mirror-images.sh"
                         }
                     }
                 }
@@ -188,26 +202,28 @@ pipeline {
 
         stage('Push Branch') {
             steps {
-                script {
-                    int commmitCount = sh(returnStdout: true, script: "git log origin/${sourceBranch}..${productBranch} --pretty=o | wc -l").trim() as int
-                    def existingBranchCommitHash = sh(returnStdout: true, script: "git ls-remote origin refs/heads/${productBranch} | cut -f 1").trim()
+                dir('integreatly-operator') {
+                    script {
+                        int commmitCount = sh(returnStdout: true, script: "git log origin/${sourceBranch}..${productBranch} --pretty=o | wc -l").trim() as int
+                        def existingBranchCommitHash = sh(returnStdout: true, script: "git ls-remote origin refs/heads/${productBranch} | cut -f 1").trim()
 
-                    boolean doPush = false
+                        boolean doPush = false
 
-                    if (productName != 'master') {
-                        if (productBranch != 'master') {
-                            if (existingBranchCommitHash) {
-                                doPush = true
-                            } else {
-                                doPush = commmitCount > 0
+                        if (productName != 'master') {
+                            if (productBranch != 'master') {
+                                if (existingBranchCommitHash) {
+                                    doPush = true
+                                } else {
+                                    doPush = commmitCount > 0
+                                }
                             }
                         }
-                    }
-                    echo "doPush = ${doPush}"
-                    if (doPush) {
-                        gitPushBranch(productBranch, true)
-                    } else {
-                        echo "[INFO] Branch push criteria not met for ${productBranch}"
+                        echo "doPush = ${doPush}"
+                        if (doPush) {
+                            gitPushBranch(productBranch, true)
+                        } else {
+                            echo "[INFO] Branch push criteria not met for ${productBranch}"
+                        }
                     }
                 }
             }
