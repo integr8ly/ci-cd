@@ -99,6 +99,9 @@ String mailSubject(productName) {
     return "New build of ${productName} created in Brew"
 }
 
+String jiraUrl
+String prUrl
+
 pipeline {
     agent any
     environment {
@@ -107,7 +110,7 @@ pipeline {
         productBranch = "${productName}-next"
         githubUserPassCredentialsID = 'githubjenkins'
         jiraCredentials = 'integreatly-jira-bot'
-        jiraUrl = "https://issues.redhat.com"
+        jiraHost = "https://issues.redhat.com"
         jiraRestApiUrl = "https://issues.redhat.com/rest/api/2"
         deloreanBranch = "master"
     }
@@ -232,14 +235,14 @@ pipeline {
         stage('Create Pull Request') {
             steps {
                 script {
-                    String title = "[WIP] ${productName} update"
-                    String body = "Created automatically by jenkins"
-                    String[] defaultPRLabels = ["do-not-merge/work-in-progress"]
-                    if (params.dryRun) {
-                        println "Finds an open pull request with the base branch '${sourceBranch}'. If this does not exist, it creates a new pull request with the following details:\ntitle:'${title}',\nbody '${body}',\nlabels:${defaultPRLabels}"
-                        prUrl = "https://github.com/example-pr-url"
-                    } else {
-                        if (params.createPR) {
+                    if (params.createPR) {
+                        String title = "[WIP] ${productName} update"
+                        String body = "Created automatically by jenkins"
+                        String[] defaultPRLabels = ["do-not-merge/work-in-progress"]
+                        if (params.dryRun) {
+                            println "Finds an open pull request with the base branch '${sourceBranch}'. If this does not exist, it creates a new pull request with the following details:\ntitle:'${title}',\nbody '${body}',\nlabels:${defaultPRLabels}"
+                            prUrl = "https://github.com/example-pr-url"
+                        } else {
                             println("Creating PR for ${productName}")
                             withCredentials([usernamePassword(
                                     credentialsId: githubUserPassCredentialsID,
@@ -250,11 +253,11 @@ pipeline {
                                         .build()
                                 GHPullRequest pr = ghUtils.ghFindOrCreatePullRequest(gitHub.getRepository("integr8ly/integreatly-operator"), "integr8ly:${productBranch}", "${sourceBranch}", title, body, defaultPRLabels)
                                 prUrl = pr.getHtmlUrl()
-                                println "Component Update PR = ${prUrl}"
                             }
-                        } else {
-                            println "[INFO] Pull Request creation is disabled for now."
                         }
+                        println "[INFO] GitHub PR: ${prUrl}"
+                    } else {
+                        println "[INFO] Pull Request creation is disabled for now."
                     }
                 }
             }
@@ -263,20 +266,22 @@ pipeline {
         stage('Create Jira') {
             steps {
                 script {
-                    if (params.dryRun) {
-                        println "[DRYRUN] A JIRA ticket would be created"
-                    } else {
-                        if (params.createJIRA) {
+                    if (params.createJIRA) {
+                        if (params.dryRun) {
+                            println "[DRYRUN] A JIRA ticket would be created"
+                            jiraUrl = "${jiraHost}/browse/example-jira-url"
+                        } else {
                             String[] labels = jiraLabelsFor("${productName}", "${tag}", [/"product-update"/])
                             String summary = "Update of ${productName} available"
                             String description = "Update of ${productName} is availabe to go back to branch ${sourceBranch}"
                             String query = createJiraQuery(labels)
                             def body = createJiraBody(summary, description, "${prUrl}", labels)
                             jiraID = jiraCreateIssue("${jiraCredentials}", "${jiraRestApiUrl}", query, body)
-                            println "[INFO] JIRA issue: ${jiraUrl}/browse/${jiraID}"
-                        } else {
-                            println "[INFO] JIRA issue creation is disabled for now."
+                            jiraUrl = "${jiraHost}/browse/${jiraID}"
                         }
+                        println "[INFO] JIRA issue: ${jiraUrl}"
+                    } else {
+                        println "[INFO] JIRA issue creation is disabled for now."
                     }
                 }
             }
@@ -285,26 +290,20 @@ pipeline {
     post {
         always {
             script {
-                if (currentBuild.currentResult == 'FAILURE') {
-                    passed = false
-                }
-                if (currentBuild.currentResult == 'SUCCESS') {
-                    passed = true
-                }
+                boolean passed = currentBuild.currentResult == 'SUCCESS'
                 Map msg = readJSON text: CI_MESSAGE
-                def jiraIssue = ""
-                if (params.createJIRA) {
-                    jiraIssue = "${jiraUrl}/browse/${jiraID}"
+                String body = createMailBody("${msg.info.name}", "${image}", passed, prUrl, jiraUrl)
+                String subject = mailSubject("${productName}")
+                if (params.dryRun) {
+                    println "[DRYRUN] Would send a mail to '${mailTo}' with subject '${subject}' and body:"
+                    print body
+                } else {
+                    mail(
+                            subject: subject,
+                            to: mailTo,
+                            body: body
+                    )
                 }
-                def pr = ""
-                if (params.createPR) {
-                    pr = "${prUrl}"
-                }
-                mail(
-                        subject: mailSubject("${productName}"),
-                        to: mailTo,
-                        body: createMailBody("${msg.info.name}", "${image}", passed, jiraIssue, pr)
-                )
             }
         }
     }
