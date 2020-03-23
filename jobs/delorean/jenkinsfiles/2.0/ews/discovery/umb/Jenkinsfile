@@ -54,48 +54,48 @@ def createJiraBody(summary, description, gitPrUrl, labels) {
   }"""
 }
 
-String createMailBody(msgInfoName, msgInfoImage, passed, prUrl, jiraIssue){
+String createMailBody(msgInfoName, msgInfoImage, passed, prUrl, jiraIssue) {
     def body = ""
     body += [
-        "Hi folks,",
-        "-",
-        "We wanted to let you know that we got word of a new build of the `${msgInfoName}` image",
-        "There's some details below about it",
-        "-",
-        "The build that triggered this message: ${msgInfoImage}",
-        "The jenkins pipeline which produced this email: ${env.BUILD_URL}",
+            "Hi folks,",
+            "-",
+            "We wanted to let you know that we got word of a new build of the `${msgInfoName}` image",
+            "There's some details below about it",
+            "-",
+            "The build that triggered this message: ${msgInfoImage}",
+            "The jenkins pipeline which produced this email: ${env.BUILD_URL}",
     ].join('\n')
     if (passed) {
         if (prUrl) {
             body = [
-                body,
-                "",
-                "The resulting pr can be found here: ${prUrl}"
+                    body,
+                    "",
+                    "The resulting pr can be found here: ${prUrl}"
             ].join('\n')
         }
-        if (jiraIssue){
-             body = [
-                body,
-                "",
-                "The resulting JIRA issue can be found here: ${jiraIssue}"
+        if (jiraIssue) {
+            body = [
+                    body,
+                    "",
+                    "The resulting JIRA issue can be found here: ${jiraIssue}"
             ].join('\n')
         }
     } else {
         body = [
-            body,
-            "",
-            "Unfortunately the build DID NOT pass!!",
-            "Please check at the pipeline link above for logs."
+                body,
+                "",
+                "Unfortunately the build DID NOT pass!!",
+                "Please check at the pipeline link above for logs."
         ].join('\n')
     }
     body = [
-        body,
-        "Feel free to reach out to the delorean team about it. :)"
+            body,
+            "Feel free to reach out to the delorean team about it. :)"
     ].join('\n')
     return body
 }
 
-String mailSubject(productName){
+String mailSubject(productName) {
     return "New build of ${productName} created in Brew"
 }
 
@@ -269,25 +269,25 @@ pipeline {
     post {
         always {
             script {
-                if (currentBuild.currentResult == 'FAILURE'){
+                if (currentBuild.currentResult == 'FAILURE') {
                     passed = false
                 }
-                if (currentBuild.currentResult == 'SUCCESS'){ {
+                if (currentBuild.currentResult == 'SUCCESS') {
                     passed = true
                 }
-                def Map msg = readJSON text: CI_MESSAGE
+                Map msg = readJSON text: CI_MESSAGE
                 def jiraIssue = ""
-                if (params.createJIRA){
+                if (params.createJIRA) {
                     jiraIssue = "${jiraUrl}/browse/${jiraID}"
                 }
                 def pr = ""
-                if (params.createPR){
+                if (params.createPR) {
                     pr = "${prUrl}"
                 }
                 mail(
-                    subject: mailSubject("${productName}"),
-                    to: mailTo,
-                    body: createMailBody("${msg.info.name}", "${image}", passed, jiraIssue, pr)
+                        subject: mailSubject("${productName}"),
+                        to: mailTo,
+                        body: createMailBody("${msg.info.name}", "${image}", passed, jiraIssue, pr)
                 )
             }
         }
