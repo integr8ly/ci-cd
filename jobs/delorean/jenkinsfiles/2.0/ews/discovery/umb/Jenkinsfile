@@ -54,59 +54,65 @@ def createJiraBody(summary, description, gitPrUrl, labels) {
   }"""
 }
 
-String createMailBody(msgInfoName, msgInfoImage, passed, prUrl, jiraIssue){
+String createMailBody(msgInfoName, msgInfoImage, passed, prUrl, jiraIssue) {
     def body = ""
     body += [
-        "Hi folks,",
-        "-",
-        "We wanted to let you know that we got word of a new build of the `${msgInfoName}` image",
-        "There's some details below about it",
-        "-",
-        "The build that triggered this message: ${msgInfoImage}",
-        "The jenkins pipeline which produced this email: ${env.BUILD_URL}",
+            "Hi folks,",
+            "-",
+            "We wanted to let you know that we got word of a new build of the `${msgInfoName}` image",
+            "There's some details below about it",
+            "-",
+            "The build that triggered this message: ${msgInfoImage}",
+            "The jenkins pipeline which produced this email: ${env.BUILD_URL}",
     ].join('\n')
     if (passed) {
         if (prUrl) {
             body = [
-                body,
-                "",
-                "The resulting pr can be found here: ${prUrl}"
+                    body,
+                    "",
+                    "The resulting pr can be found here: ${prUrl}"
             ].join('\n')
         }
-        if (jiraIssue){
-             body = [
-                body,
-                "",
-                "The resulting JIRA issue can be found here: ${jiraIssue}"
+        if (jiraIssue) {
+            body = [
+                    body,
+                    "",
+                    "The resulting JIRA issue can be found here: ${jiraIssue}"
             ].join('\n')
         }
     } else {
         body = [
-            body,
-            "",
-            "Unfortunately the build DID NOT pass!!",
-            "Please check at the pipeline link above for logs."
+                body,
+                "",
+                "Unfortunately the build DID NOT pass!!",
+                "Please check at the pipeline link above for logs."
         ].join('\n')
     }
     body = [
-        body,
-        "Feel free to reach out to the delorean team about it. :)"
+            body,
+            "Feel free to reach out to the delorean team about it. :)"
     ].join('\n')
     return body
 }
 
-String mailSubject(productName){
+String mailSubject(productName) {
     return "New build of ${productName} created in Brew"
 }
+
+String jiraUrl
+String prUrl
 
 pipeline {
     agent any
     environment {
+        PATH = "$WORKSPACE/delorean/scripts/delorean/:$PATH"
+        MANIFESTS_DIR = "$WORKSPACE/integreatly-operator/manifests"
         productBranch = "${productName}-next"
         githubUserPassCredentialsID = 'githubjenkins'
         jiraCredentials = 'integreatly-jira-bot'
-        jiraUrl = "https://issues.redhat.com"
+        jiraHost = "https://issues.redhat.com"
         jiraRestApiUrl = "https://issues.redhat.com/rest/api/2"
+        deloreanBranch = "master"
     }
     stages {
         stage('Process UMB Message') {
@@ -121,41 +127,50 @@ pipeline {
             }
         }
 
-        stage('Clone Operator Repo') {
+        stage('Checkout') {
             steps {
                 cleanWs()
-                git branch: '${sourceBranch}', url: 'https://github.com/integr8ly/integreatly-operator'
+                dir('integreatly-operator') {
+                    git branch: sourceBranch, url: 'https://github.com/integr8ly/integreatly-operator'
+                }
+                dir('delorean') {
+                    git branch: deloreanBranch, url: 'https://github.com/integr8ly/delorean'
+                }
             }
         }
 
         stage("Ensure Product Branch") {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'githubjenkins', passwordVariable: 'gitPassword', usernameVariable: 'gitUsername')]) {
-                    sh("""
+                dir('integreatly-operator') {
+                    withCredentials([usernamePassword(credentialsId: 'githubjenkins', passwordVariable: 'gitPassword', usernameVariable: 'gitUsername')]) {
+                        sh("""
                         git config --global user.name 'Automatron'
                         git config --global user.email 'github.eng@feedhenry.com'
                         git config --global credential.username ${gitUsername}
                         git config --global credential.helper "!echo password=${gitPassword}; echo"
                        """)
-                }
-                script {
-                    def checkout = sh(script: 'git checkout ${productBranch}', returnStatus: true)
-                    if (checkout) {
-                        sh("""
+                    }
+                    script {
+                        def checkout = sh(script: 'git checkout ${productBranch}', returnStatus: true)
+                        if (checkout) {
+                            sh("""
                             git checkout -B ${productBranch}
                            """)
+                        }
+                        sh "git rebase ${sourceBranch}"
                     }
-                    sh 'git rebase ${sourceBranch}'
                 }
             }
         }
 
         stage('Extract Manifests') {
             steps {
-                script {
-                    gitCommitWhenChanges("Added New image Manifests") { msgs ->
-                        sh "scripts/delorean/process-image-manifests ${image} ${productName}"
-                        sh "git add ."
+                dir('integreatly-operator') {
+                    script {
+                        gitCommitWhenChanges("Added New image Manifests") { msgs ->
+                            sh "process-image-manifests ${image} ${productName}"
+                            sh "git add ."
+                        }
                     }
                 }
             }
@@ -163,10 +178,12 @@ pipeline {
 
         stage('Process Manifest Images') {
             steps {
-                gitCommitWhenChanges("Updated image_mirror_mapping") { msgs ->
-                    echo "Process Manifest Images - generate image_mirror_mapping files and update CSV with new images tags"
-                    sh "scripts/delorean/process-csv-images ${productName}"
-                    sh "git add ."
+                dir('integreatly-operator') {
+                    gitCommitWhenChanges("Updated image_mirror_mapping") { msgs ->
+                        echo "Process Manifest Images - generate image_mirror_mapping files and update CSV with new images tags"
+                        sh "process-csv-images ${productName}"
+                        sh "git add ."
+                    }
                 }
             }
         }
@@ -179,7 +196,7 @@ pipeline {
                     } else {
                         withCredentials([usernamePassword(credentialsId: "quay-integreatly_delorean", usernameVariable: "USERNAME", passwordVariable: "PASSWORD")]) {
                             sh "docker login -u=\"${USERNAME}\" -p=\"${PASSWORD}\" quay.io"
-                            sh "scripts/delorean/mirror-images.sh"
+                            sh "mirror-images.sh"
                         }
                     }
                 }
@@ -188,26 +205,28 @@ pipeline {
 
         stage('Push Branch') {
             steps {
-                script {
-                    int commmitCount = sh(returnStdout: true, script: "git log origin/${sourceBranch}..${productBranch} --pretty=o | wc -l").trim() as int
-                    def existingBranchCommitHash = sh(returnStdout: true, script: "git ls-remote origin refs/heads/${productBranch} | cut -f 1").trim()
+                dir('integreatly-operator') {
+                    script {
+                        int commmitCount = sh(returnStdout: true, script: "git log origin/${sourceBranch}..${productBranch} --pretty=o | wc -l").trim() as int
+                        def existingBranchCommitHash = sh(returnStdout: true, script: "git ls-remote origin refs/heads/${productBranch} | cut -f 1").trim()
 
-                    boolean doPush = false
+                        boolean doPush = false
 
-                    if (productName != 'master') {
-                        if (productBranch != 'master') {
-                            if (existingBranchCommitHash) {
-                                doPush = true
-                            } else {
-                                doPush = commmitCount > 0
+                        if (productName != 'master') {
+                            if (productBranch != 'master') {
+                                if (existingBranchCommitHash) {
+                                    doPush = true
+                                } else {
+                                    doPush = commmitCount > 0
+                                }
                             }
                         }
-                    }
-                    echo "doPush = ${doPush}"
-                    if (doPush) {
-                        gitPushBranch(productBranch, true)
-                    } else {
-                        echo "[INFO] Branch push criteria not met for ${productBranch}"
+                        echo "doPush = ${doPush}"
+                        if (doPush) {
+                            gitPushBranch(productBranch, true)
+                        } else {
+                            echo "[INFO] Branch push criteria not met for ${productBranch}"
+                        }
                     }
                 }
             }
@@ -216,14 +235,14 @@ pipeline {
         stage('Create Pull Request') {
             steps {
                 script {
-                    String title = "[WIP] ${productName} update"
-                    String body = "Created automatically by jenkins"
-                    String[] defaultPRLabels = ["do-not-merge/work-in-progress"]
-                    if (params.dryRun) {
-                        println "Finds an open pull request with the base branch '${sourceBranch}'. If this does not exist, it creates a new pull request with the following details:\ntitle:'${title}',\nbody '${body}',\nlabels:${defaultPRLabels}"
-                        prUrl = "https://github.com/example-pr-url"
-                    } else {
-                        if (params.createPR) {
+                    if (params.createPR) {
+                        String title = "[WIP] ${productName} update"
+                        String body = "Created automatically by jenkins"
+                        String[] defaultPRLabels = ["do-not-merge/work-in-progress"]
+                        if (params.dryRun) {
+                            println "Finds an open pull request with the base branch '${sourceBranch}'. If this does not exist, it creates a new pull request with the following details:\ntitle:'${title}',\nbody '${body}',\nlabels:${defaultPRLabels}"
+                            prUrl = "https://github.com/example-pr-url"
+                        } else {
                             println("Creating PR for ${productName}")
                             withCredentials([usernamePassword(
                                     credentialsId: githubUserPassCredentialsID,
@@ -234,11 +253,11 @@ pipeline {
                                         .build()
                                 GHPullRequest pr = ghUtils.ghFindOrCreatePullRequest(gitHub.getRepository("integr8ly/integreatly-operator"), "integr8ly:${productBranch}", "${sourceBranch}", title, body, defaultPRLabels)
                                 prUrl = pr.getHtmlUrl()
-                                println "Component Update PR = ${prUrl}"
                             }
-                        } else {
-                            println "[INFO] Pull Request creation is disabled for now."
                         }
+                        println "[INFO] GitHub PR: ${prUrl}"
+                    } else {
+                        println "[INFO] Pull Request creation is disabled for now."
                     }
                 }
             }
@@ -247,20 +266,22 @@ pipeline {
         stage('Create Jira') {
             steps {
                 script {
-                    if (params.dryRun) {
-                        println "[DRYRUN] A JIRA ticket would be created"
-                    } else {
-                        if (params.createJIRA) {
+                    if (params.createJIRA) {
+                        if (params.dryRun) {
+                            println "[DRYRUN] A JIRA ticket would be created"
+                            jiraUrl = "${jiraHost}/browse/example-jira-url"
+                        } else {
                             String[] labels = jiraLabelsFor("${productName}", "${tag}", [/"product-update"/])
                             String summary = "Update of ${productName} available"
                             String description = "Update of ${productName} is availabe to go back to branch ${sourceBranch}"
                             String query = createJiraQuery(labels)
                             def body = createJiraBody(summary, description, "${prUrl}", labels)
                             jiraID = jiraCreateIssue("${jiraCredentials}", "${jiraRestApiUrl}", query, body)
-                            println "[INFO] JIRA issue: ${jiraUrl}/browse/${jiraID}"
-                        } else {
-                            println "[INFO] JIRA issue creation is disabled for now."
+                            jiraUrl = "${jiraHost}/browse/${jiraID}"
                         }
+                        println "[INFO] JIRA issue: ${jiraUrl}"
+                    } else {
+                        println "[INFO] JIRA issue creation is disabled for now."
                     }
                 }
             }
@@ -269,26 +290,20 @@ pipeline {
     post {
         always {
             script {
-                if (currentBuild.currentResult == 'FAILURE'){
-                    passed = false
+                boolean passed = currentBuild.currentResult == 'SUCCESS'
+                Map msg = readJSON text: CI_MESSAGE
+                String body = createMailBody("${msg.info.name}", "${image}", passed, prUrl, jiraUrl)
+                String subject = mailSubject("${productName}")
+                if (params.dryRun) {
+                    println "[DRYRUN] Would send a mail to '${mailTo}' with subject '${subject}' and body:"
+                    print body
+                } else {
+                    mail(
+                            subject: subject,
+                            to: mailTo,
+                            body: body
+                    )
                 }
-                if (currentBuild.currentResult == 'SUCCESS'){ {
-                    passed = true
-                }
-                def Map msg = readJSON text: CI_MESSAGE
-                def jiraIssue = ""
-                if (params.createJIRA){
-                    jiraIssue = "${jiraUrl}/browse/${jiraID}"
-                }
-                def pr = ""
-                if (params.createPR){
-                    pr = "${prUrl}"
-                }
-                mail(
-                    subject: mailSubject("${productName}"),
-                    to: mailTo,
-                    body: createMailBody("${msg.info.name}", "${image}", passed, jiraIssue, pr)
-                )
             }
         }
     }
