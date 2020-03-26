@@ -122,6 +122,7 @@ pipeline {
                     final Map msg = readJSON text: CI_MESSAGE
                     image = msg.info.extra.image.index.pull[1]
                     tag = msg.info.extra.image.index.tags[0]
+                    source = msg.info.source
                     sh "echo Image to process: ${image}"
                 }
             }
@@ -167,10 +168,8 @@ pipeline {
             steps {
                 dir('integreatly-operator') {
                     script {
-                        gitCommitWhenChanges("Added New image Manifests") { msgs ->
-                            sh "process-image-manifests ${image} ${productName}"
-                            sh "git add ."
-                        }
+                        sh "process-image-manifests ${image} ${productName}"
+                        sh "git add ."
                     }
                 }
             }
@@ -184,11 +183,9 @@ pipeline {
             }
             steps {
                 dir('integreatly-operator') {
-                    gitCommitWhenChanges("Updated image_mirror_mapping") { msgs ->
-                        echo "Process Manifest Images - generate image_mirror_mapping files and update CSV with new images tags"
-                        sh "process-csv-images ${productName}"
-                        sh "git add ."
-                    }
+                    echo "Process Manifest Images - generate image_mirror_mapping files and update CSV with new images tags"
+                    sh "process-csv-images ${productName}"
+                    sh "git add ."
                 }
             }
         }
@@ -212,6 +209,12 @@ pipeline {
             steps {
                 dir('integreatly-operator') {
                     script {
+                        String productVersion = sh(script: ". csv_helper && get_current_version ${productName}", returnStdout: true ).trim()
+                        gitCommitWhenChanges("Update ${productName} manifests (${productVersion})") { msgs ->
+                            msgs << "Image: ${image}"
+                            msgs << "Image tag: ${tag}"
+                            msgs << "Image source: ${source}"
+                        }
                         int commmitCount = sh(returnStdout: true, script: "git log origin/${sourceBranch}..${productBranch} --pretty=o | wc -l").trim() as int
                         def existingBranchCommitHash = sh(returnStdout: true, script: "git ls-remote origin refs/heads/${productBranch} | cut -f 1").trim()
 
