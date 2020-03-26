@@ -101,13 +101,13 @@ String mailSubject(productName) {
 
 String jiraUrl
 String prUrl
+String productBranch = isGA ? "${productName}-next-ga" : "${productName}-next"
 
 pipeline {
     agent any
     environment {
         PATH = "$WORKSPACE/delorean/scripts/delorean/:$PATH"
         MANIFESTS_DIR = "$WORKSPACE/integreatly-operator/manifests"
-        productBranch = "${productName}-next"
         githubUserPassCredentialsID = 'githubjenkins'
         jiraCredentials = 'integreatly-jira-bot'
         jiraHost = "https://issues.redhat.com"
@@ -151,7 +151,7 @@ pipeline {
                        """)
                     }
                     script {
-                        def checkout = sh(script: 'git checkout ${productBranch}', returnStatus: true)
+                        def checkout = sh(script: "git checkout ${productBranch}", returnStatus: true)
                         if (checkout) {
                             sh("""
                             git checkout -B ${productBranch}
@@ -177,6 +177,11 @@ pipeline {
         }
 
         stage('Process Manifest Images') {
+            when {
+                expression {
+                    return !isGA
+                }
+            }
             steps {
                 dir('integreatly-operator') {
                     gitCommitWhenChanges("Updated image_mirror_mapping") { msgs ->
