@@ -101,7 +101,7 @@ String mailSubject(productName) {
 
 String jiraUrl
 String prUrl
-String productBranch = isGA ? "${productName}-next-ga" : "${productName}-next"
+def productBranch = params.isGA ? "${productName}-next-ga" : "${productName}-next"
 
 pipeline {
     agent any
@@ -179,7 +179,7 @@ pipeline {
         stage('Process Manifest Images') {
             when {
                 expression {
-                    return !isGA
+                    return !params.isGA
                 }
             }
             steps {
