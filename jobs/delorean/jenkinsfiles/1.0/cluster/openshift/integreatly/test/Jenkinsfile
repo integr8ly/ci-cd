@@ -102,6 +102,13 @@ pipeline {
       } 
     }
 
+    stage('Sleep for 5 minutes after installation') {
+      steps {
+        echo "[INFO] Waiting 5 minutes after installation before running tests"
+        sleep time: 5, unit: 'MINUTES'
+      } 
+    }
+
     stage('Test Integreatly') {
       steps {
         echo "[INFO] Running Tests on Integreatly"
