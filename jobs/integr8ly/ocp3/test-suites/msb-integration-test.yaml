@@ -48,7 +48,7 @@
                 testOptions.awsAccountName = 'mwcloudservices.AWS'
                 testOptions.awsRegion = 'eu-west-2'
                 testOptions.clusterName = clusterName
-                testOptions.domainName = 'skunkhenry.com'
+                testOptions.domainName = 'tower.cloudservices.rhmw.io'
                 testOptions.gitUrl = params.installationGitUrl
                 testOptions.gitBranch = params.installationGitBranch
                 testOptions.openshiftMasterUrl = "https://${clusterName}.${testOptions.domainName}"

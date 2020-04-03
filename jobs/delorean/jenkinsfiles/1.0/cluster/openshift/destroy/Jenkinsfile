@@ -11,7 +11,7 @@ def verifyDeprovisionOptions(deprovisionOptions) {
       string(defaultValue: (deprovisionOptions.clusterName ?: ''), description: 'Cluster Name', name: 'clusterName'),
       choiceAWSRegion,
       choiceAWSAccountName,
-      string(defaultValue: (deprovisionOptions.clusterDomainName ?: 'skunkhenry.com'), description: 'Cluster Domain Name', name: 'clusterDomainName'),
+      string(defaultValue: (deprovisionOptions.clusterDomainName ?: 'tower.cloudservices.rhmw.io'), description: 'Cluster Domain Name', name: 'clusterDomainName'),
     ]
 
     deprovisionOptions.clusterName = userInput.clusterName
