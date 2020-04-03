@@ -60,7 +60,7 @@ pipeline {
           testOptions.awsAccountName = 'fheng.AWS'
           testOptions.awsRegion = 'eu-west-2'
           testOptions.clusterName = params.clusterName ? params.clusterName : params.installationGitBranch
-          testOptions.domainName = 'skunkhenry.com'
+          testOptions.domainName = 'tower.cloudservices.rhmw.io'
           testOptions.gitUrl = params.installationGitUrl
           testOptions.gitBranch = params.installationGitBranch
           testOptions.openshiftMasterUrl = "https://${testOptions.clusterName}.${testOptions.domainName}"
@@ -126,11 +126,11 @@ pipeline {
             [$class: 'StringParameterValue', name: 'CUSTOMER_ADMIN_PASSWORD', value: 'Password1'],
             [$class: 'StringParameterValue', name: 'TIMEOUT_THRESHOLD', value: '2'],
             [$class: 'StringParameterValue', name: 'NAMESPACE_PREFIX', value: 'openshift-'],
-            [$class: 'StringParameterValue', name: 'WEBAPP_URL', value: "https://tutorial-web-app-openshift-webapp.apps.${testOptions.clusterName}.skunkhenry.com"],
+            [$class: 'StringParameterValue', name: 'WEBAPP_URL', value: "https://tutorial-web-app-openshift-webapp.apps.${testOptions.clusterName}.tower.cloudservices.rhmw.io"],
             [$class: 'BooleanParameterValue', name: 'CLEAN_RESOURCES', value: true],
             [$class: 'StringParameterValue', name: 'MANIFEST_VERSION', value: 'master'],
             [$class: 'BooleanParameterValue', name: 'TESTING_MASTER', value: false],
-            [$class: 'StringParameterValue', name: 'SSO_URL', value: "https://sso-openshift-sso.apps.${testOptions.clusterName}.skunkhenry.com"],
+            [$class: 'StringParameterValue', name: 'SSO_URL', value: "https://sso-openshift-sso.apps.${testOptions.clusterName}.tower.cloudservices.rhmw.io"],
             [$class: 'StringParameterValue', name: 'NUMBER_OF_USERS', value: '5']
           ]
 
