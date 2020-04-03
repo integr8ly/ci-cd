@@ -4,7 +4,7 @@ def deprovisionOptions = [:]
 
 def verifyDeprovisionOptions(deprovisionOptions) {
   if (!deprovisionOptions.clusterName || !deprovisionOptions.awsRegion || !deprovisionOptions.awsAccountName || !deprovisionOptions.clusterDomainName) {
-    choiceAWSAccountName = new ChoiceParameterDefinition('awsAccountName', ['fheng.AWS'] as String[], 'AWS Account Name')
+    choiceAWSAccountName = new ChoiceParameterDefinition('awsAccountName', ['mwcloudservices.AWS'] as String[], 'AWS Account Name')
     choiceAWSRegion = new ChoiceParameterDefinition('awsRegion', ['us-east-1', 'eu-west-1', 'eu-west-2'] as String[], 'AWS Region')
 
     def userInput = input message: 'Deprovision Options', parameters: [
