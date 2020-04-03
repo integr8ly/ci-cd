@@ -60,7 +60,7 @@ node('cirhos_rhel7') {
         } else {
             wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
               ansibleTower(
-                towerServer: 'Dev Tower',
+                towerServer: 'Eng Tower',
                 jobTemplate: 'Integreatly Uninstall Workflow',
                 templateType: 'workflow',
                 importTowerLogs: true,

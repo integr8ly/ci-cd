@@ -101,7 +101,7 @@ node('cirhos_rhel7') {
             println(extraVars)
             wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
                 ansibleTower(
-                    towerServer: 'Dev Tower',
+                    towerServer: 'Eng Tower',
                     jobTemplate: 'Integreatly Install Workflow',
                     templateType: 'workflow',
                     importTowerLogs: true,
