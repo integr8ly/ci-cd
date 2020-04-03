@@ -45,7 +45,7 @@
             node('cirhos_rhel7') {
               
               stage('Set default parameters') {
-                testOptions.awsAccountName = 'fheng.AWS'
+                testOptions.awsAccountName = 'mwcloudservices.AWS'
                 testOptions.awsRegion = 'eu-west-2'
                 testOptions.clusterName = clusterName
                 testOptions.domainName = 'skunkhenry.com'

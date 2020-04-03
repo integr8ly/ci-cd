@@ -4,7 +4,7 @@ def clusterOptions = [:]
 
 def verifyClusterOptions(clusterOptions) {
     if (!clusterOptions.name || !clusterOptions.awsRegion || !clusterOptions.awsAccountName) {
-        choiceAWSAccountName = new ChoiceParameterDefinition('awsAccountName', ['fheng.AWS'] as String[], 'AWS Account Name')
+        choiceAWSAccountName = new ChoiceParameterDefinition('awsAccountName', ['mwcloudservices.AWS'] as String[], 'AWS Account Name')
         def userInput = input message: 'Cluster Options', parameters: [
                 string(defaultValue: (clusterOptions.name ?: ''), description: 'Cluster name', name: 'clusterName'),
                 string(defaultValue: (clusterOptions.awsRegion ?: 'eu-west-2'), description: 'AWS Region', name: 'awsRegion'),

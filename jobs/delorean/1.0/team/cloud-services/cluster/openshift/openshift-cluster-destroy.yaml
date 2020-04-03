@@ -19,7 +19,7 @@
       - choice:
           name: 'awsAccountName'
           choices:
-            - fheng.AWS
+            - mwcloudservices.AWS
           description: '[REQUIRED] The AWS Account to use'
       - string:
           name: 'clusterDomainName'

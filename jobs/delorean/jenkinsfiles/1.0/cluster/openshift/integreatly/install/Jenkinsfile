@@ -46,7 +46,7 @@ stage("Verify Installation Options") {
     installerOptions.installationGitBranch = params.installationGitBranch
     installerOptions.userCount = params.userCount
     installerOptions.selfSignedCerts = params.selfSignedCerts ? 'true': 'false'
-    installerOptions.awsCredentials = 'fheng.AWS'
+    installerOptions.awsCredentials = 'mwcloudservices.AWS'
 
     verifyInstallerOptions(installerOptions)
     println "Installer Options: ${installerOptions}"
