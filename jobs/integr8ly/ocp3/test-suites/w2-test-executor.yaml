@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: w2-test-executor
+    name: pp-w2-test-executor
     project-type: pipeline
     sandbox: false
     parameters:
@@ -54,6 +54,8 @@
           description: 'defaults to false. When set to true - only final checks of the individual wt2 related tests are checked'
     dsl: |
         def err = null
+        String ghUser = params.GH_USER ?: 'fh-automatron'
+        String ghToken = params.GH_PERSONAL_TOKEN ?: ''
         try {
             timeout(90) { 
                 ansiColor('gnome-terminal') { 
@@ -63,6 +65,11 @@
                                 if (!CLUSTER_URL) {
                                     throw new hudson.AbortException('CLUSTER_URL parameter is required!')
                                 } // if
+                                if (ghToken == '') {
+                                    withCredentials([string(credentialsId: "fh-automatron-wt2-token", variable: "TOKEN")]) {
+                                        ghToken = TOKEN
+                                    }
+                                }
                             } // stage
 
                             stage('Run Launcher test') {
@@ -76,8 +83,8 @@
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
                                     string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
-                                    string(name: 'GH_USER', value: "${GH_USER}"),
-                                    string(name: 'GH_PERSONAL_TOKEN', value: "${GH_PERSONAL_TOKEN}"),
+                                    string(name: 'GH_USER', value: ghUser),
+                                    string(name: 'GH_PERSONAL_TOKEN', value: ghToken),
                                     booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
                                     booleanParam(name: 'FINAL_CHECK_ONLY', value: Boolean.valueOf("${FINAL_CHECK_ONLY}"))
                                 ]).result;
@@ -98,8 +105,8 @@
                                     string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
                                     string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
                                     string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
-                                    string(name: 'GH_USER', value: "${GH_USER}"),
-                                    string(name: 'GH_PERSONAL_TOKEN', value: "${GH_PERSONAL_TOKEN}"),
+                                    string(name: 'GH_USER', value: ghUser),
+                                    string(name: 'GH_PERSONAL_TOKEN', value: ghToken),
                                     booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}"))
                                 ]).result;
 
