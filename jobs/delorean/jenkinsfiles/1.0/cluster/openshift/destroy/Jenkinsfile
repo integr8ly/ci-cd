@@ -44,7 +44,7 @@ node('cirhos_rhel7') {
     } else {
       wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
         ansibleTower(
-          towerServer: 'Dev Tower',
+          towerServer: 'QE Tower',
           jobTemplate: 'Cluster Deprovision',
           templateType: 'workflow',
           importTowerLogs: true,
