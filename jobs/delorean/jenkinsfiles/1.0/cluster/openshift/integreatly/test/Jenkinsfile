@@ -57,7 +57,7 @@ pipeline {
     stage('Verify Parameters') {
       steps {
         script {
-          testOptions.awsAccountName = 'fheng.AWS'
+          testOptions.awsAccountName = 'mwcloudservices.AWS'
           testOptions.awsRegion = 'eu-west-2'
           testOptions.clusterName = params.clusterName ? params.clusterName : params.installationGitBranch
           testOptions.domainName = 'tower.cloudservices.rhmw.io'
