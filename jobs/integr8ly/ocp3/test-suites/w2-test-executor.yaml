@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: pp-w2-test-executor
+    name: w2-test-executor
     project-type: pipeline
     sandbox: false
     parameters:
