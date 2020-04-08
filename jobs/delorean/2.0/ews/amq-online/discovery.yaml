@@ -6,7 +6,7 @@
       <h2>Click <a href="https://github.com/integr8ly/ci-cd/tree/master/jobs/delorean/2.0/ews/amq-online">here</a> to see the job definition on GitHub!</h2>
 
       <h3>This job gets triggered by <a href="https://brewweb.engineering.redhat.com/brew/packageinfo?packageID=74050">Brew Builds</a> on the UMB</h3>
-    disabled: false
+    disabled: true
     project-type: pipeline
 
     # Trigger responds to new builds of amq7-amq-online-1-controller-manager-operator-metadata-container
