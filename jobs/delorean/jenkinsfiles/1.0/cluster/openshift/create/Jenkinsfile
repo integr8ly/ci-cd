@@ -52,7 +52,7 @@ node('cirhos_rhel7') {
                 "oo_clusterid: ${clusterOptions.name}",
                 "oo_sublocation: ${clusterOptions.awsRegion}",
                 "cluster_inventory_source_aws_credentials: ${clusterOptions.awsAccountName}",
-                "survey_provision_logging: 'true'",
+                "survey_provision_logging: 'false'",
                 "master_instance_size: ${clusterOptions.nodes.master.instance_type}",
                 "compute_instance_size: ${clusterOptions.nodes.compute.instance_type}",
                 "infra_instance_size: ${clusterOptions.nodes.infra.instance_type}",
