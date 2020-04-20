@@ -46,7 +46,7 @@ stage("Verify Installation Options") {
     installerOptions.installationGitBranch = params.installationGitBranch
     installerOptions.userCount = params.userCount
     installerOptions.selfSignedCerts = params.selfSignedCerts ? 'true': 'false'
-    installerOptions.awsCredentials = 'fheng.AWS'
+    installerOptions.awsCredentials = 'mwcloudservices.AWS'
 
     verifyInstallerOptions(installerOptions)
     println "Installer Options: ${installerOptions}"
@@ -101,7 +101,7 @@ node('cirhos_rhel7') {
             println(extraVars)
             wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
                 ansibleTower(
-                    towerServer: 'Dev Tower',
+                    towerServer: 'QE Tower',
                     jobTemplate: 'Integreatly Install Workflow',
                     templateType: 'workflow',
                     importTowerLogs: true,

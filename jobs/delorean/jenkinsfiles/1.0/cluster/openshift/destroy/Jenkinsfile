@@ -4,14 +4,14 @@ def deprovisionOptions = [:]
 
 def verifyDeprovisionOptions(deprovisionOptions) {
   if (!deprovisionOptions.clusterName || !deprovisionOptions.awsRegion || !deprovisionOptions.awsAccountName || !deprovisionOptions.clusterDomainName) {
-    choiceAWSAccountName = new ChoiceParameterDefinition('awsAccountName', ['fheng.AWS'] as String[], 'AWS Account Name')
+    choiceAWSAccountName = new ChoiceParameterDefinition('awsAccountName', ['mwcloudservices.AWS'] as String[], 'AWS Account Name')
     choiceAWSRegion = new ChoiceParameterDefinition('awsRegion', ['us-east-1', 'eu-west-1', 'eu-west-2'] as String[], 'AWS Region')
 
     def userInput = input message: 'Deprovision Options', parameters: [
       string(defaultValue: (deprovisionOptions.clusterName ?: ''), description: 'Cluster Name', name: 'clusterName'),
       choiceAWSRegion,
       choiceAWSAccountName,
-      string(defaultValue: (deprovisionOptions.clusterDomainName ?: 'skunkhenry.com'), description: 'Cluster Domain Name', name: 'clusterDomainName'),
+      string(defaultValue: (deprovisionOptions.clusterDomainName ?: 'tower.cloudservices.rhmw.io'), description: 'Cluster Domain Name', name: 'clusterDomainName'),
     ]
 
     deprovisionOptions.clusterName = userInput.clusterName
@@ -44,7 +44,7 @@ node('cirhos_rhel7') {
     } else {
       wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
         ansibleTower(
-          towerServer: 'Dev Tower',
+          towerServer: 'QE Tower',
           jobTemplate: 'Cluster Deprovision',
           templateType: 'workflow',
           importTowerLogs: true,

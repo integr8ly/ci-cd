@@ -23,7 +23,7 @@
           description: '[REQUIRED] Openshift token for cluster-admin user'
       - string:
           name: 'towerInstance'
-          default: 'Dev Tower'
+          default: 'QE Tower'
           description: '[REQUIRED] Name of a Tower instance from Ansible Tower plugin in Jenkins'     
     dsl: |
         node('cirhos_rhel7') {

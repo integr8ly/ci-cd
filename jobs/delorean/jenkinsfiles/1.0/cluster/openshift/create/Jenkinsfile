@@ -4,7 +4,7 @@ def clusterOptions = [:]
 
 def verifyClusterOptions(clusterOptions) {
     if (!clusterOptions.name || !clusterOptions.awsRegion || !clusterOptions.awsAccountName) {
-        choiceAWSAccountName = new ChoiceParameterDefinition('awsAccountName', ['fheng.AWS'] as String[], 'AWS Account Name')
+        choiceAWSAccountName = new ChoiceParameterDefinition('awsAccountName', ['mwcloudservices.AWS'] as String[], 'AWS Account Name')
         def userInput = input message: 'Cluster Options', parameters: [
                 string(defaultValue: (clusterOptions.name ?: ''), description: 'Cluster name', name: 'clusterName'),
                 string(defaultValue: (clusterOptions.awsRegion ?: 'eu-west-2'), description: 'AWS Region', name: 'awsRegion'),
@@ -51,8 +51,8 @@ node('cirhos_rhel7') {
             def extraVars = [
                 "oo_clusterid: ${clusterOptions.name}",
                 "oo_sublocation: ${clusterOptions.awsRegion}",
-                "cluster_credential_bundle_aws_name: ${clusterOptions.awsAccountName}",
-                "survey_provision_logging: 'true'",
+                "cluster_inventory_source_aws_credentials: ${clusterOptions.awsAccountName}",
+                "survey_provision_logging: 'false'",
                 "master_instance_size: ${clusterOptions.nodes.master.instance_type}",
                 "compute_instance_size: ${clusterOptions.nodes.compute.instance_type}",
                 "infra_instance_size: ${clusterOptions.nodes.infra.instance_type}",
@@ -74,7 +74,7 @@ node('cirhos_rhel7') {
 
             wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
                 ansibleTower(
-                        towerServer: 'Dev Tower',
+                        towerServer: 'QE Tower',
                         jobTemplate: 'Cluster Provision',
                         templateType: 'workflow',
                         importTowerLogs: true,

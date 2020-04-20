@@ -19,11 +19,11 @@
       - choice:
           name: 'awsAccountName'
           choices:
-            - fheng.AWS
+            - mwcloudservices.AWS
           description: '[REQUIRED] The AWS Account to use'
       - string:
           name: 'clusterDomainName'
-          default: 'skunkhenry.com'
+          default: 'tower.cloudservices.rhmw.io'
           description: '[REQUIRED] The domain name used by the provisioned cluster'
       - bool:
           name: 'dryRun'

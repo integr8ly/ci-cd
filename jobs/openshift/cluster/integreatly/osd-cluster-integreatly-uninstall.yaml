@@ -27,7 +27,7 @@
           description: '[REQUIRED] All existing users containing this string in their username will be removed.'
       - string:
           name: 'towerInstance'
-          default: 'Dev Tower'
+          default: 'QE Tower'
           description: '[REQUIRED] Name of a Tower instance from Ansible Tower plugin in Jenkins'         
     dsl: |
         node('cirhos_rhel7') {
