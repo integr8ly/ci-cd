@@ -63,11 +63,14 @@
           description: '[REQUIRED] Backups S3 bucket name'
       - string:
           name: 'clientSecret'
-          description: '[REQUIRED] Desired client secret value for RHSSO'     
+          description: '[REQUIRED] Desired client secret value for RHSSO'
+      - string:
+          name: 'heimdallPullSecretToken'
+          description: '[REQUIRED] Value of heimdall token'
       - string:
           name: 'towerInstance'
           default: 'QE Tower'
-          description: '[REQUIRED] Name of a Tower instance from Ansible Tower plugin in Jenkins'      
+          description: '[REQUIRED] Name of a Tower instance from Ansible Tower plugin in Jenkins'
     dsl: |
         node('cirhos_rhel7') {
           if (currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')['userId']){
@@ -98,7 +101,8 @@
                     threescale_s3_bucket_region: ${threeScaleBucketRegion}
                     backup_s3_access_key: ${backupAwsKey}
                     backup_s3_secret_key: ${backupAwsSecret}
-                    backup_s3_bucket_name: ${backupsBucketName}"""
+                    backup_s3_bucket_name: ${backupsBucketName}
+                    heimdall_pull_secret_token: ${heimdallPullSecretToken}"""
                 )
             }  
           }
