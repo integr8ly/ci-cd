@@ -25,12 +25,12 @@ def templatesResourcesBaseRawVar = params.templatesResourcesBaseRawVar
 def templatesResourcesGitUrlVar = params.templatesResourcesGitUrlVar
 def latestPreRelease
 
-String brewContainerRegistry = "brew-pulp-docker01.web.prod.ext.phx2.redhat.com:8888"
+String brewContainerRegistry = "registry-proxy.engineering.redhat.com"
 String rhContainerRegistry = "registry.redhat.io"
 String rhContainerRegistry2 = "registry.access.redhat.com"
 String clusterContainerRegistryPrivate = "docker-registry.default.svc:5000"
 
-def rhRegistries = [brewContainerRegistry, rhContainerRegistry, rhContainerRegistry2]
+def rhRegistries = [rhContainerRegistry, rhContainerRegistry2]
 def productImages = []
 def productPreReleaseImages = []
 def registryProjectIDs = params.registryProjectIDs.replaceAll(" ", "").split(',')
@@ -80,6 +80,20 @@ String getLatestPreRelease(projectOrg, projectRepo, productName, githubCredentia
             break
     }
     return result
+}
+
+def getRHOSBSImages(def imageUrls) {
+    return imageUrls.collect { imageUrl ->
+        def image = new RegistryImage(imageUrl)
+        if(image.getName().contains("amq-broker")) {
+            osbsImageUrl = "registry-proxy.engineering.redhat.com/rh-osbs/amq-broker-7-amq-broker-76-openshift:7.6"
+        } else {
+            osbsImageUrl = "registry-proxy.engineering.redhat.com/rh-osbs/" + image.getProject() + "-" + image.getName() + ":" + image.getTag()
+        }
+        def osbsImage = new RegistryImage(osbsImageUrl)
+        def clusterImage = "docker-registry.default.svc:5000/rh-osbs/" + osbsImage.getName() + ":" + osbsImage.getTag()
+        [imageUrl, osbsImageUrl, clusterImage]
+    } - null - ''
 }
 
 node {
@@ -144,7 +158,7 @@ node {
                     registryCredentials: targetRegistrySecret,
                     registryHost: targetRegistryHost
                 ]
-                productPreReleaseImages = getPreReleaseImages(getPreReleaseImagesParams)
+                productPreReleaseImages = getRHOSBSImages(productImages)
 
                 println "[INFO] Found ${productPreReleaseImages.size()} pre release product images"
                 currentBuild.description = currentBuild.description + "\nPre Release Images: ${productPreReleaseImages.size()}\n"
@@ -168,8 +182,10 @@ node {
             stage('Update Product Image Registry') {
                 gitCommitWhenChanges("Updated pre release image references to use internal cluster registry") { msgs ->
                     dir(templatesDir) {
-                        productPreReleaseImages.each { imageUrl ->
-                            String clusterImage = "${clusterContainerRegistryPrivate}${new URI("docker://${imageUrl}").getPath()}"
+                        productPreReleaseImages.each { images ->
+                            def imageUrl = images[0]
+                            def osbsImage = images[1]
+                            def clusterImage = images[2]
                             println("rhImage: ${imageUrl}, clusterImage: ${clusterImage}")
                             String rhImageUrlEscaped = imageUrl.replace("/", "\\/")
                             String clusterImageUrlEscaped = clusterImage.replace("/", "\\/")
@@ -220,8 +236,11 @@ node {
                         //Delete the file here since 'writeYaml' will fail if the file already exists
                         sh "rm ${integreatlyMetaFile}"
                     }
-                    productPreReleaseImages.each { imageUrl ->
-                        URI uri = new URI("docker://${imageUrl}");
+                    productPreReleaseImages.each { images ->
+                        def imageUrl = images[0]
+                        def osbsImage = images[1]
+                        def clusterImage = images[2]
+                        URI uri = new URI("docker://${osbsImage}");
                         def pathParts = uri.getPath().split(/\//) - null - ''
                         def project = pathParts[0]
                         def image = pathParts[1]
