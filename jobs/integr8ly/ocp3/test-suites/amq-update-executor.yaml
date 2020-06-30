@@ -1,0 +1,172 @@
+---
+
+- job:
+    name: amq-update-executor
+    project-type: pipeline
+    description: "Pipeline to run all of the automated tests needed to test an AMQ update "
+    sandbox: true
+    concurrent: true
+    properties:
+      - build-discarder:
+          num-to-keep: 20
+    parameters:
+      - string:
+          name: REPOSITORY
+          default: 'https://gitlab.cee.redhat.com/integreatly-qe/integreatly-qe.git'
+          description: 'QE repository containing the smoke tests source code.'
+      - string:
+          name: BRANCH
+          default: 'master'
+          description: 'Branch of the repository'
+      - string:
+          name: CLUSTER_URL
+          description: 'URL of cluster on which the smoke tests will be executed.'
+      - string:
+          name: EVALS_USERNAME
+          default: 'evals11@example.com'
+          description: 'Evals account email address for checking created namespaces.'    
+      - string:
+          name: ADMIN_USERNAME
+          default: 'admin@example.com'
+          description: 'Admin sername to login to Integreatly cluster.'
+      - string:
+          name: ADMIN_PASSWORD
+          default: 'Password1'
+          description: 'Admin password to login to Integreatly cluster.'
+      - string:
+          name: CUSTOMER_ADMIN_USERNAME
+          default: 'customer-admin@example.com'
+          description: 'customer-admin username to login to Integreatly cluster.'
+      - string:
+          name: CUSTOMER_ADMIN_PASSWORD
+          default: 'Password1'
+          description: 'Password to login to Integreatly cluster.'
+      - string:
+          name: NAMESPACE_PREFIX
+          description: "Value used to prefix the names of the namespaces created during Integr8ly installation"
+      - string:
+          name: WEBAPP_URL
+          description: 'URL of Tutorial Web App'
+      - bool:
+          name: CLEAN_RESOURCES
+          default: true
+          description: 'depending on whether the resources should be cleaned after the successful execution'
+      - string:
+          name: MANIFEST_VERSION
+          default: 'master'
+          description: 'Provide release version when testing particular release (smoke tests)'
+      - bool:
+          name: TESTING_MASTER
+          default: true
+          description: 'Indicates whether to check master tags or compare versions from manifest file (smoke tests)'   
+      - string:
+          name: WALKTHROUGHS_VERSION
+          default: ''
+          description: 'Provide walkthroughs release version. Empty value means the master version is expected (smoke tests)'
+      - string:
+          name: SSO_URL
+          description: 'SSO URL for the cluster on which the tests will be executed (sso-user-create test)'
+      - string:
+          name: USERNAME
+          default: "tester"
+          description: 'Name of newly created users in SSO.'   
+      - string:
+          name: GH_USER
+          description: 'Github user name'
+      - string:
+          name: GH_PERSONAL_TOKEN
+          description: 'Github token for the user provided'
+      - string:
+          name: NUMBER_OF_USERS
+          default: "5"
+          description: 'Number of created users (sso-user-create test)'
+      - string:
+          name: TIMEOUT_THRESHOLD
+          default: '1'
+          description: 'optionally increase timeout values. If you provide value 2 it means it will be sleeping/waiting two times longer'
+      - string:
+          name: POLARION_TEMPLATE_ID
+          description: 'Optional: the Polarion test run template id to use to report the test result to Polarion'   
+    dsl: |
+        jobParams = [
+            string(name: 'REPOSITORY', value: "${REPOSITORY}"),
+            string(name: 'BRANCH', value: "${BRANCH}"),
+            string(name: 'CLUSTER_URL', value: "${CLUSTER_URL}"),
+            string(name: 'EVALS_USERNAME', value: "${EVALS_USERNAME}"),
+            string(name: 'ADMIN_USERNAME', value: "${ADMIN_USERNAME}"),
+            string(name: 'ADMIN_PASSWORD', value: "${ADMIN_PASSWORD}"),
+            string(name: 'CUSTOMER_ADMIN_USERNAME', value: "${CUSTOMER_ADMIN_USERNAME}"),
+            string(name: 'CUSTOMER_ADMIN_PASSWORD', value: "${CUSTOMER_ADMIN_PASSWORD}"),
+            string(name: 'NAMESPACE_PREFIX', value: "${NAMESPACE_PREFIX}"),
+            string(name: 'WEBAPP_URL', value: "${WEBAPP_URL}"),
+            booleanParam(name: 'CLEAN_RESOURCES', value: Boolean.valueOf("${CLEAN_RESOURCES}")),
+            string(name: 'MANIFEST_VERSION', value: "${MANIFEST_VERSION}"),
+            booleanParam(name: 'TESTING_MASTER', value: Boolean.valueOf("${TESTING_MASTER}")),
+            string(name: 'WALKTHROUGHS_VERSION', value: "${WALKTHROUGHS_VERSION}"),
+            string(name: 'SSO_URL', value: "${SSO_URL}"),
+            string(name: 'GH_USER', value: "${GH_USER}"),
+            string(name: 'GH_PERSONAL_TOKEN', value: "${GH_PERSONAL_TOKEN}"),
+            string(name: 'TIMEOUT_THRESHOLD', value: "${TIMEOUT_THRESHOLD}"),
+            string(name: 'NUMBER_OF_USERS', value: "${NUMBER_OF_USERS}"),
+            string(name: 'USERNAME', value: "${USERNAME}"),
+            string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
+        ]
+        def err = null
+        def wtTestStatus;
+        try {
+            timeout(180) { ansiColor('gnome-terminal') { timestamps {
+                node('cirhos_rhel7') {
+                    currentBuild.displayName = "${currentBuild.displayName} ${CLUSTER_URL}"
+                    currentBuild.description = "testing branch: ${BRANCH}<br>evals username: ${EVALS_USERNAME}"
+                    
+                    stage ('Smoke Tests') {
+                        runTests('installation-smoke-tests')
+                    } // stage
+
+                    stage ('Alerts test') {
+                        runTests('alerts-test')
+                    }
+
+                    stage ('Start Basic Walkthroughs Browser Test') {
+                       wtTestStatus = runSingleBrowserTest('tests/00_walkthroughs_start/start-walkthroughs.js')
+                    } // stage
+
+                    stage ('After First Login Tests') {
+                        runTests('after-first-login-tests')
+                    } // stage
+
+                    stage ('Walkthrough 1 test') {
+                        runTests('w1-test-executor')
+                    } // stage
+
+                    stage ('Start Dashboards Browser Tests') {
+                        runSingleBrowserTest('tests/10_fuse/fuse-console-login.js')
+                        runSingleBrowserTest('tests/50_enmasse/enmasse-console-login.js')
+                        runSingleBrowserTest('tests/80_walkthrough_wt1a/wt1a-walkthrough.js')
+                    } // stage
+
+                } // node
+            }}} // timeout, ansiColor, timestamps
+        } catch (caughtError){
+            currentBuild.result = 'FAILURE'
+        }
+
+        def runTests(testPipeline) {
+            buildStatus = build(job: testPipeline, propagate: false, parameters: jobParams).result
+            println "Build finished with ${buildStatus}"
+                            
+            if (buildStatus != 'SUCCESS') {
+                currentBuild.result = 'UNSTABLE'
+            }
+        }
+
+        def runSingleBrowserTest(testName) {
+            jobParams.push(string(name: 'TEST_TO_RUN', value: "${testName}"))   
+            buildStatus = build(job: 'browser-based-single-test', propagate: false, parameters: jobParams).result
+            println "Build finished with ${buildStatus}"
+                            
+            if (buildStatus != 'SUCCESS') {
+                currentBuild.result = 'UNSTABLE'
+            }
+            return buildStatus
+        }
