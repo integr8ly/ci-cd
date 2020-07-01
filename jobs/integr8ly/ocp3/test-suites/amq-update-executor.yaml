@@ -71,12 +71,6 @@
           default: "tester"
           description: 'Name of newly created users in SSO.'   
       - string:
-          name: GH_USER
-          description: 'Github user name'
-      - string:
-          name: GH_PERSONAL_TOKEN
-          description: 'Github token for the user provided'
-      - string:
           name: NUMBER_OF_USERS
           default: "5"
           description: 'Number of created users (sso-user-create test)'
@@ -111,8 +105,6 @@
             string(name: 'USERNAME', value: "${USERNAME}"),
             string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
         ]
-        def err = null
-        def wtTestStatus;
         try {
             timeout(180) { ansiColor('gnome-terminal') { timestamps {
                 node('cirhos_rhel7') {
@@ -128,7 +120,7 @@
                     }
 
                     stage ('Start Basic Walkthroughs Browser Test') {
-                       wtTestStatus = runSingleBrowserTest('tests/00_walkthroughs_start/start-walkthroughs.js')
+                       runSingleBrowserTest('tests/00_walkthroughs_start/start-walkthroughs.js')
                     } // stage
 
                     stage ('After First Login Tests') {
