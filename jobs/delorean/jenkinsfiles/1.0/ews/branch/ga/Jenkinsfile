@@ -10,7 +10,7 @@ import org.kohsuke.github.GitHub
 import org.kohsuke.github.GitHubBuilder
 
 def createJiraQuery(labels) {
-  String query = "project = INTLY AND status = Open"
+  String query = "project = INTLY AND (status != Closed OR status != Resolved OR status != Completed)"
 
   for (i = 0; i < labels.size(); i++) {
     def label = labels[i].replaceAll('"', "'")
