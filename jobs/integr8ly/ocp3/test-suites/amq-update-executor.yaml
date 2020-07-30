@@ -106,7 +106,7 @@
             string(name: 'POLARION_TEMPLATE_ID', value: "${POLARION_TEMPLATE_ID}"),
         ]
         try {
-            timeout(180) { ansiColor('gnome-terminal') { timestamps {
+            timeout(240) { ansiColor('gnome-terminal') { timestamps {
                 node('cirhos_rhel7') {
                     currentBuild.displayName = "${currentBuild.displayName} ${CLUSTER_URL}"
                     currentBuild.description = "testing branch: ${BRANCH}<br>evals username: ${EVALS_USERNAME}"
