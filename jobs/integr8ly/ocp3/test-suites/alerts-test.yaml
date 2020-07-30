@@ -36,7 +36,7 @@
           name: POLARION_TEMPLATE_ID
           description: 'Optional: the Polarion test run template id to use to report the test result to Polarion'
     dsl: |
-        timeout(15) { ansiColor('gnome-terminal') { timestamps {
+        timeout(20) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){
 
                 Boolean publishTestResults = true

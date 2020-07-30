@@ -51,7 +51,7 @@
           default: false
           description: 'defaults to false. When set to true - only the final check is performed (e.g. whether it is possible to send an order and see it appearing in the list of orders)'
     dsl: |
-        timeout(10) { ansiColor('gnome-terminal') { timestamps {
+        timeout(15) { ansiColor('gnome-terminal') { timestamps {
             node('cirhos_rhel7'){
 
                 Boolean publishTestResults = true
