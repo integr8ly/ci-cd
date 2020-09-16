@@ -129,9 +129,9 @@ def install(clusterName, clusterDomain, password) {
         booleanParam(name: 'BYOC', value:  Boolean.valueOf(BYOC))
     ]
     if (OLM_INSTALLATION.toString() == 'true') {   
-        build (job: 'openshift4-rhmi-olm-install', parameters: parameters)
+        build (job: 'openshift4-managed-api-olm-install', parameters: parameters)
     } else {
-        build (job: 'openshift4-rhmi-image-deploy-install', parameters: parameters)
+        build (job: 'openshift4-managed-api-image-deploy-install', parameters: parameters)
     }
     sleep time: 3, unit: 'MINUTES'
 }

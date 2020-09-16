@@ -28,7 +28,7 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/openshift/cluster/integr
 generate_inline_script_job $SCRIPTS_DIR/../jobs/openshift/cluster/integreatly/osd-cluster-integreatly-test-upgrade.yaml
 
 # OSDv3
-jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/osd/create-rhmi-user.yaml
+jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/osd/create-manage-api-user.yaml
 jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/osd/grant-3scale-admin-permissions.yaml
 
 #Generated jobs
@@ -82,8 +82,8 @@ jenkins-jobs --conf $CONFIG update $SCRIPTS_DIR/../jobs/integr8ly/ocp3/tower/tow
 
 
 #Integreatly-QE jobs - OpenShift 4
-generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/install/image-deploy/openshift4-rhmi-image-install.yaml
-generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/install/olm/openshift4-rhmi-olm-install.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/install/image-deploy/openshift4-managed-api-image-install.yaml
+generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/install/olm/openshift4-managed-api-olm-install.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/nightly/executor/osd-ocp4-testing-executor.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/nightly/trigger/olm/osd-ocp4-olm-testing-nightly-trigger.yaml
 generate_inline_script_job $SCRIPTS_DIR/../jobs/integr8ly/ocp4/nightly/trigger/master/osd-ocp4-master-testing-nightly-trigger.yaml

@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: create-rhmi-user
+    name: create-manage-api-user
     project-type: pipeline
     description: "Pipeline to create a new evalsXX-like user in RHSSO, OpenShift, and 3scale"
     sandbox: true

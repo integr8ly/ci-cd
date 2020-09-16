@@ -149,7 +149,7 @@
                         } // stage
 
                         stage ('Create test user in SSO') {
-                            def buildStatus = build(job: 'create-rhmi-user', propagate: false, parameters: [
+                            def buildStatus = build(job: 'create-manage-api-user', propagate: false, parameters: [
                                 string(name: 'REPOSITORY', value: "${TEST_SUITES_REPOSITORY}"),
                                 string(name: 'BRANCH', value: "${TEST_SUITES_BRANCH}"),
                                 string(name: 'CLUSTER_URL', value: "https://console.${CLUSTER_NAME}.openshift.com"),

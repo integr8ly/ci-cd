@@ -25,7 +25,7 @@
           description: "Whether this cluster was provisioned using BYOC or not"
        - string:
           name: "NAMESPACE_PREFIX"
-          default: "redhat-rhmi-"
+          default: "redhat-managed-api-"
           description: "namespace prefix used during provision"
     pipeline-scm:
       script-path: jobs/integr8ly/ocp4/osd/cluster/deprovision/Jenkinsfile

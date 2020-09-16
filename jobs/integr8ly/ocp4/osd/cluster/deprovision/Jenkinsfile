@@ -47,20 +47,20 @@ node("cirhos_rhel7") {
                 }
             }
 
-            stage("Remove RHMI CR on BYOC cluster") {
+            stage("Remove Managed-API CR on BYOC cluster") {
                 script {
                     if(params.BYOC) {
-                        sh "oc delete rhmis -n ${params.NAMESPACE_PREFIX}operator"
+                        sh "oc delete managed-apis -n ${params.NAMESPACE_PREFIX}operator"
                     }
                 }
             }
 
-            stage("Wait for RHMI CR to be removed on BYOC cluster") {
+            stage("Wait for Managed-API CR to be removed on BYOC cluster") {
                 script {
                     if(params.BYOC) {
                         Boolean rhmiDeleted = isRHMIDeleted()
                         while(!isRHMIDeleted) {
-                            println "RHMI resource is still being deleted"
+                            println "Managed-API resource is still being deleted"
                             sleep time: 2, unit: 'MINUTES'
                             rhmiDeleted = isRHMIDeleted()
                         }
@@ -133,7 +133,7 @@ def isClusterDestroyed(clusterID, apiPrefix) {
 
 def isRHMIDeleted() {
     String rhmiCount = sh(
-        script: "oc get rhmis -n ${params.NAMESPACE_PREFIX}operator | grep -v 'NAME' | wc -l",
+        script: "oc get managed-apis -n ${params.NAMESPACE_PREFIX}operator | grep -v 'NAME' | wc -l",
         returnStdout: true
     ).trim()
 

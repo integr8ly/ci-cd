@@ -3,7 +3,7 @@
 - job:
     name: ocp4-install
     project-type: pipeline
-    description: "Installs RHMI on your OpenShift 4 RHPDS or openshift-install cluster (with configuration stored here: https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins/tree/master/clusters"
+    description: "Installs Managed-api on your OpenShift 4 RHPDS or openshift-install cluster (with configuration stored here: https://gitlab.cee.redhat.com/integreatly-qe/rhmi-jenkins/tree/master/clusters"
     sandbox: false
     concurrent: true
     parameters:

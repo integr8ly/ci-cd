@@ -18,7 +18,7 @@
             RECIPIENTS=integreatly-qe@redhat.com
             INTEGREATLY_OPERATOR_BRANCH=master
             TO_DO=provision + install + tests + destroy
-            INSTALLATION_PREFIX=redhat-rhmi
+            INSTALLATION_PREFIX=redhat-managed-api
             BYOC=true
             AWS_CREDENTIALS=rhmi-clouds@redhat.com
             AWS_ACCOUNT_ID=408612754352

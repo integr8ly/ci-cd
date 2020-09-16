@@ -1,7 +1,7 @@
 ---
 
 - job:
-    name: openshift4-rhmi-image-deploy-install
+    name: openshift4-managed-api-image-deploy-install
     display-name: OpenShift 4 RHMI Image Deploy install
     project-type: pipeline
     description: "Installs RHMI on OpenShift 4 cluster using image build as a part of this pipeline"

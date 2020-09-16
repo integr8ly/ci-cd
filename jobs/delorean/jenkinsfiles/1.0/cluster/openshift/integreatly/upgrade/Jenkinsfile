@@ -148,7 +148,7 @@ pipeline {
             println "Build finished with ${adminBuildStatus}"
 
             echo "[INFO] Creating test user on ${params.clusterName} cluster"   
-            def userBuildStatus = build(job: 'create-rhmi-user', propagate: false, parameters: [
+            def userBuildStatus = build(job: 'create-manage-api-user', propagate: false, parameters: [
                 string(name: 'REPOSITORY', value: "${constants.TEST_SUITE_REPO}"),
                 string(name: 'BRANCH', value: "${params.testBranch}"),
                 string(name: 'CLUSTER_URL', value: "https://console.${params.clusterName}.openshift.com"),

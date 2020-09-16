@@ -10,7 +10,7 @@ String selfSignedCerts = selfSigned ? "true" : "false"
 
 String installationName = "example-installation"
 
-String installationNamespace = "redhat-rhmi-operator"
+String installationNamespace = "redhat-managed-api-operator"
 
 String expectedOcCommandOutput = ""
 
@@ -95,7 +95,7 @@ node('cirhos_rhel7') {
             stage ('Create Installation CR') {
                 dir('integreatly-operator') {
                     sh "oc project ${installationNamespace}"
-                    sh "make deploy/integreatly-rhmi-cr.yml SELF_SIGNED_CERTS=${selfSignedCerts} INSTALLATION_NAME=${installationName} INSTALLATION_TYPE=${INSTALLATION_TYPE} INSTALLATION_PREFIX=${INSTALLATION_PREFIX} USE_CLUSTER_STORAGE=${useClusterStorage}"
+                    sh "make deploy/integreatly-managed-api-cr.yml SELF_SIGNED_CERTS=${selfSignedCerts} INSTALLATION_NAME=${installationName} INSTALLATION_TYPE=${INSTALLATION_TYPE} INSTALLATION_PREFIX=${INSTALLATION_PREFIX} USE_CLUSTER_STORAGE=${useClusterStorage}"
                     sleep time: 2, unit: 'MINUTES'
                 }
             } // stage

@@ -30,7 +30,7 @@ oc new-app -p IMAGE_NAME=cro-base-image -p GITHUB_ORG=integr8ly -p GITHUB_REPO=c
 RHMI Utils
 
 ```bash
-oc new-app -p IMAGE_NAME=rhmi-utils-base-image -p GITHUB_ORG=integr8ly -p GITHUB_REPO=rhmi-utils -p GITHUB_REF=master -f openshift-ci/templates/base-image-build-template.yml -n integr8ly
+oc new-app -p IMAGE_NAME=managed-api-utils-base-image -p GITHUB_ORG=integr8ly -p GITHUB_REPO=rhmi-utils -p GITHUB_REF=master -f openshift-ci/templates/base-image-build-template.yml -n integr8ly
 ```
 
 ## Deploy a new image
