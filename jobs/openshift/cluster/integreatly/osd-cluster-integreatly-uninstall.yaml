@@ -69,7 +69,7 @@
           stage("Delete leftover apiservices and CRDs") {
             sh '''
               oc login https://console.${clusterName}.openshift.com --token=${openShiftToken}
-              oc delete crd $(oc get crd | egrep 'aerogear|integreatly|enmasse|mobile' | awk '{print $1}') || true
+              # oc delete crd $(oc get crd | egrep 'aerogear|integreatly|enmasse|mobile' | awk '{print $1}') || true
               oc delete apiservices $(oc get apiservices | egrep 'aerogear|integreatly|enmasse|mobile' | awk '{print $1}') || true
             '''
           }
