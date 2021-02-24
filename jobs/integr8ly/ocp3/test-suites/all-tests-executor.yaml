@@ -151,19 +151,13 @@
                         runTests('w2-test-executor')
                     } // stage
 
-                    stage ('CodeReady test') {
-                        runTests('codeready-tests')
-                    } // stage
-
                     stage ('SSO user creation test') {
                         runTests('sso-user-create-tests')
                     } // stage
 
                     stage ('Start Dashboards Browser Tests') {
-                        runSingleBrowserTest('tests/10_fuse/fuse-console-login.js')
                         runSingleBrowserTest('tests/20_apicurito/apicurito-console-login.js')
                         runSingleBrowserTest('tests/30_three_scale/three_scale-login.js')
-                        runSingleBrowserTest('tests/40_che/che-console-login.js')
                         runSingleBrowserTest('tests/50_enmasse/enmasse-console-login.js')
                         runSingleBrowserTest('tests/60_launcher/launcher-console-login.js')
                         runSingleBrowserTest('tests/70_sso_access/sso-console-access.js')
