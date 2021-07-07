@@ -1,0 +1,95 @@
+---
+
+- job:
+    name: poc-upgrade
+    project-type: pipeline
+    description: "Installs Integreatly remotely from Jenkins slave to QE Pony cluster."
+    sandbox: false
+    concurrent: true
+    parameters:
+        - string:
+            name: REPOSITORY
+            default: https://github.com/integr8ly/installation.git
+            description: "Repository of the Integreatly installer"
+        - string:
+            name: BRANCH
+            default: 'master'
+            description: "Branch of the installer repository"
+        - string:
+            name: CLUSTER_URL
+            description: "URL of cluster for installation."
+        - string:
+            name: ANSIBLE_USER
+            default: root
+            description: "User for Ansible to access the master node of target cluster"
+        - string:
+            name: MASTER_URLS
+            description: "Comma separated list of URLs for master nodes of target cluster to be used in Ansible inventory file"
+        - string:
+            name: OC_USER
+            description: "OpenShift user for QE cluster."
+        - string:
+            name: OC_PASSWORD
+            description: "OpenShift password for QE cluster."
+    dsl: |
+        timeout(60) { ansiColor('gnome-terminal') { timestamps {
+            node('cirhos_rhel7') {        
+                stage('Verify input') {
+                    if (!MASTER_URLS) {
+                        throw new hudson.AbortException('MASTER_URLS parameter is required!')
+                    }
+                    if (!CLUSTER_URL) {
+                        throw new hudson.AbortException('CLUSTER_URL parameter is required!')
+                    }
+                    if (!OC_USER) {
+                        throw new hudson.AbortException('OC_USER parameter is required!')
+                    }
+                    if (!OC_PASSWORD) {
+                        throw new hudson.AbortException('OC_PASSWORD parameter is required!')
+                    }
+                }
+
+                stage('Clone the installer') {
+                    dir('installation') {
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: BRANCH]],,
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [],
+                            userRemoteConfigs: [[url: REPOSITORY]]
+                        ])
+
+                        sh "git clean -xdf"
+
+                        if(!fileExists("evals")) {
+                            sh "ln -s . evals"
+                        }
+                    } // dir
+                } // stage
+
+                stage('Prepare environment') {
+                    dir('installation') {
+                        sh """
+                            cp ./evals/inventories/hosts.template ./evals/inventories/hosts
+                            sed -i 's/ansible_user=ec2-user/ansible_user=${ANSIBLE_USER}/g' ./evals/inventories/hosts
+                        """
+                    
+                        String masterUrls = MASTER_URLS.replaceAll(~/,[\s]*/, '\\\\n')
+                    
+                        sh """
+                            sed -i '\$!N;s@\\[master\\]\\n127.0.0.1@[master]\\n${masterUrls}@;P;D' ./evals/inventories/hosts
+                        """
+                    } // dir
+                } // stage
+            
+                stage('Execute playbook') {
+                    dir('installation/evals') {
+                        sh """
+                            sudo ansible-playbook -i ./inventories/hosts ./playbooks/upgrades/upgrade.yaml
+                        """
+                    } // dir
+                } // stage
+
+            } // node
+        }}} // timeout, ansiColor, timestamps
+
